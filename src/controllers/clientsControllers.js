@@ -49,15 +49,13 @@ export default class ClientsControllers {
         try {
             //Obtienes el parámetro de la ruta (:company_name).
             const {company_name} = req.params;
-            const companyNameNormalized = sanitizeString(company_name);
-            if (!companyNameNormalized || companyNameNormalized.length === 0) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.NAME_REQUIRED});
+            if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.NAME_REQUIRED});
             }
-            const result = await ClientsServices.getCompany(companyNameNormalized);
+            const result = await ClientsServices.getCompany(company_name);
             if (!result || result.length === 0) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
             }
-
             return res.status(200).json({
                 msg: ErrorMessage.GLOBAL.DATA,
                 clientes: result
@@ -72,7 +70,7 @@ export default class ClientsControllers {
         try {
             const {name, lastname} = req.query;
             if (!name && !lastname) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.NAME_LASTNAME_REQUIRED});
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.NAME_LASTNAME_REQUIRED});
             }
             // Sanitizar individualmente
             const nameSanitized = name ? sanitizeString(name) : null;
@@ -103,7 +101,7 @@ export default class ClientsControllers {
             const result = await ClientsServices.getByIdentification(identificationNormalized);
 
             if (!result || result.length === 0) {
-                return res.status(400).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
             }
             return res.status(200).json({
                 msg: ErrorMessage.GLOBAL.DATA,
@@ -119,11 +117,10 @@ export default class ClientsControllers {
     static async getById(req, res) {
         try {
             const {id} = req.params;
-            const idTrimmed = id.trim();
-            if (!idTrimmed || isNaN(Number(idTrimmed))) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.ID_INVALID});
+            if (!id || isNaN(Number(id))) {
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID});
             }
-            const result = await ClientsServices.getById(idTrimmed);
+            const result = await ClientsServices.getById(id);
             if (!result) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
             }
@@ -143,14 +140,14 @@ export default class ClientsControllers {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({
+                return res.status(404).json({
                     msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
                     errors: errors.array()
                 })
             }
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
             }
             return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
 
@@ -164,7 +161,7 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
             }
             const existing = await ClientsServices.getById(id);
             if (!existing) {
@@ -182,7 +179,7 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
+                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
             }
             const deleted = await ClientsServices.deleteClient(id);
             if (!deleted) {

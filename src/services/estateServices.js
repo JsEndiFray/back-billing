@@ -1,16 +1,29 @@
 import EstateRepository from "../repository/estateRepository.js";
+import {sanitizeString} from "../utils/stringHelpers.js";
 
 export default class EstateServices {
 
-    //obtener los datos de los servicios
-    static async getAllServices() {
+    //obtener los inmuebles
+    static async getAllEstate() {
         return await EstateRepository.getAll();
     }
 
     //MÉTODOS DE BÚSQUEDAS
 
-    //búsqueda de los servicios
-    static async getEstateId(id) {
+    //búsqueda de inmueble con el catastro.
+    static async getByCadastralReference(cadastral_reference) {
+        if (!cadastral_reference || typeof cadastral_reference !== 'string') return null;
+
+        const refNormalized = sanitizeString(cadastral_reference);
+        if (!refNormalized || refNormalized.length === 0) return null;
+
+        return await EstateRepository.findByCadastralReference(refNormalized);
+
+
+    }
+
+    //búsqueda de inmuebles con el ID
+    static async getById(id) {
         if (!id || isNaN(id)) return null;
         return await EstateRepository.findById(id);
     }
@@ -21,7 +34,7 @@ export default class EstateServices {
     static async createEstate(estate) {
         //verificamos antes si existe antes de crear
         const {estates} = estate;
-        const existing = await EstateRepository.findByEstates(estates);
+        const existing = await EstateRepository.findByCadastralReference(estates);
         if (existing) return null;
 
         const estateID = await EstateRepository.create(estate);

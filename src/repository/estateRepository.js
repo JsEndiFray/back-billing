@@ -2,7 +2,7 @@ import db from '../db/dbConnect.js';
 
 export default class EstateRepository {
 
-    //obtener los datos de los servicios
+    //obtener los inmuebles
     static async getAll() {
         const [rows] = await db.query('SELECT * FROM estates');
         return rows;
@@ -10,13 +10,13 @@ export default class EstateRepository {
 
     //MÉTODOS DE BÚSQUEDAS
 
-    //búsqueda por nombre //LOWER = mayúsculas o minúsculas TRIM = espacios
-    static async findByEstates(estate) {
-        const [rows] = await db.query(`SELECT * FROM estates WHERE LOWER(TRIM(cadastral_reference)) = LOWER(TRIM(?))`, [estate]);
+    //búsqueda estate
+    static async findByCadastralReference(cadastral_reference) {
+        const [rows] = await db.query(`SELECT * FROM estates WHERE LOWER(TRIM(cadastral_reference)) = LOWER(TRIM(?))`, [cadastral_reference]);
         return rows;
     }
 
-    //búsqueda por ID
+    //búsqueda de inmuebles con el ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM estates WHERE id = ?', [id]);
         return rows[0];

@@ -27,6 +27,14 @@ export const ErrorMessage = {
         DELETE_OK: 'Eliminado correctamente.'
 
     },
+    ESTATES: {
+        NOT_FOUND: 'Inmueble no encontrado.',
+        DUPLICATE: 'Ya existe un inmueble con esa referencia catastral.',
+        CREATE_ERROR: 'No se pudo crear el inmueble.',
+        UPDATE_ERROR: 'No se pudo actualizar el inmueble.',
+        DELETE_ERROR: 'No se pudo eliminar el inmueble.',
+        REFERENCE_CADASTRAL: 'La referencia del catastro es obligatorio.'
+    },
 
     OWNERS: {
         DUPLICATE: 'Ya existe un propietario con este NIF.',
@@ -43,11 +51,5 @@ export const ErrorMessage = {
         DELETE_ERROR: 'No se pudo eliminar la factura.',
     },
 
-    ESTATES: {
-        NOT_FOUND: 'Inmueble no encontrado.',
-        DUPLICATE: 'Ya existe un inmueble con esa referencia catastral.',
-        CREATE_ERROR: 'No se pudo crear el inmueble.',
-        UPDATE_ERROR: 'No se pudo actualizar el inmueble.',
-        DELETE_ERROR: 'No se pudo eliminar el inmueble.',
-    }
+
 }

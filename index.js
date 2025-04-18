@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 
 import clientsRoutes from './src/routes/clientsRoutes.js'
+import estateRoutes from './src/routes/estateRoutes.js';
 
 //.env
 process.loadEnvFile();
@@ -21,6 +22,7 @@ app.use(morgan('dev'));
 
 //Conexión a la DB
 app.use('/api/clients', clientsRoutes)
+app.use('/api/estates', estateRoutes)
 
 //Conexión del servidor
 app.listen(port, () => {

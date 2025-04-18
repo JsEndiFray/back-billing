@@ -18,7 +18,11 @@ export default class ClientsServices {
     //búsqueda por nombre de empresa.
     static async getCompany(company_name) {
         if (!company_name || typeof company_name !== 'string') return null;
-        return await ClientsRepository.findCompany(sanitizeString(company_name));
+
+        const companyNameNormalized = sanitizeString(company_name);
+        if(!companyNameNormalized || companyNameNormalized.length === 0) return null;
+
+        return await ClientsRepository.findCompany(sanitizeString(companyNameNormalized));
     }
 
     //búsqueda por nombre y apellidos
