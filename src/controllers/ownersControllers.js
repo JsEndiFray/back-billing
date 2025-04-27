@@ -38,7 +38,7 @@ export default class OwnersControllers {
             if (!created) {
                 return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_CREATE });
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
+            return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE, owner: created});
 
         } catch (error) {
                 console.error('Error al crear Owner:', error);

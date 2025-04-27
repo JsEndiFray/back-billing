@@ -41,6 +41,7 @@ export const ErrorMessage = {
     BILLS: {
         NOT_FOUND: 'Factura no encontrada.',
         DUPLICATE: 'Ya existe una factura con ese número.',
+        ERROR_CREATE: 'Error al crear factura con el mismo propietario mes y año.',
     },
 
 

@@ -1,3 +1,4 @@
+import {format} from 'date-fns';
 import BillsRepository from "../repository/billsRepository.js";
 import {sanitizeString} from "../utils/stringHelpers.js";
 
@@ -47,23 +48,61 @@ export default class BillsService {
 
     //crear FACTURAS
     static async createBill(data) {
-        const {bill_number} = data;
-        //verificamos si existe facturas
-        const existing = await BillsRepository.findByBillNumber(bill_number);
-        if (existing && existing.length > 0) return null;
-        const newTaxes = await BillsRepository.create(data);
-        return {id: newTaxes, ...data}
+        const {owners_id, estate_id, date} = data;
+        if (!owners_id || !estate_id || !date) {
+            return null; //Datos incompletos
+        }
+        // Buscar todas las facturas del mismo owner y estate
+        const existingBills = await BillsRepository.findByOwnersAndEstate(owners_id, estate_id);
+        if (existingBills.length > 0) {
+            // Comprobar si alguna factura es del mismo mes y año
+            const newBillMonth = format(new Date(date), 'yyyy-MM'); //Ej: "2025-04"
+            const sameMonthBill = existingBills.find(bill => {
+                const billMonth = format(new Date(bill.date), 'yyyy-MM');
+                return billMonth === newBillMonth;
+            });
+            if (sameMonthBill) {
+                return null;
+            }
+        }
+        //Generar número de factura automático
+        const lastBillNumber = await BillsRepository.getLastBillNumber();
+        let newBillNumber = 'FACT-0001';
+        if (lastBillNumber) {
+            const lastNumber = parseInt(lastBillNumber.replace(/\D/g, ''), 10);
+            const nextNumber = lastNumber + 1;
+            newBillNumber = `FACT-${String(nextNumber).padStart(4, '0')}`;
+        }
+        const billToCreate = {
+            ...data,
+            bill_number: newBillNumber
+        };
+        const newBillId = await BillsRepository.create(billToCreate);
+        return {id: newBillId, ...billToCreate};
     }
 
+
     //actualizar facturas
-    static async updateBill(data) {
-        if (!data.id || isNaN(data.id)) return null;
-        //verificamos si existe facturas
-        const existing = await BillsRepository.findById(data.id);
+    static async updateBill(id, updateData) {
+        if (!id || isNaN(id)) return null;
+
+        const existing = await BillsRepository.findById(id);
         if (!existing) return null;
-        // Actualizar
-        const updatedTaxes = await BillsRepository.update(data);
-        return updatedTaxes ? data : null;
+
+        const billToUpdate = {
+            id,
+            bill_number: updateData.bill_number || existing.bill_number, //recupera el bill_number si no viene
+            owners_id: updateData.owners_id,
+            clients_id: updateData.clients_id,
+            date: updateData.date,
+            tax_base: updateData.tax_base,
+            iva: updateData.iva,
+            irpf: updateData.irpf,
+            total: updateData.total
+        };
+
+        const updated = await BillsRepository.update(billToUpdate);
+        return updated ? billToUpdate : null;
     }
 
     //ELIMINAR FACTURAS

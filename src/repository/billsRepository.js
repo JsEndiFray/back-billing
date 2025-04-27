@@ -12,7 +12,7 @@ export default class BillsRepository {
     //búsqueda por ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM bills WHERE id = ?', [id]);
-        return rows[0];
+        return rows.length ? rows[0]: null;
     }
 
     //búsqueda por numero de factura
@@ -33,14 +33,31 @@ export default class BillsRepository {
     //BÚSQUEDA HISTORIAL FACTURA POR NIF
     // búsqueda por NIF del cliente
     static async findByClientNif(nif) {
-        const [rows] = await db.query(`SELECT bills.* FROM bills JOIN clients ON bills.clients_id = clients.id WHERE clients.identification = ?`,
+        const [rows] = await db.query(
+            `SELECT bills.* FROM bills JOIN clients ON bills.clients_id = clients.id WHERE clients.identification = ?`,
             [nif]
+        );
+        return rows;
+    }
+    //Busca facturas que tienen mismo owner + estate.
+    static async findByOwnersAndEstate(ownersId, estateId) {
+        const [rows] = await db.query(
+            `SELECT * FROM bills WHERE owners_id = ? AND estate_id = ?`,
+            [ownersId, estateId]
         );
         return rows;
     }
 
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+
+    //buscar el último número de factura
+    static async getLastBillNumber() {
+        const [rows] = await db.query(
+            `SELECT bill_number FROM bills ORDER BY id DESC LIMIT 1`
+        );
+        return rows[0]?.bill_number || null;
+    }
 
     //crear FACTURAS
     static async create(bill) {
@@ -53,7 +70,7 @@ export default class BillsRepository {
     static async update(bill) {
         const {id, bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total} = bill;
         const [result] = await db.query(
-            `UPDATE bills SET bill_number = ?, users_id = ?, clients_id = ?,date = ?,tax_base = ?,iva = ?,irpf = ?,total = ?, date_update = NOW() WHERE id = ?`,
+            `UPDATE bills SET bill_number = ?, owners_id = ?, clients_id = ?,date = ?,tax_base = ?,iva = ?,irpf = ?,total = ?, date_update = NOW() WHERE id = ?`,
             [bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total, id]);
         return result.affectedRows;
     }
