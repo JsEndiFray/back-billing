@@ -11,7 +11,7 @@ const router = express.Router()
     .get('/search/identification/:identification', ClientsControllers.getByIdentification)
     .get('/:id', ClientsControllers.getById)
     .post('/', validateClient, ClientsControllers.createClient)
-    .put('/:id', ClientsControllers.updateClient)
+    .put('/:id', validateClient, ClientsControllers.updateClient)
     .delete('/:id', ClientsControllers.deleteClient)
 
 

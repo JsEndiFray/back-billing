@@ -71,7 +71,8 @@ export default class ClientsServices {
     //eliminar el cliente
     static async deleteClient(id) {
         if (!id || isNaN(id)) return null;
-        return await ClientsRepository.delete(id);
+        const result = await ClientsRepository.delete(id);
+        return result > 0;
     }
 
 }

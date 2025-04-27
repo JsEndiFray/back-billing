@@ -4,6 +4,8 @@ import morgan from 'morgan';
 
 import clientsRoutes from './src/routes/clientsRoutes.js'
 import estateRoutes from './src/routes/estateRoutes.js';
+import billsRoutes from './src/routes/billsRoutes.js';
+import ownersRoutes from './src/routes/ownersRoutes.js';
 
 //.env
 process.loadEnvFile();
@@ -23,6 +25,8 @@ app.use(morgan('dev'));
 //Conexión a la DB
 app.use('/api/clients', clientsRoutes)
 app.use('/api/estates', estateRoutes)
+app.use('/api/bills', billsRoutes)
+app.use('/api/owners', ownersRoutes)
 
 //Conexión del servidor
 app.listen(port, () => {

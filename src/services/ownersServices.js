@@ -4,14 +4,14 @@ import {sanitizeString} from "../utils/stringHelpers.js";
 export default class OwnersServices {
 
     //obtener los datos del usuario
-    static async getAllUsers() {
+    static async getAllOwners() {
         return await OwnersRepository.getAll();
     }
 
     //MÉTODOS DE BÚSQUEDAS
 
     //búsqueda por nombre, apellido o nif
-    static async getUser(name, lastname, nif) {
+    static async getOwner(name, lastname, nif) {
         if (!name && !lastname && !nif) return null;
 
         let user = null;
@@ -22,7 +22,7 @@ export default class OwnersServices {
     }
 
     // Obtener un usuario por ID
-    static async getUserId(id) {
+    static async getOwnerId(id) {
         if (!id && isNaN(id)) return null;
         return await OwnersRepository.findById(id);
     }
@@ -30,18 +30,21 @@ export default class OwnersServices {
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
     //crear usuario
-    static async createUser(owner) {
+    static async createOwner(owner) {
         //verificamos antes si existe antes de crear
         const {nif} = owner;
         const existing = await OwnersRepository.findByNif(nif);
-        if (existing) return null;
+
+        if (existing) return { duplicated: true };
 
         const ownerID = await OwnersRepository.create(owner);
+        if (!ownerID) return null;
+
         return {ownerID, owner};
     }
 
     //actualizar usuarios
-    static async updateUser(owner) {
+    static async updateOwner(owner) {
         if (!owner.id || !isNaN(owner.id)) return null;
         //verificamos antes si existe antes de actualizar
         const existing = await OwnersRepository.findById(owner.id);
@@ -52,7 +55,7 @@ export default class OwnersServices {
     }
 
     //eliminar usuarios
-    static async deleteUser(id) {
+    static async deleteOwner(id) {
         if (!id || isNaN(id)) return null;
         //verificamos antes si existe antes de actualizar
         const existing = await OwnersRepository.findById(id);

@@ -1,5 +1,6 @@
 import EstateService from '../services/estateServices.js';
 import {ErrorMessage} from "../utils/msgError.js";
+import {validationResult} from "express-validator";
 
 
 export default class EstateController {
@@ -9,7 +10,7 @@ export default class EstateController {
         try {
             const estate = await EstateService.getAllEstate();
             if (!estate || estate.length === 0) {
-                return res.status(400).json({msg: ErrorMessage.GLOBAL.NO_DATA})
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA})
             }
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, estate})
 
@@ -46,7 +47,7 @@ export default class EstateController {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
             }
             const result = await EstateService.getById(id);
-            if (!result || result.length === 0) {
+            if (!result) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
             }
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, result})
@@ -57,6 +58,94 @@ export default class EstateController {
     }
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+
+    //crear inmuebles
+    static async createEstate(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
+                    errors: errors.array()
+                });
+            }
+
+            const {cadastral_reference} = req.body;
+            const existing = await EstateService.getByCadastralReference(cadastral_reference);
+            if (existing && existing.length > 0) {
+                return res.status(400).json({msg: ErrorMessage.ESTATES.DUPLICATE});
+            }
+
+            const created = await EstateService.createEstate(req.body);
+            if (!created) {
+                return res.status(500).json({msg: ErrorMessage.GLOBAL.ERROR_CREATE});
+            }
+
+            return res.status(201).json({
+                msg: ErrorMessage.GLOBAL.CREATE,
+                estate: created
+            });
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
+    //Actualizar inmuebles
+    static async updateEstate(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
+                    errors: errors.array()
+                });
+            }
+            const {id} = req.params;
+            if (!id || isNaN(Number(id))) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+            }
+            const existing = await EstateService.getById(id);
+            if (!existing) {
+                return res.status(400).json({msg: ErrorMessage.ESTATES.NOT_FOUND})
+            }
+            const updated = await EstateService.updateEstate({id: Number(id), ...req.body});
+            if (!updated) {
+                return res.status(400).json({msg: ErrorMessage.ESTATES.UPDATE_ERROR});
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, estate: updated})
+
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
+    //eliminar inmueble
+    static async deleteEstate(req, res) {
+        try {
+            const {id} = req.params;
+            if (!id || isNaN(Number(id))) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+            }
+            const existing = await EstateService.getById(id);
+            if (!existing) {
+                return res.status(404).json({msg: ErrorMessage.ESTATES.NOT_FOUND});
+            }
+
+            const deleted = await EstateService.deleteService(id);
+            if (!deleted) {
+                return res.status(400).json({msg: ErrorMessage.ESTATES.DELETE_ERROR});
+            }
+            return res.status(200).json({
+                msg: ErrorMessage.GLOBAL.DELETE,
+                estate: existing
+            });
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
 
 
 }

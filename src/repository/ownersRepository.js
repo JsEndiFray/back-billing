@@ -25,7 +25,7 @@ export default class OwnersRepository {
     //búsqueda por nif
     static async findByNif(nif) {
         const [rows] = await db.query('SELECT * FROM owners WHERE LOWER(TRIM(nif)) = LOWER(TRIM(?))', [nif]);
-        return rows;
+        return rows.length > 0 ? rows[0] : null;
     }
 
     //búsqueda por ID
@@ -39,7 +39,7 @@ export default class OwnersRepository {
     static async create(data) {
         const {name, lastname, email, nif, address, postal_code, location, province} = data;
         const [result] = await db.query('INSERT INTO owners (name, lastname, email, nif, address, postal_code, location, province, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [name, lastname, email, nif, address, postal_code, location, province]);
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [name, lastname, email, nif, address, postal_code, location, province]);
         return result.insertId;
     }
 

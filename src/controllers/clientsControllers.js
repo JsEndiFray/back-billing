@@ -30,7 +30,7 @@ export default class ClientsControllers {
             //tipos permitidos
             const allowedTypes = ['particular', 'autónomo', 'empresa'];
             if (!allowedTypes.includes(clientTypeNormalized)) {
-                return res.status(500).json({msg: ErrorMessage.CLIENTS.TYPE});
+                return res.status(400).json({msg: ErrorMessage.CLIENTS.TYPE});
             }
 
             const clientsType = await ClientsServices.getByClientType(clientTypeNormalized);
@@ -118,7 +118,7 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID});
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
             }
             const result = await ClientsServices.getById(id);
             if (!result) {
@@ -140,14 +140,14 @@ export default class ClientsControllers {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(404).json({
+                return res.status(400).json({
                     msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
                     errors: errors.array()
                 })
             }
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
+                return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
             }
             return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
 
@@ -159,16 +159,23 @@ export default class ClientsControllers {
     //actualizar clientes
     static async updateClient(req, res) {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
+                    errors: errors.array()
+                });
+            }
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
             }
             const existing = await ClientsServices.getById(id);
             if (!existing) {
                 return res.status(404).json({msg: ErrorMessage.CLIENTS.NOT_FOUND})
             }
             const updated = await ClientsServices.updateClient(id, req.body);
-            return res.status(200).json({msg: ErrorMessage.CLIENTS.UPDATE_OK, client: updated});
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, client: updated});
         } catch (error) {
             return res.status(500).json({msg: ErrorMessage.CLIENTS.UPDATE_ERROR});
         }
@@ -179,16 +186,16 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_INVALID})
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
             }
             const deleted = await ClientsServices.deleteClient(id);
             if (!deleted) {
                 return res.status(404).json({msg: ErrorMessage.CLIENTS.NOT_FOUND})
             }
-            return res.status(200).json({msg: ErrorMessage.CLIENTS.DELETE_OK})
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE})
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.CLIENTS.DELETE_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.ERROR_DELETE});
         }
     }
 

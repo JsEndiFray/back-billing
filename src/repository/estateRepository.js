@@ -23,7 +23,7 @@ export default class EstateRepository {
     }
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
-    //crear usuario
+    //crear inmuebles
     static async create(estate) {
         const {cadastral_reference, price, address, postal_code, location, province, surface} = estate;
         const [result] = await db.query('INSERT INTO estates (cadastral_reference, price, address, postal_code, location, province, surface, date_create, date_update)' +

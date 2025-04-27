@@ -30,15 +30,16 @@ export default class EstateServices {
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
-    //crear servicios
+    //crear inmuebles
     static async createEstate(estate) {
         //verificamos antes si existe antes de crear
-        const {estates} = estate;
-        const existing = await EstateRepository.findByCadastralReference(estates);
-        if (existing) return null;
+        const {cadastral_reference} = estate;
+        const existing = await EstateRepository.findByCadastralReference(cadastral_reference);
+        if (existing && existing.length > 0) return null;
 
         const estateID = await EstateRepository.create(estate);
-        return {estateID, estate};
+        if (!estateID) return null;
+        return {estateID, estate} || null;
     }
 
     //actualizar usuarios
@@ -48,6 +49,16 @@ export default class EstateServices {
         const existing = await EstateRepository.findById(estate.id);
         if (!existing) return null;
 
+        const {cadastral_reference} = estate;
+        const duplicate = await EstateRepository.findByCadastralReference(cadastral_reference);
+        if (duplicate && duplicate.length > 0) {
+            const duplicateId = duplicate[0].id;
+            if (Number(duplicateId) !== Number(estate.id)) {
+                // Si existe otro inmueble con esa referencia -> error
+                return null;
+            }
+        }
+
         const updated = await EstateRepository.update(estate);
         return updated ? estate : null;
     }
@@ -55,11 +66,12 @@ export default class EstateServices {
     //eliminar usuarios
     static async deleteService(id) {
         if (!id || isNaN(id)) return null;
-        //verificamos antes si existe antes de actualizar
+        //verificamos antes si existe antes de eliminar
         const existing = await EstateRepository.findById(id);
         if (!existing) return null;
 
-        return await EstateRepository.delete(id);
+        const result = await EstateRepository.delete(id);
+        return result > 0;
     }
 
 

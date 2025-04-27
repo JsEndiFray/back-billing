@@ -1,11 +1,11 @@
-import TaxesRepository from "../repository/taxesRepository.js";
+import BillsRepository from "../repository/billsRepository.js";
 import {sanitizeString} from "../utils/stringHelpers.js";
 
-export default class TaxesService {
+export default class BillsService {
 
     //obtener las facturas
-    static async getAllTaxes() {
-        return await TaxesRepository.getAll();
+    static async getAllBills() {
+        return await BillsRepository.getAll();
     }
 
     //MÉTODOS DE BÚSQUEDAS
@@ -13,25 +13,25 @@ export default class TaxesService {
     //búsqueda por numero de factura.
     static async getBillByNumber(bill_number) {
         if (!bill_number) return null;
-        return await TaxesRepository.findByBillNumber(bill_number);
+        return await BillsRepository.findByBillNumber(bill_number);
     }
 
     //búsqueda por ID
-    static async getTaxById(id) {
+    static async getBillById(id) {
         if (!id || isNaN(id)) return null;
-        return await TaxesRepository.findById(id);
+        return await BillsRepository.findById(id);
     }
 
     //búsqueda por id_owners
     static async getByOwnersId(ownersId) {
         if (!ownersId || isNaN(ownersId)) return null;
-        return await TaxesRepository.findByOwnersId(ownersId);
+        return await BillsRepository.findByOwnersId(ownersId);
     }
 
     //búsqueda por id_cliente
     static async getByClientsId(clientsId) {
         if (!clientsId || isNaN(clientsId)) return null;
-        return await TaxesRepository.findByClientId(clientsId);
+        return await BillsRepository.findByClientId(clientsId);
     }
 
 
@@ -40,36 +40,36 @@ export default class TaxesService {
     // búsqueda por NIF del cliente
     static async getBillsByClientNif(nif) {
         if (!nif || typeof nif !== 'string') return null;
-        return await TaxesRepository.findByClientNif(sanitizeString(nif));
+        return await BillsRepository.findByClientNif(sanitizeString(nif));
     }
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
     //crear FACTURAS
-    static async createTaxes(data) {
+    static async createBill(data) {
         const {bill_number} = data;
         //verificamos si existe facturas
-        const existing = await TaxesRepository.findByBillNumber(bill_number);
+        const existing = await BillsRepository.findByBillNumber(bill_number);
         if (existing && existing.length > 0) return null;
-        const newTaxes = await TaxesRepository.create(data);
+        const newTaxes = await BillsRepository.create(data);
         return {id: newTaxes, ...data}
     }
 
     //actualizar facturas
-    static async updateTaxes(data) {
+    static async updateBill(data) {
         if (!data.id || isNaN(data.id)) return null;
         //verificamos si existe facturas
-        const existing = await TaxesRepository.findById(data.id);
+        const existing = await BillsRepository.findById(data.id);
         if (!existing) return null;
         // Actualizar
-        const updatedTaxes = await TaxesRepository.update(data);
+        const updatedTaxes = await BillsRepository.update(data);
         return updatedTaxes ? data : null;
     }
 
     //ELIMINAR FACTURAS
-    static async deleteTaxes(id) {
+    static async deleteBill(id) {
         if (!id || isNaN(id)) return null;
-        return await TaxesRepository.delete(id);
+        return await BillsRepository.delete(id);
     }
 
 

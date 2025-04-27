@@ -1,0 +1,114 @@
+import BillsService from "../services/billsServices.js";
+import {ErrorMessage} from "../utils/msgError.js";
+
+
+export default class BillsControllers {
+    //obtener las facturas
+    static async getAllBills(req, res) {
+        try {
+            const bills = await BillsService.getAllBills();
+            if (!bills || bills.length === 0) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA})
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, taxes: bills});
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})
+        }
+    }
+
+    //MÉTODOS DE BÚSQUEDAS
+
+    //búsqueda por numero de factura.
+    static async getBillNumber(req, res) {
+        try {
+            const {bill_number} = req.params;
+            if (!bill_number || bill_number.length === 0) {
+                return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
+            }
+            const bills = await BillsService.getBillByNumber(bill_number);
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bills: bills});
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
+    //búsqueda por ID
+    static async getBillById(req, res) {
+        try{
+            const {id} = req.params;
+            if(!id || isNaN(Number(id))){
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+            }
+            const result = await BillsService.getBillById(id);
+            if(!result || result.length === 0){
+                return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
+            }
+            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+
+        }catch (error){
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+    //búsqueda por id_owners
+    static async getOwnersId(req, res) {
+        try{
+            const {id} = req.params;
+            if(!id || isNaN(Number(id))){
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+            }
+            const result = await BillsService.getByOwnersId(id);
+            if(!result || result.length === 0){
+                return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
+            }
+            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+
+        }catch(error){
+            console.log(error);
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+    //búsqueda por id_cliente
+    static async getByClientsId(req, res) {
+        try{
+            const {id} = req.params;
+            if(!id || isNaN(Number(id))){
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+            }
+            const result = await BillsService.getByClientsId(id);
+            if(!result || result.length === 0){
+                return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
+            }
+            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+
+        }catch(error){
+            console.log(error);
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
+
+
+
+    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+    static async createBill(req, res) {
+        try {
+            const {bill_number} = req.body;
+            const existing = await BillsService.getBillByNumber(bill_number);
+            if (existing) {
+                return res.status(400).json({msg: ErrorMessage.BILLS.DUPLICATE});
+            }
+            const created = await BillsService.createBill(req.body);
+            if (!created) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.ERROR_CREATE});
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.CREATE, Bill: created});
+
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})
+        }
+    }
+
+
+}
