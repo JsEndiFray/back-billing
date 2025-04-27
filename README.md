@@ -25,6 +25,7 @@ src/
 ├── routes/         # Definición de rutas Express
 ├── services/       # Lógica del negocio
 ├── utils/          # Utilidades y mensajes de error
+├── validator/      # Validación de los datos
 ```
 
 ---
@@ -36,6 +37,7 @@ src/
     - Propietarios
     - Facturas
     - Inmuebles
+    - Login
 - Búsquedas inteligentes:
     - Por NIF/NIE/CIF
     - Por nombre, apellidos, empresa
@@ -69,7 +71,7 @@ src/
 
 - Sistema de autenticación con JWT
 - Roles de usuarios (admin)
-- Generación de facturas en PDF
+- Generación de facturas en PDF (Frontend)
 - Panel de administración para propietarios
 - Sistema de copias de seguridad automáticas (base de datos)
 - Subida del backend a producción en Railway
