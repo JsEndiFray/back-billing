@@ -13,13 +13,13 @@ export default class OwnersRepository {
     //búsqueda por nombre //LOWER = mayúsculas o minúsculas TRIM = espacios
     static async findByName(name) {
         const [rows] = await db.query(`SELECT * FROM owners WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, [name]);
-        return rows;
+        return rows.length > 0 ? rows[0] : null;
     }
 
     //búsqueda por apellidos
     static async findByLastname(lastname) {
         const [rows] = await db.query('SELECT * FROM owners WHERE LOWER(TRIM(lastname)) = LOWER(TRIM(?))', [lastname]);
-        return rows;
+        return rows.length > 0 ? rows[0] : null;
     }
 
     //búsqueda por nif
@@ -27,7 +27,6 @@ export default class OwnersRepository {
         const [rows] = await db.query('SELECT * FROM owners WHERE LOWER(TRIM(nif)) = LOWER(TRIM(?))', [nif]);
         return rows.length > 0 ? rows[0] : null;
     }
-
     //búsqueda por ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM owners WHERE id = ?', [id]);

@@ -18,17 +18,17 @@ export default class BillsRepository {
     //búsqueda por numero de factura
     static async findByBillNumber(bill_number) {
         const [rows] = await db.query('SELECT * FROM bills WHERE bill_number = ?', [bill_number]);
-        return rows;
+        return rows.length ? rows[0] : null;
     }
     //búsqueda por id_owners
     static async findByOwnersId(ownersId) {
         const [rows] = await db.query('SELECT * FROM bills WHERE owners_id = ?', [ownersId]);
-        return rows;
+        return rows.length ? rows[0] : null;
     }
     //búsqueda por id_cliente
     static async findByClientId(clientId) {
         const [rows] = await db.query('SELECT * FROM bills WHERE clients_id = ?', [clientId]);
-        return rows;
+        return rows.length ? rows[0] : null;
     }
     //BÚSQUEDA HISTORIAL FACTURA POR NIF
     // búsqueda por NIF del cliente
@@ -37,7 +37,7 @@ export default class BillsRepository {
             `SELECT bills.* FROM bills JOIN clients ON bills.clients_id = clients.id WHERE clients.identification = ?`,
             [nif]
         );
-        return rows;
+        return rows.length ? rows[0] : null;
     }
     //Busca facturas que tienen mismo owner + estate.
     static async findByOwnersAndEstate(ownersId, estateId) {
@@ -45,7 +45,7 @@ export default class BillsRepository {
             `SELECT * FROM bills WHERE owners_id = ? AND estate_id = ?`,
             [ownersId, estateId]
         );
-        return rows;
+        return rows.length ? rows[0] : null;
     }
 
 

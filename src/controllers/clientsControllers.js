@@ -16,7 +16,7 @@ export default class ClientsControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, clients})
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     };
 
@@ -40,7 +40,7 @@ export default class ClientsControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, clientes: clientsType})
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -61,7 +61,7 @@ export default class ClientsControllers {
                 clientes: result
             })
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -86,7 +86,7 @@ export default class ClientsControllers {
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -109,7 +109,7 @@ export default class ClientsControllers {
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -130,7 +130,7 @@ export default class ClientsControllers {
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.SEARCH_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -140,6 +140,7 @@ export default class ClientsControllers {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
+                console.debug("Validation errors:", errors.array());
                 return res.status(400).json({
                     msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
                     errors: errors.array()
@@ -152,7 +153,7 @@ export default class ClientsControllers {
             return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.CLIENTS.CREATE_ERROR});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -161,6 +162,7 @@ export default class ClientsControllers {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
+                console.debug("Validation errors:", errors.array());
                 return res.status(400).json({
                     msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
                     errors: errors.array()
@@ -175,9 +177,14 @@ export default class ClientsControllers {
                 return res.status(404).json({msg: ErrorMessage.CLIENTS.NOT_FOUND})
             }
             const updated = await ClientsServices.updateClient(id, req.body);
+            if (!updated) {
+                return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE});
+            }
+
             return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, client: updated});
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.CLIENTS.UPDATE_ERROR});
+            console.error(error);
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 
@@ -195,7 +202,7 @@ export default class ClientsControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE})
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.ERROR_DELETE});
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
 

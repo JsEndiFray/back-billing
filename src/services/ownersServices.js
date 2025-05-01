@@ -14,16 +14,25 @@ export default class OwnersServices {
     static async getOwner(name, lastname, nif) {
         if (!name && !lastname && !nif) return null;
 
-        let user = null;
-        if (name) user = await OwnersRepository.findByName(sanitizeString(name));
-        if (!user && lastname) user = await OwnersRepository.findByLastname(sanitizeString(lastname));
-        if (!user && nif) user = await OwnersRepository.findByNif(sanitizeString(nif));
-        return user;
+        // Búsqueda secuencial por prioridad
+        if (name) {
+            const owner = await OwnersRepository.findByName(sanitizeString(name));
+            if (owner) return owner;
+        }
+        if (lastname) {
+            const owner = await OwnersRepository.findByLastname(sanitizeString(lastname));
+            if (owner) return owner;
+        }
+        if (nif) {
+            return await OwnersRepository.findByNif(sanitizeString(nif));
+        }
+        return null;
     }
+
 
     // Obtener un usuario por ID
     static async getOwnerId(id) {
-        if (!id && isNaN(id)) return null;
+        if (!id && isNaN(Number(id))) return null;
         return await OwnersRepository.findById(id);
     }
 
@@ -31,30 +40,40 @@ export default class OwnersServices {
 
     //crear usuario
     static async createOwner(owner) {
-        //verificamos antes si existe antes de crear
         const {nif} = owner;
-        const existing = await OwnersRepository.findByNif(nif);
 
-        if (existing) return { duplicated: true };
+        const existing = await OwnersRepository.findByNif(nif);
+        if (existing) return {duplicated: true};
 
         const ownerID = await OwnersRepository.create(owner);
         if (!ownerID) return null;
 
+        //Retornar resultado
         return {ownerID, owner};
     }
 
     //actualizar usuarios
-    static async updateOwner(owner) {
-        if (!owner.id || !isNaN(owner.id)) return null;
-        //verificamos antes si existe antes de actualizar
-        const existing = await OwnersRepository.findById(owner.id);
+    static async updateOwner(id, data) {
+        if (!id || isNaN(id)) return null;
+
+        // verificar si existe
+        const existing = await OwnersRepository.findById(id);
         if (!existing) return null;
 
-        const updated = await OwnersRepository.update(owner);
-        return updated ? owner : null;
+        // validar que la nueva identificación no la tenga otro owner
+        if (data.nif) {
+            const ownerWithSameIdentification = await OwnersRepository.findByNif(data.nif);
+            if (ownerWithSameIdentification && ownerWithSameIdentification.id !== Number(id)) {
+                // la identificación ya está en uso por otro owner
+                return null;
+            }
+        }
+        // actualizar
+        const updated = await OwnersRepository.update({id, ...data});
+        return updated ? {id, ...data} : null;
     }
 
-    //eliminar usuarios
+    //eliminar owners
     static async deleteOwner(id) {
         if (!id || isNaN(id)) return null;
         //verificamos antes si existe antes de actualizar

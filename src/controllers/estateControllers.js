@@ -111,7 +111,7 @@ export default class EstateController {
             }
             const updated = await EstateService.updateEstate({id: Number(id), ...req.body});
             if (!updated) {
-                return res.status(400).json({msg: ErrorMessage.ESTATES.UPDATE_ERROR});
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.ERROR_UPDATE});
             }
             return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, estate: updated})
 

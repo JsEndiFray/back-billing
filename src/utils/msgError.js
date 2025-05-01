@@ -14,6 +14,7 @@ export const ErrorMessage = {
         CREATE: 'Creado correctamente.',
         UPDATE: 'Actualizado correctamente.',
         DELETE: 'Eliminado correctamente.',
+        NOT_FOUND: 'No tiene datos registrados.',
     },
     CLIENTS: {
         TYPE: 'Tipo de cliente no válido.',
@@ -33,9 +34,8 @@ export const ErrorMessage = {
 
     OWNERS: {
         DUPLICATE: 'Ya existe un propietario con este NIF.',
-        CREATE_ERROR: 'No se pudo crear el propietario.',
-        UPDATE_ERROR: 'No se pudo actualizar el propietario.',
-        DELETE_ERROR: 'No se pudo eliminar el propietario.',
+
+
     },
 
     BILLS: {

@@ -42,7 +42,7 @@ export default class ClientsRepository {
     //búsqueda por identificación
     static async findByIdentification(identification) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
-        return rows;
+        return rows.length ? rows[0] : null;
     }
 
     //búsqueda por ID

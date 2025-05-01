@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
-export const validateCreateClient = [
+export const validateOwners = [
     body('name').notEmpty().withMessage('El nombre es obligatorio.'),
     body('lastname').notEmpty().withMessage('El apellido es obligatorio.'),
     body('email').notEmpty().withMessage('El correo electrónico es obligatorio.')

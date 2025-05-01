@@ -88,6 +88,14 @@ export default class BillsService {
 
         const existing = await BillsRepository.findById(id);
         if (!existing) return null;
+        //comprobar si el nuevo bill_number está en uso por otra factura
+        if (updateData.bill_number) {
+            const billWithSameNumber = await BillsRepository.findByBillNumber(updateData.bill_number);
+
+            if (billWithSameNumber && billWithSameNumber.id !== Number(id)) {
+                return null; // número de factura duplicado
+            }
+        }
 
         const billToUpdate = {
             id,

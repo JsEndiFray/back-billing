@@ -60,10 +60,23 @@ export default class ClientsServices {
     //actualizar clientes
     static async updateClient(id, data) {
         if (!id || isNaN(id)) return null;
-        //verifica si existe el cliente
+
+        // verificar si existe el cliente
         const existing = await ClientsRepository.findById(id);
         if (!existing) return null;
-        //actualizar
+
+        // comprobar si el nuevo identification está en uso por otro cliente
+        if (data.identification) {
+            const clientWithSameIdentification = await ClientsRepository.findByIdentification(data.identification);
+
+            // si existe otro cliente con el mismo identification y NO es este
+            if (clientWithSameIdentification && clientWithSameIdentification.id !== Number(id)) {
+                // devolver null para que el controlador devuelva error
+                return null;
+            }
+        }
+
+        // actualizar
         const updated = await ClientsRepository.update({id, ...data});
         return updated ? {id, ...data} : null;
     }

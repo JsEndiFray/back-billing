@@ -143,9 +143,9 @@ export default class BillsControllers {
             }
             const updated = await BillsService.updateBill(Number(id), updateData);
             if (!updated) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.ERROR_UPDATE});
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.ERROR_UPDATE});
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.UPDATE, Bill: updated});
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, Bill: updated});
 
         } catch (error) {
             console.log(error);
