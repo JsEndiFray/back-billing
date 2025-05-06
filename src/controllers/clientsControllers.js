@@ -1,7 +1,6 @@
 import ClientsServices from "../services/clientsServices.js";
-import {ErrorMessage} from "../utils/msgError.js";
-import {sanitizeString} from "../utils/stringHelpers.js";
-import {validationResult} from "express-validator";
+import {ErrorMessage} from "../helpers/msgError.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class ClientsControllers {
 
@@ -138,14 +137,6 @@ export default class ClientsControllers {
     //crear clientes
     static async createClient(req, res) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                console.debug("Validation errors:", errors.array());
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                })
-            }
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
                 return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
@@ -153,6 +144,7 @@ export default class ClientsControllers {
             return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
 
         } catch (error) {
+            console.log(error)
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
@@ -160,14 +152,6 @@ export default class ClientsControllers {
     //actualizar clientes
     static async updateClient(req, res) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                console.debug("Validation errors:", errors.array());
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                });
-            }
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})

@@ -12,8 +12,9 @@ const db = mysql2.createPool({
     database: process.env.DB_DATABASE,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
-
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
 });
 
 const check = async () => {
@@ -22,11 +23,10 @@ const check = async () => {
         console.log('Conectado correctamente a MYSQL');
         connection.release();
     } catch (error) {
-        console.log('Error de conexión', error);
-        process.exit(1)
+        console.error('Error de conexión:', error.message);
+        process.exit(1);
     }
-}
+};
 check();
 
 export default db;
-

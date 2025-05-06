@@ -43,6 +43,9 @@ export const ErrorMessage = {
         DUPLICATE: 'Ya existe una factura con ese número.',
         ERROR_CREATE: 'Error al crear factura con el mismo propietario mes y año.',
     },
-
-
+    USERS: {
+        INVALID_CREDENTIALS: 'Las credenciales no son validas.',
+        LOGIN: 'Login correcto.',
+        DUPLICATE: 'Ya existe un usuario con el nombre.',
+    },
 }

@@ -1,5 +1,5 @@
 import ClientsRepository from "../repository/clientsRepository.js";
-import {sanitizeString} from "../utils/stringHelpers.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class ClientsServices {
 
@@ -51,7 +51,7 @@ export default class ClientsServices {
 
         //verificamos si existe el cliente
         const existing = await ClientsRepository.findByIdentification(identification);
-        if (existing.length > 0) return null;
+        if (existing) return null;
 
         const new_client = await ClientsRepository.create(data)
         return {id: new_client, ...data}
@@ -59,7 +59,7 @@ export default class ClientsServices {
 
     //actualizar clientes
     static async updateClient(id, data) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
 
         // verificar si existe el cliente
         const existing = await ClientsRepository.findById(id);
@@ -83,7 +83,7 @@ export default class ClientsServices {
 
     //eliminar el cliente
     static async deleteClient(id) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
         const result = await ClientsRepository.delete(id);
         return result > 0;
     }

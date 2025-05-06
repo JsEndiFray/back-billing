@@ -1,6 +1,6 @@
 import db from '../db/dbConnect.js';
 
-export default class EstateRepository {
+export default class EstatesRepository {
 
     //obtener los inmuebles
     static async getAll() {
@@ -19,7 +19,7 @@ export default class EstateRepository {
     //búsqueda de inmuebles con el ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM estates WHERE id = ?', [id]);
-        return rows[0];
+        return rows[0] || null;
     }
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
@@ -48,4 +48,3 @@ export default class EstateRepository {
 
 
 }
-

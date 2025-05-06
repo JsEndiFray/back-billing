@@ -1,5 +1,5 @@
 import OwnersServices from "../services/ownersServices.js";
-import {ErrorMessage} from "../utils/msgError.js";
+import {ErrorMessage} from "../helpers/msgError.js";
 import {validationResult} from "express-validator";
 
 
@@ -57,15 +57,6 @@ export default class OwnersControllers {
     //crear usuario
     static async createOwner(req, res) {
         try {
-            // 1. Validación
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                console.debug("Validation errors:", errors.array());
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                });
-            }
             const created = await OwnersServices.createOwner(req.body);
             if (created?.duplicated) {
                 return res.status(400).json({msg: ErrorMessage.OWNERS.DUPLICATE});
@@ -85,14 +76,6 @@ export default class OwnersControllers {
     //actualizar usuarios
     static async updateOwner(req, res) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                console.debug("Validation errors:", errors.array());
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                });
-            }
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
@@ -123,7 +106,7 @@ export default class OwnersControllers {
             if(!deleted) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.NOT_FOUND})
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE, owner: deleted});
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE});
 
         }catch(error){
             console.log(error)

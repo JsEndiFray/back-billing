@@ -17,7 +17,7 @@ export default class ClientsRepository {
     }
 
     //búsqueda por nombre de empresa.
-    static async findCompany(company_name){
+    static async findByCompany(company_name){
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(company_name)) = LOWER(TRIM(?))', [company_name]);
         return rows;
     }
@@ -27,14 +27,16 @@ export default class ClientsRepository {
         let query = 'SELECT * FROM clients WHERE 1=1';
         const values = [];
 
-        if(name){
-            query += ' AND LOWER(TRIM(name))';
+        if (name) {
+            query += ' AND LOWER(TRIM(name)) = LOWER(TRIM(?))';
             values.push(name);
         }
-        if(lastname){
-            query += ' AND LOWER(TRIM(lastname))';
+
+        if (lastname) {
+            query += ' AND LOWER(TRIM(lastname)) = LOWER(TRIM(?))';
             values.push(lastname);
         }
+
         const [rows] = await db.query(query, values);
         return rows;
     }
@@ -42,13 +44,13 @@ export default class ClientsRepository {
     //búsqueda por identificación
     static async findByIdentification(identification) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
-        return rows.length ? rows[0] : null;
+        return rows[0] || null;
     }
 
     //búsqueda por ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM clients WHERE id = ?', [id]);
-        return rows[0];
+        return rows[0] || null;
     }
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
@@ -77,4 +79,3 @@ export default class ClientsRepository {
 
 
 }
-

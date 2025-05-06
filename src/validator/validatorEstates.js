@@ -11,17 +11,20 @@ export const validateEstate = [
         .isDecimal().withMessage('El precio debe ser un número decimal.'),
 
     body('address')
-        .notEmpty().withMessage('La dirección es obligatoria.'),
+        .notEmpty().withMessage('La dirección es obligatoria.')
+        .trim(),
 
     body('postal_code')
         .notEmpty().withMessage('El código postal es obligatorio.')
         .isPostalCode('ES').withMessage('El código postal debe ser válido en España.'),
 
     body('location')
-        .notEmpty().withMessage('La localidad es obligatoria.'),
+        .notEmpty().withMessage('La localidad es obligatoria.')
+        .trim(),
 
     body('province')
-        .notEmpty().withMessage('La provincia es obligatoria.'),
+        .notEmpty().withMessage('La provincia es obligatoria.')
+        .trim(),
 
     body('surface')
         .notEmpty().withMessage('La superficie es obligatoria.')

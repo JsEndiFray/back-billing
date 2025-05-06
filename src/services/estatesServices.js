@@ -1,11 +1,11 @@
-import EstateRepository from "../repository/estateRepository.js";
-import {sanitizeString} from "../utils/stringHelpers.js";
+import EstatesRepository from "../repository/estatesRepository.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
-export default class EstateServices {
+export default class EstatesServices {
 
     //obtener los inmuebles
     static async getAllEstate() {
-        return await EstateRepository.getAll();
+        return await EstatesRepository.getAll();
     }
 
     //MÉTODOS DE BÚSQUEDAS
@@ -17,15 +17,15 @@ export default class EstateServices {
         const refNormalized = sanitizeString(cadastral_reference);
         if (!refNormalized || refNormalized.length === 0) return null;
 
-        return await EstateRepository.findByCadastralReference(refNormalized);
+        return await EstatesRepository.findByCadastralReference(refNormalized);
 
 
     }
 
     //búsqueda de inmuebles con el ID
     static async getById(id) {
-        if (!id || isNaN(id)) return null;
-        return await EstateRepository.findById(id);
+        if (!id || isNaN(Number(id))) return null;
+        return await EstatesRepository.findById(id);
     }
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
@@ -34,23 +34,23 @@ export default class EstateServices {
     static async createEstate(estate) {
         //verificamos antes si existe antes de crear
         const {cadastral_reference} = estate;
-        const existing = await EstateRepository.findByCadastralReference(cadastral_reference);
+        const existing = await EstatesRepository.findByCadastralReference(cadastral_reference);
         if (existing && existing.length > 0) return null;
 
-        const estateID = await EstateRepository.create(estate);
+        const estateID = await EstatesRepository.create(estate);
         if (!estateID) return null;
-        return {estateID, estate} || null;
+        return {estateID, estate};
     }
 
     //actualizar usuarios
     static async updateEstate(estate) {
         if (!estate.id || isNaN(estate.id)) return null;
         //verificamos antes si existe antes de actualizar
-        const existing = await EstateRepository.findById(estate.id);
+        const existing = await EstatesRepository.findById(estate.id);
         if (!existing) return null;
 
         const {cadastral_reference} = estate;
-        const duplicate = await EstateRepository.findByCadastralReference(cadastral_reference);
+        const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
         if (duplicate && duplicate.length > 0) {
             const duplicateId = duplicate[0].id;
             if (Number(duplicateId) !== Number(estate.id)) {
@@ -59,18 +59,18 @@ export default class EstateServices {
             }
         }
 
-        const updated = await EstateRepository.update(estate);
+        const updated = await EstatesRepository.update(estate);
         return updated ? estate : null;
     }
 
     //eliminar usuarios
     static async deleteService(id) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
         //verificamos antes si existe antes de eliminar
-        const existing = await EstateRepository.findById(id);
+        const existing = await EstatesRepository.findById(id);
         if (!existing) return null;
 
-        const result = await EstateRepository.delete(id);
+        const result = await EstatesRepository.delete(id);
         return result > 0;
     }
 

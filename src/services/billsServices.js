@@ -1,6 +1,6 @@
 import {format} from 'date-fns';
 import BillsRepository from "../repository/billsRepository.js";
-import {sanitizeString} from "../utils/stringHelpers.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class BillsService {
 
@@ -19,7 +19,7 @@ export default class BillsService {
 
     //búsqueda por ID
     static async getBillById(id) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
         return await BillsRepository.findById(id);
     }
 
@@ -84,7 +84,7 @@ export default class BillsService {
 
     //actualizar facturas
     static async updateBill(id, updateData) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
 
         const existing = await BillsRepository.findById(id);
         if (!existing) return null;
@@ -115,8 +115,9 @@ export default class BillsService {
 
     //ELIMINAR FACTURAS
     static async deleteBill(id) {
-        if (!id || isNaN(id)) return null;
-        return await BillsRepository.delete(id);
+        if (!id || isNaN(Number(id))) return null;
+        const result = await BillsRepository.delete(id);
+        return result > 0;
     }
 
 

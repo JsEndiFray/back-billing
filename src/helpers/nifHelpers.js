@@ -1,5 +1,5 @@
 export const validate = (id) => {
-    if (!id || typeof id !== 'string') return false;
+    if (!id || typeof id !== 'string' || id.trim().length === 0) return false;
 
     const cleanId = id.trim().toUpperCase();
 

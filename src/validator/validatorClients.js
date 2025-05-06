@@ -4,9 +4,10 @@ export const validateClient = [
     body('type_client')
         .notEmpty().withMessage('El tipo de cliente es obligatorio')
         .isIn(['particular', 'autónomo', 'empresa']).withMessage('Tipo de cliente inválido'),
-    body('name').notEmpty().withMessage('El nombre es obligatorio'),
-    body('lastname').notEmpty().withMessage('El apellido es obligatorio'),
+    body('name').trim().notEmpty().withMessage('El nombre es obligatorio'),
+    body('lastname').trim().notEmpty().withMessage('El apellido es obligatorio'),
     body('company_name')
+        .trim()
         .custom((value, {req}) => {
             if (req.body.type_client === 'empresa' && (!value || value.trim() === '')) {
                 throw new Error('El nombre de la compañía es obligatorio para empresas');
@@ -28,8 +29,8 @@ export const validateClient = [
             }
             return true;
         }),
-    body('address').notEmpty().withMessage('La dirección es obligatorio'),
-    body('postal_code').notEmpty().withMessage('El código postal es obligatorio'),
-    body('location').notEmpty().withMessage('La localidad es obligatorio'),
-    body('province').notEmpty().withMessage('La provincia es obligatorio'),
+    body('address').trim().notEmpty().withMessage('La dirección es obligatorio'),
+    body('postal_code').notEmpty().withMessage('El código postal es obligatorio').isPostalCode('ES'),
+    body('location').trim().notEmpty().withMessage('La localidad es obligatorio'),
+    body('province').trim().notEmpty().withMessage('La provincia es obligatorio'),
 ];

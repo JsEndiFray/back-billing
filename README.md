@@ -24,7 +24,7 @@ src/
 ├── repository/     # Consultas SQL puras
 ├── routes/         # Definición de rutas Express
 ├── services/       # Lógica del negocio
-├── utils/          # Utilidades y mensajes de error
+├── helpers/          # Utilidades y mensajes de error
 ├── validator/      # Validación de los datos
 ```
 

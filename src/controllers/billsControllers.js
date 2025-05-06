@@ -1,6 +1,6 @@
 import BillsService from "../services/billsServices.js";
-import {ErrorMessage} from "../utils/msgError.js";
-import {validate} from "../utils/nifHelpers.js";
+import {ErrorMessage} from "../helpers/msgError.js";
+import {validate} from "../helpers/nifHelpers.js";
 
 
 export default class BillsControllers {
@@ -24,10 +24,11 @@ export default class BillsControllers {
     static async getBillNumber(req, res) {
         try {
             const {bill_number} = req.params;
-            if (!bill_number || bill_number.length === 0) {
+            const billNumberSanitized = bill_number.trim();
+            if (!billNumberSanitized) {
                 return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
             }
-            const bills = await BillsService.getBillByNumber(bill_number);
+            const bills = await BillsService.getBillByNumber(billNumberSanitized);
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bills: bills});
 
         } catch (error) {
@@ -46,7 +47,7 @@ export default class BillsControllers {
             if (!result || result.length === 0) {
                 return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bill: result})
 
         } catch (error) {
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
@@ -64,7 +65,7 @@ export default class BillsControllers {
             if (!result || result.length === 0) {
                 return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bills: result})
 
         } catch (error) {
             console.log(error);
@@ -83,7 +84,7 @@ export default class BillsControllers {
             if (!result || result.length === 0) {
                 return res.status(404).json({msg: ErrorMessage.BILLS.NOT_FOUND});
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.DATA, id: result})
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bills: result})
 
         } catch (error) {
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
@@ -164,7 +165,7 @@ export default class BillsControllers {
             if (!deleted) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.ERROR_DELETE});
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.DELETE, Bill: deleted});
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE});
 
         } catch (error) {
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})

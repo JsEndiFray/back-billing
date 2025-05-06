@@ -1,5 +1,5 @@
-import EstateService from '../services/estateServices.js';
-import {ErrorMessage} from "../utils/msgError.js";
+import EstateService from '../services/estatesServices.js';
+import {ErrorMessage} from "../helpers/msgError.js";
 import {validationResult} from "express-validator";
 
 
@@ -62,14 +62,6 @@ export default class EstateController {
     //crear inmuebles
     static async createEstate(req, res) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                });
-            }
-
             const {cadastral_reference} = req.body;
             const existing = await EstateService.getByCadastralReference(cadastral_reference);
             if (existing && existing.length > 0) {
@@ -94,13 +86,6 @@ export default class EstateController {
     //Actualizar inmuebles
     static async updateEstate(req, res) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    msg: ErrorMessage.GLOBAL.ERROR_VALIDATE,
-                    errors: errors.array()
-                });
-            }
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
@@ -135,12 +120,9 @@ export default class EstateController {
 
             const deleted = await EstateService.deleteService(id);
             if (!deleted) {
-                return res.status(400).json({msg: ErrorMessage.ESTATES.DELETE_ERROR});
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.ERROR_DELETE});
             }
-            return res.status(200).json({
-                msg: ErrorMessage.GLOBAL.DELETE,
-                estate: existing
-            });
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE});
 
         } catch (error) {
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});

@@ -1,5 +1,5 @@
 import OwnersRepository from "../repository/ownersRepository.js";
-import {sanitizeString} from "../utils/stringHelpers.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class OwnersServices {
 
@@ -17,11 +17,11 @@ export default class OwnersServices {
         // Búsqueda secuencial por prioridad
         if (name) {
             const owner = await OwnersRepository.findByName(sanitizeString(name));
-            if (owner) return owner;
+            if (owner.length) return owner;
         }
         if (lastname) {
             const owner = await OwnersRepository.findByLastname(sanitizeString(lastname));
-            if (owner) return owner;
+            if (owner.length) return owner;
         }
         if (nif) {
             return await OwnersRepository.findByNif(sanitizeString(nif));
@@ -54,7 +54,7 @@ export default class OwnersServices {
 
     //actualizar usuarios
     static async updateOwner(id, data) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
 
         // verificar si existe
         const existing = await OwnersRepository.findById(id);
@@ -75,12 +75,13 @@ export default class OwnersServices {
 
     //eliminar owners
     static async deleteOwner(id) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(Number(id))) return null;
         //verificamos antes si existe antes de actualizar
         const existing = await OwnersRepository.findById(id);
         if (!existing) return null;
 
-        return await OwnersRepository.delete(id);
+        const result = await OwnersRepository.delete(id);
+        return result > 0;
     }
 
 
