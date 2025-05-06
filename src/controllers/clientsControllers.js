@@ -144,7 +144,6 @@ export default class ClientsControllers {
             return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
 
         } catch (error) {
-            console.log(error)
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
@@ -167,7 +166,6 @@ export default class ClientsControllers {
 
             return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, client: updated});
         } catch (error) {
-            console.error(error);
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }

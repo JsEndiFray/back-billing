@@ -68,7 +68,6 @@ export default class BillsControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, bills: result})
 
         } catch (error) {
-            console.log(error);
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
@@ -108,7 +107,6 @@ export default class BillsControllers {
 
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, data: result});
         } catch (error) {
-            console.error(error);
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }
@@ -149,7 +147,6 @@ export default class BillsControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, Bill: updated});
 
         } catch (error) {
-            console.log(error);
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})
         }
     }

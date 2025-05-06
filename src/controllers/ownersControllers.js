@@ -1,6 +1,5 @@
 import OwnersServices from "../services/ownersServices.js";
 import {ErrorMessage} from "../helpers/msgError.js";
-import {validationResult} from "express-validator";
 
 
 export default class OwnersControllers {
@@ -91,7 +90,6 @@ export default class OwnersControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, owner: updated});
 
         } catch (error) {
-            console.error(error);
             return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }
@@ -109,7 +107,6 @@ export default class OwnersControllers {
             return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE});
 
         }catch(error){
-            console.log(error)
             return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }

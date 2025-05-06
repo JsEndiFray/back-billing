@@ -108,12 +108,10 @@ export default class UserController {
             }
             const updated = await UserService.updateUser(id, data);
             if (!updated) {
-                console.log(updated)
                 return res.status(404).json({ msg: ErrorMessage.GLOBAL.NOT_FOUND });
             }
              return  res.status(200).json({ msg: ErrorMessage.GLOBAL.UPDATE, update: updated });
         } catch (error) {
-            console.log(error);
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})
         }
     }

@@ -8,10 +8,27 @@ Este proyecto es una API REST construida en **Node.js** destinada a la gestión 
 
 - **Node.js** – Entorno de ejecución.
 - **Express** – Framework para crear la API.
-- **MySQL** – Base de datos relacional.
+- **MySQL** - (mysql2/promise) – Base de datos relacional.
 - **Express-validator** – Validación de datos del lado del servidor.
 - **Postman** – Herramienta para probar los endpoints.
 - **Estructura por capas** – Separación clara en controladores, servicios, repositorios y rutas.
+- **Bcrypt** (hash de contraseñas)
+- **JWT** (autenticación)
+- **Middlewares personalizados** (auth, roles, validaciones)
+
+---
+## 📌 Roles del sistema
+
+- **admin** → Acceso total (puede ver, crear, actualizar y eliminar).
+- **employee** → Acceso limitado (puede ver todo y crear facturas, pero no puede actualizar ni eliminar).
+
+---
+
+## 🛡️ Seguridad
+
+- **authMiddleware** → Requiere token en rutas protegidas.
+- **roleMiddleware** → Restringe acceso según rol.
+- **handleValidationErrors** → Maneja errores de validación.
 
 ---
 

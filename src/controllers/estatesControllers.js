@@ -1,6 +1,5 @@
 import EstateService from '../services/estatesServices.js';
 import {ErrorMessage} from "../helpers/msgError.js";
-import {validationResult} from "express-validator";
 
 
 export default class EstateController {
