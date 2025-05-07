@@ -56,17 +56,17 @@ export default class ClientsRepository {
 
     //crear usuario
     static async create(client) {
-        const {type_client, name, lastname, company_name, identification, address, postal_code, location, province} = client;
-        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, address, postal_code, location, province, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province]);
+        const {type_client, name, lastname, company_name, identification, address, postal_code, location, province, country} = client;
+        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, date_create, date_update )' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country]);
         return result.insertId;
     }
 
     //actualizar clientes
     static async update(client) {
-        const {id, type_client, name, lastname, company_name, identification, address, postal_code, location, province} = client;
-        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, address = ?, postal_code = ?, location = ?, province = ?, date_update = NOW() WHERE id = ?',
-            [type_client, name, lastname, company_name, identification, address, postal_code, location, province, id]
+        const {id, type_client, name, lastname, company_name, identification, address, postal_code, location, province, country} = client;
+        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
+            [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, id]
         );
         return result.affectedRows;
     }

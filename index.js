@@ -8,7 +8,7 @@ import billsRoutes from './src/routes/billsRoutes.js';
 import ownersRoutes from './src/routes/ownersRoutes.js';
 import usersRoutes from './src/routes/usersRoutes.js';
 import authRoutes from "./src/routes/authRoutes.js";
-
+import estatesOwnersRoutes from "./src/routes/estatesOwnersRoutes.js";
 //.env
 process.loadEnvFile();
 
@@ -28,6 +28,7 @@ app.use('/api/bills', billsRoutes)
 app.use('/api/owners', ownersRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/estate-owners', estatesOwnersRoutes)
 
 
 // Middleware para rutas no encontradas (404)

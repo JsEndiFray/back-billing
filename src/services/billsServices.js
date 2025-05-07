@@ -1,6 +1,7 @@
-import {format} from 'date-fns';
 import BillsRepository from "../repository/billsRepository.js";
 import {sanitizeString} from "../helpers/stringHelpers.js";
+import EstatesOwnersRepository from "../repository/estatesOwnersRepository.js";
+import {format} from "morgan";
 
 export default class BillsService {
 
@@ -65,6 +66,8 @@ export default class BillsService {
                 return null;
             }
         }
+        const ownershipPercent = await EstatesOwnersRepository.getOwnershipPercent(estate_id, owners_id);
+
         //Generar número de factura automático
         const lastBillNumber = await BillsRepository.getLastBillNumber();
         let newBillNumber = 'FACT-0001';
@@ -75,7 +78,8 @@ export default class BillsService {
         }
         const billToCreate = {
             ...data,
-            bill_number: newBillNumber
+            bill_number: newBillNumber,
+            ownership_percent: ownershipPercent
         };
         const newBillId = await BillsRepository.create(billToCreate);
         return {id: newBillId, ...billToCreate};

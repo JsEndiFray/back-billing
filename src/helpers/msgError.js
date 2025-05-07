@@ -48,4 +48,7 @@ export const ErrorMessage = {
         LOGIN: 'Login correcto.',
         DUPLICATE: 'Ya existe un usuario con el nombre.',
     },
+    ESTATE_OWNERS: {
+        DUPLICATE: 'Ya existe datos registrados.',
+    },
 }

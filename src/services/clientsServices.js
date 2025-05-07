@@ -22,7 +22,7 @@ export default class ClientsServices {
         const companyNameNormalized = sanitizeString(company_name);
         if(!companyNameNormalized || companyNameNormalized.length === 0) return null;
 
-        return await ClientsRepository.findCompany(sanitizeString(companyNameNormalized));
+        return await ClientsRepository.findByCompany(sanitizeString(companyNameNormalized));
     }
 
     //búsqueda por nombre y apellidos

@@ -61,17 +61,18 @@ export default class BillsRepository {
 
     //crear FACTURAS
     static async create(bill) {
-        const {bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total} = bill;
-        const [result] = await db.query('INSERT INTO bills (bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, date_create, date_update)' +
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',[bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total]);
+        const {bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent} = bill;
+        const [result] = await db.query('INSERT INTO bills (bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, date_create, date_update)' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+            [bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent]);
         return result.insertId;
     }
     //actualizar FACTURAS
     static async update(bill) {
-        const {id, bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total} = bill;
+        const {id, bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent} = bill;
         const [result] = await db.query(
-            `UPDATE bills SET bill_number = ?, owners_id = ?, clients_id = ?,date = ?,tax_base = ?,iva = ?,irpf = ?,total = ?, date_update = NOW() WHERE id = ?`,
-            [bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total, id]);
+            `UPDATE bills SET bill_number = ?, owners_id = ?, clients_id = ?, date = ?, tax_base = ?, iva = ?, irpf = ?, total = ?, ownership_percent = ?, date_update = NOW() WHERE id = ?`,
+            [bill_number, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, id]);
         return result.affectedRows;
     }
     //ELIMINAR FACTURAS
