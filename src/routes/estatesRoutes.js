@@ -15,7 +15,7 @@ const router = express.Router()
     .get('/:id', authMiddleware, roleMiddleware(['admin', 'employee']), EstateController.getById)
 
     //Crear, actualizar y eliminar solo admin
-    .post('/', authMiddleware, roleMiddleware(['admin']), validateEstate, handleValidationErrors, EstateController.createEstate)
+    .post('/', authMiddleware, roleMiddleware(['admin', 'employee']), validateEstate, handleValidationErrors, EstateController.createEstate)
     .put('/:id', authMiddleware, roleMiddleware(['admin']), validateEstate, handleValidationErrors, EstateController.updateEstate)
     .delete('/:id', authMiddleware, roleMiddleware(['admin']), EstateController.deleteEstate)
 

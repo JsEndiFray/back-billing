@@ -58,7 +58,7 @@ export default class ClientsRepository {
     static async create(client) {
         const {type_client, name, lastname, company_name, identification, address, postal_code, location, province, country} = client;
         const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country]);
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country]);
         return result.insertId;
     }
 

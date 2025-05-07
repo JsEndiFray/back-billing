@@ -78,6 +78,7 @@ export default class EstateController {
             });
 
         } catch (error) {
+            console.log(error)
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
         }
     }

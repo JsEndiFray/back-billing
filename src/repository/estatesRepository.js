@@ -25,17 +25,17 @@ export default class EstatesRepository {
 
     //crear inmuebles
     static async create(estate) {
-        const {cadastral_reference, price, address, postal_code, location, province, surface} = estate;
-        const [result] = await db.query('INSERT INTO estates (cadastral_reference, price, address, postal_code, location, province, surface, date_create, date_update)' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [cadastral_reference, price, address, postal_code, location, province, surface]);
+        const {cadastral_reference, price, address, postal_code, location, province, country, surface} = estate;
+        const [result] = await db.query('INSERT INTO estates (cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update)' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?,?, NOW(), NOW())', [cadastral_reference, price, address, postal_code, location, province, country, surface]);
         return result.insertId;
     }
 
     //actualizar usuarios
     static async update(estate) {
-        const {id, cadastral_reference,  price, address, postal_code, location, province, surface } = estate;
-        const [result] = await db.query('UPDATE estates SET cadastral_reference = ?, price = ? , address = ?, postal_code = ?, location = ?, province = ?, surface = ?, date_update = NOW() WHERE id = ?',
-            [cadastral_reference, price, address, postal_code, location, province, surface, id]
+        const {id, cadastral_reference,  price, address, postal_code, location, province, country, surface } = estate;
+        const [result] = await db.query('UPDATE estates SET cadastral_reference = ?, price = ? , address = ?, postal_code = ?, location = ?, province = ?, country = ?, surface = ?, date_update = NOW() WHERE id = ?',
+            [cadastral_reference, price, address, postal_code, location, province, country, surface, id]
         );
         return result.affectedRows;
     }

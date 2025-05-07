@@ -18,7 +18,7 @@ const router = express.Router()
     .get('/:id', authMiddleware, roleMiddleware(['admin', 'employee']), ClientsControllers.getById)
 
     //Crear, actualizar y eliminar solo admin
-    .post('/', authMiddleware, roleMiddleware(['admin']), validateClient, handleValidationErrors, ClientsControllers.createClient)
+    .post('/', authMiddleware, roleMiddleware(['admin','employee']), validateClient, handleValidationErrors, ClientsControllers.createClient)
     .put('/:id', authMiddleware, roleMiddleware(['admin']), validateClient, handleValidationErrors, ClientsControllers.updateClient)
     .delete('/:id', authMiddleware, roleMiddleware(['admin']), ClientsControllers.deleteClient)
 
