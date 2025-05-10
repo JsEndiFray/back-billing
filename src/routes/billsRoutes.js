@@ -1,25 +1,30 @@
 import express from "express";
 import BillsControllers from "../controllers/billsControllers.js";
-import authMiddleware from "../middlewares/auth/authMiddleware.js";
-import roleMiddleware from "../middlewares/auth/roleMiddleware.js";
+import auth from "../middlewares/auth.js";
+import role from "../middlewares/role.js";
 
 const router = express.Router()
 
-    //Búsquedas  admin y employee
-    .get('/search/:bill_number', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getBillNumber)
-    .get('/owners/:id', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getOwnersId)
-    .get('/clients/:id', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getByClientsId)
-    .get('/clients/nif/:nif', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getBillsByClientNif)
+    // === RUTAS PARA ABONOS (REFUNDS) ===
+    // Estas rutas deben ir primero para evitar conflictos con rutas como /:id
+    .get('/refunds', auth, role(['admin', 'employee']), BillsControllers.getAllRefunds)
+    .post('/refunds', auth, role(['admin']), BillsControllers.createRefund)
+    .get('/refunds/:id/pdf', auth, role(['admin', 'employee']), BillsControllers.downloadRefundPdf)
 
-    //Obtener facturas  admin y employee
-    .get('/', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getAllBills)
-    .get('/:id', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.getBillById)
+    // === RUTAS PARA BÚSQUEDAS (FACTURAS NORMALES) ===
+    .get('/search/:bill_number', auth, role(['admin', 'employee']), BillsControllers.getBillNumber)
+    .get('/owners/:id', auth, role(['admin', 'employee']), BillsControllers.getOwnersId)
+    .get('/clients/nif/:nif', auth, role(['admin', 'employee']), BillsControllers.getBillsByClientNif)
+    .get('/clients/:id', auth, role(['admin', 'employee']), BillsControllers.getByClientsId)
+    .get('/', auth, role(['admin', 'employee']), BillsControllers.getAllBills)
 
-    //Crear facturas admin y employee
-    .post('/', authMiddleware, roleMiddleware(['admin', 'employee']), BillsControllers.createBill)
+    // === RUTAS PARA GESTIÓN DE FACTURAS NORMALES ===
+    .get('/:id/pdf', auth, role(['admin', 'employee']), BillsControllers.downloadPdf)
+    .get('/:id', auth, role(['admin', 'employee']), BillsControllers.getBillById)
 
-    //Actualizar y eliminar facturas solo admin
-    .put('/:id', authMiddleware, roleMiddleware(['admin']), BillsControllers.updateBill)
-    .delete('/:id', authMiddleware, roleMiddleware(['admin']), BillsControllers.deleteBill)
+    // === RUTAS PARA CREAR/ACTUALIZAR/ELIMINAR FACTURAS ===
+    .post('/', auth, role(['admin', 'employee']), BillsControllers.createBill)
+    .put('/:id', auth, role(['admin']), BillsControllers.updateBill)
+    .delete('/:id', auth, role(['admin']), BillsControllers.deleteBill)
 
 export default router;

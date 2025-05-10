@@ -7,6 +7,10 @@ export default class EstatesServices {
     static async getAllEstate() {
         return await EstatesRepository.getAll();
     }
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownEstates() {
+        return await EstatesRepository.getAllForDropdown();
+    }
 
     //MÉTODOS DE BÚSQUEDAS
 

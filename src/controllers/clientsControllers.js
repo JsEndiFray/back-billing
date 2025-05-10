@@ -19,6 +19,19 @@ export default class ClientsControllers {
         }
     };
 
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownClients(req, res) {
+        try {
+            const clients = await ClientsServices.getAllForDropdownClients();
+            if (!clients || clients.length === 0) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, Clients: clients});
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
     //búsqueda por tipo de cliente.
     static async getByClientType(req, res) {
         try {

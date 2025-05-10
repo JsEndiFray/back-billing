@@ -1,5 +1,5 @@
 import EstateOwnersService from "../services/estatesOwnersServices.js";
-import {ErrorMessage} from "../helpers/msgError.js";
+import { ErrorMessage } from "../helpers/msgError.js";
 
 export default class EstateOwnersController {
 
@@ -8,11 +8,12 @@ export default class EstateOwnersController {
         try {
             const estateOwners = await EstateOwnersService.getAllEstateOwners();
             if (!estateOwners || estateOwners.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return res.status(404).json({ msg: ErrorMessage.GLOBAL.NO_DATA });
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, EstateOwners: estateOwners});
+            return res.status(200).json({ msg: ErrorMessage.GLOBAL.DATA, EstateOwners: estateOwners });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            console.error(error);
+            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }
 
@@ -22,42 +23,42 @@ export default class EstateOwnersController {
             const data = req.body;
             const result = await EstateOwnersService.createEstateOwners(data);
             if (!result) {
-                return res.status(400).json({msg: ErrorMessage.ESTATE_OWNERS.DUPLICATE});
+                return res.status(400).json({ msg: ErrorMessage.ESTATE_OWNERS.DUPLICATE });
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE});
+            return res.status(201).json({ msg: ErrorMessage.GLOBAL.CREATE });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }
 
-    // Actualizar
+    // Actualizar por ID ÚNICO
     static async updateEstateOwners(req, res) {
         try {
-            const {estate_id, owners_id} = req.params;
-            const {ownership_precent} = req.body;
+            const { id } = req.params;
+            const { ownership_precent } = req.body;
 
-            const result = await EstateOwnersService.updateEstateOwners(estate_id, owners_id, ownership_precent);
+            const result = await EstateOwnersService.updateEstateOwners(id, ownership_precent);
             if (!result) {
-                return res.status(400).json({msg: ErrorMessage.GLOBAL.ERROR_UPDATE});
+                return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_UPDATE });
             }
-            return res.json({msg: ErrorMessage.GLOBAL.UPDATE, id: result});
+            return res.json({ msg: ErrorMessage.GLOBAL.UPDATE });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }
 
-    // Eliminar
+    // Eliminar por ID ÚNICO
     static async deleteEstateOwners(req, res) {
         try {
-            const {estate_id, owners_id} = req.params;
+            const { id } = req.params;
 
-            const result = await EstateOwnersService.deleteEstateOwners(estate_id, owners_id);
+            const result = await EstateOwnersService.deleteEstateOwners(id);
             if (!result) {
-                return res.status(400).json({msg: ErrorMessage.GLOBAL.ERROR_DELETE});
+                return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_DELETE });
             }
-            res.json({msg: ErrorMessage.GLOBAL.DELETE});
+            res.json({ msg: ErrorMessage.GLOBAL.DELETE });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
         }
     }
 }

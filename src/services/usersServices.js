@@ -1,12 +1,12 @@
 import UsersRepository from "../repository/usersRepository.js";
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import {generateAccessToken, generateRefreshToken, verifyToken} from "../middlewares/tokenManager.js";
 
 process.loadEnvFile();
 
 export default class UserService {
 
-    //login
+    //login modificado con tokens de acceso y refresco
     static async login(username, password) {
         const user = await UsersRepository.findByUsername(username);
         if (!user) return null;
@@ -14,11 +14,45 @@ export default class UserService {
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
 
-        const token = jwt.sign({
-                id: user.id, username: user.username, role: user.role
-            }, process.env.JWT_SECRET, {expiresIn: '1h'}
+        // Usar las funciones del TokenManager
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+
+        return {
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role
+            },
+            accessToken,
+            refreshToken
+        };
+    }
+
+    static async refreshToken(refreshToken) {
+        if (!refreshToken) return null;
+
+        // Usar la función verifyToken del TokenManager
+        const decoded = verifyToken(
+            refreshToken,
+            process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
         );
-        return token;
+
+        if (!decoded) return null;
+
+        const user = await UsersRepository.findById(decoded.id);
+        if (!user || user.length === 0) return null;
+
+        const userData = Array.isArray(user) ? user[0] : user;
+
+        // Usar las funciones del TokenManager
+        const newAccessToken = generateAccessToken(userData);
+        const newRefreshToken = generateRefreshToken(userData);
+
+        return {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken
+        };
     }
 
 

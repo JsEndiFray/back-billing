@@ -8,16 +8,22 @@ export default class ClientsRepository {
         return rows;
     }
 
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdown() {
+        const [rows] = await db.query('SELECT id, name FROM clients ORDER BY name ASC');
+        return rows;
+    }
+
     //MÉTODOS DE BÚSQUEDAS
 
     //búsqueda por tipo de cliente.
-    static async findByType(type_client){
+    static async findByType(type_client) {
         const [rows] = await db.query('SELECT * FROM clients WHERE type_client = ?', [type_client]);
         return rows;
     }
 
     //búsqueda por nombre de empresa.
-    static async findByCompany(company_name){
+    static async findByCompany(company_name) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(company_name)) = LOWER(TRIM(?))', [company_name]);
         return rows;
     }
@@ -52,11 +58,23 @@ export default class ClientsRepository {
         const [rows] = await db.query('SELECT * FROM clients WHERE id = ?', [id]);
         return rows[0] || null;
     }
+
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
     //crear usuario
     static async create(client) {
-        const {type_client, name, lastname, company_name, identification, address, postal_code, location, province, country} = client;
+        const {
+            type_client,
+            name,
+            lastname,
+            company_name,
+            identification,
+            address,
+            postal_code,
+            location,
+            province,
+            country
+        } = client;
         const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, date_create, date_update )' +
             'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country]);
         return result.insertId;
@@ -64,7 +82,19 @@ export default class ClientsRepository {
 
     //actualizar clientes
     static async update(client) {
-        const {id, type_client, name, lastname, company_name, identification, address, postal_code, location, province, country} = client;
+        const {
+            id,
+            type_client,
+            name,
+            lastname,
+            company_name,
+            identification,
+            address,
+            postal_code,
+            location,
+            province,
+            country
+        } = client;
         const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
             [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, id]
         );

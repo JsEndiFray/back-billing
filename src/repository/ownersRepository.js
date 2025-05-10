@@ -7,6 +7,11 @@ export default class OwnersRepository {
         const [rows] = await db.query('SELECT * FROM owners');
         return rows;
     }
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdown() {
+        const [rows] = await db.query('SELECT id, name FROM owners ORDER BY name ASC');
+        return rows;
+    }
 
     //MÉTODOS DE BÚSQUEDAS
 

@@ -1,22 +1,23 @@
 import express from "express";
 import EstateController from "../controllers/estatesControllers.js";
 import {validateEstate} from "../validator/validatorEstates.js";
-import handleValidationErrors from "../middlewares/validation/handleValidationErrors.js";
-import authMiddleware from "../middlewares/auth/authMiddleware.js";
-import roleMiddleware from "../middlewares/auth/roleMiddleware.js";
+import errorHandler from "../middlewares/errorHandler.js";
+import auth from "../middlewares/auth.js";
+import role from "../middlewares/role.js";
 
 const router = express.Router()
 
     //Buscar inmuebles admin y employee
-    .get('/search/cadastral/:cadastral', authMiddleware, roleMiddleware(['admin', 'employee']), EstateController.getByCadastralReference)
+    .get('/search/cadastral/:cadastral', auth, role(['admin', 'employee']), EstateController.getByCadastralReference)
+    .get('/dropdown/list', auth, role(['admin', 'employee']), EstateController.getAllForDropdownEstates)
 
     //Obtener inmuebles admin y employee
-    .get('/', authMiddleware, roleMiddleware(['admin', 'employee']), EstateController.getAllEstate)
-    .get('/:id', authMiddleware, roleMiddleware(['admin', 'employee']), EstateController.getById)
+    .get('/', auth, role(['admin', 'employee']), EstateController.getAllEstate)
+    .get('/:id', auth, role(['admin', 'employee']), EstateController.getById)
 
     //Crear, actualizar y eliminar solo admin
-    .post('/', authMiddleware, roleMiddleware(['admin', 'employee']), validateEstate, handleValidationErrors, EstateController.createEstate)
-    .put('/:id', authMiddleware, roleMiddleware(['admin']), validateEstate, handleValidationErrors, EstateController.updateEstate)
-    .delete('/:id', authMiddleware, roleMiddleware(['admin']), EstateController.deleteEstate)
+    .post('/', auth, role(['admin', 'employee']), validateEstate, errorHandler, EstateController.createEstate)
+    .put('/:id', auth, role(['admin']), validateEstate, errorHandler, EstateController.updateEstate)
+    .delete('/:id', auth, role(['admin']), EstateController.deleteEstate)
 
 export default router;

@@ -18,6 +18,20 @@ export default class EstateController {
         }
     }
 
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownEstates(req, res) {
+        try {
+            const estates = await EstateService.getAllForDropdownEstates();
+            if (!estates || estates.length === 0) {
+                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA})
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, Estates: estates});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
+
     //MÉTODOS DE BÚSQUEDAS
 
     //búsqueda de inmueble con el catastro.

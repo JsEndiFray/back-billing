@@ -1,4 +1,3 @@
-//mensajes de errores
 export const ErrorMessage = {
     GLOBAL: {
         NO_DATA: 'No hay ningún dato registrado.',
@@ -9,12 +8,12 @@ export const ErrorMessage = {
         ERROR_UPDATE: 'Error al actualizar',
         ERROR_DELETE: 'Error al eliminar',
         ERROR_CREATE: 'Error al crear',
-        ERROR_VALIDATE: 'Error de validación.',
-        UNAUTHORIZED: 'No autorizado para realizar esta acción.',
+        UNAUTHORIZED: 'Error de validación. Faltan datos requeridos.',
         CREATE: 'Creado correctamente.',
         UPDATE: 'Actualizado correctamente.',
         DELETE: 'Eliminado correctamente.',
         NOT_FOUND: 'No tiene datos registrados.',
+        ERROR_VALIDATE: 'Error de validación.',
     },
     CLIENTS: {
         TYPE: 'Tipo de cliente no válido.',
@@ -42,10 +41,18 @@ export const ErrorMessage = {
         NOT_FOUND: 'Factura no encontrada.',
         DUPLICATE: 'Ya existe una factura con ese número.',
         ERROR_CREATE: 'Error al crear factura con el mismo propietario mes y año.',
+        ERROR_GENERATE_PDF: 'Error al generar el PDF.',
+        NOT_ABONO: 'Abono no encontrado.',
+        ID_FACTURA_REQUIRED:'Se requiere el ID de la factura original',
+        ERROR_ABONO: 'No se pudo crear el abono. Verifica que la factura original exista y no sea ya un abono.',
+        ABONO_OK: 'Abono creado correctamente.'
     },
+
     USERS: {
         INVALID_CREDENTIALS: 'Las credenciales no son validas.',
         LOGIN: 'Login correcto.',
+        INVALID_TOKEN: 'Token inválido o expirado.',
+        RENOVATE_TOKEN: 'Tokens renovados exitosamente.',
         DUPLICATE: 'Ya existe un usuario con el nombre.',
     },
     ESTATE_OWNERS: {

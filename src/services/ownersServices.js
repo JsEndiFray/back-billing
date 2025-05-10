@@ -7,6 +7,10 @@ export default class OwnersServices {
     static async getAllOwners() {
         return await OwnersRepository.getAll();
     }
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownOwners() {
+        return await OwnersRepository.getAllForDropdown();
+    }
 
     //MÉTODOS DE BÚSQUEDAS
 

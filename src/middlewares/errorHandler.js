@@ -1,7 +1,7 @@
 import { validationResult } from "express-validator";
-import {ErrorMessage} from "../../helpers/msgError.js";
+import {ErrorMessage} from "../helpers/msgError.js";
 
-const handleValidationErrors = (req, res, next) => {
+const errorHandler = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.debug("Validation errors:", errors.array());
@@ -13,4 +13,4 @@ const handleValidationErrors = (req, res, next) => {
     next();
 };
 
-export default handleValidationErrors;
+export default errorHandler;

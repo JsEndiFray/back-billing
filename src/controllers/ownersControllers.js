@@ -17,6 +17,18 @@ export default class OwnersControllers {
             return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL})
         }
     }
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownOwners(req, res) {
+        try {
+            const owners = await OwnersServices.getAllForDropdownOwners();
+            if (!owners || owners.length === 0) {
+                return res.status(400).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+            }
+            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, Owners: owners});
+        } catch (error) {
+            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+        }
+    }
 
     //MÉTODOS DE BÚSQUEDAS
 

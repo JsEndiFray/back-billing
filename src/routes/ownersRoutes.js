@@ -1,22 +1,23 @@
 import express from "express";
 import OwnersControllers from "../controllers/ownersControllers.js";
 import {validateOwners} from "../validator/validatorOwners.js";
-import handleValidationErrors from "../middlewares/validation/handleValidationErrors.js";
-import authMiddleware from "../middlewares/auth/authMiddleware.js";
-import roleMiddleware from "../middlewares/auth/roleMiddleware.js";
+import errorHandler from "../middlewares/errorHandler.js";
+import auth from "../middlewares/auth.js";
+import role from "../middlewares/role.js";
 
 const router = express.Router()
 
     //Buscar propietarios admin y employee
-    .get('/search/name', authMiddleware, roleMiddleware(['admin', 'employee']), OwnersControllers.getOwner)
-
+    .get('/search/name', auth, role(['admin', 'employee']), OwnersControllers.getOwner)
+    .get('/dropdown', auth, role(['admin', 'employee']), OwnersControllers.getAllForDropdownOwners)
     //Obtener propietarios admin y employee
-    .get('/', authMiddleware, roleMiddleware(['admin', 'employee']), OwnersControllers.getAllOwners)
-    .get('/:id', authMiddleware, roleMiddleware(['admin', 'employee']), OwnersControllers.getOwnerId)
+    .get('/', auth, role(['admin', 'employee']), OwnersControllers.getAllOwners)
+    .get('/:id', auth, role(['admin', 'employee']), OwnersControllers.getOwnerId)
+
 
     //Crear, actualizar y eliminar solo admin
-    .post('/', authMiddleware, roleMiddleware(['admin']), validateOwners, handleValidationErrors, OwnersControllers.createOwner)
-    .put('/:id', authMiddleware, roleMiddleware(['admin']), validateOwners, handleValidationErrors, OwnersControllers.updateOwner)
-    .delete('/:id', authMiddleware, roleMiddleware(['admin']), OwnersControllers.deleteOwner)
+    .post('/', auth, role(['admin']), validateOwners, errorHandler, OwnersControllers.createOwner)
+    .put('/:id', auth, role(['admin']), validateOwners, errorHandler, OwnersControllers.updateOwner)
+    .delete('/:id', auth, role(['admin']), OwnersControllers.deleteOwner)
 
 export default router;

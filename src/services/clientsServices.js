@@ -7,6 +7,10 @@ export default class ClientsServices {
     static async getAllClients() {
         return await ClientsRepository.getAll();
     }
+    //obtener todos los propietarios con su ID y su nombre
+    static async getAllForDropdownClients() {
+        return await ClientsRepository.getAllForDropdown();
+    }
 
     //MÉTODOS DE BÚSQUEDAS
     //búsqueda por tipo de cliente.

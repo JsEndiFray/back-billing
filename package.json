@@ -4,7 +4,13 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "lint": "eslint src/**/*.js",
+    "build": "echo 'Preparando proyecto para producción...' && npm install --production",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +21,18 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.14.0"
+    "mysql2": "^3.14.0",
+    "pdfkit": "^0.17.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
   }
 }

@@ -11,11 +11,16 @@ export default class EstateOwnersRepository {
         return rows[0]?.ownership_precent || 0;
     }
 
-    // Obtener todos
+    // Obtener todos (JOIN para traer nombres)
     static async getAll() {
-        const [rows] = await db.query(`SELECT * FROM estate_owners`);
+        const [rows] = await db.query(`SELECT eo.id, eo.estate_id, e.address AS estate_name, eo.owners_id, o.name AS owner_name,
+                                              eo.ownership_precent, eo.date_create, eo.date_update
+                                       FROM estate_owners eo
+                                                JOIN estates e ON eo.estate_id = e.id
+                                                JOIN owners o ON eo.owners_id = o.id`);
         return rows;
     }
+ //BÚSQUEDAS
 
     // Buscar por propiedad + propietario
     static async findByEstateAndOwners(estate_id, owners_id) {
@@ -26,11 +31,11 @@ export default class EstateOwnersRepository {
         return rows;
     }
 
-    // Buscar por ID (propiedad + propietario)
-    static async findById(estate_id, owners_id) {
+    // Buscar por ID ÚNICO
+    static async findById(id) {
         const [rows] = await db.query(
-            'SELECT * FROM estate_owners WHERE estate_id = ? AND owners_id = ?',
-            [estate_id, owners_id]
+            'SELECT * FROM estate_owners WHERE id = ?',
+            [id]
         );
         return rows[0] || null;
     }
@@ -44,20 +49,20 @@ export default class EstateOwnersRepository {
         return { estateId, ownersId, ownershipPercent };
     }
 
-    // Actualizar
-    static async update(estateId, ownersId, ownershipPercent) {
+    // Actualizar por ID ÚNICO
+    static async updateById(id, ownershipPercent) {
         const [result] = await db.query(
-            `UPDATE estate_owners SET ownership_precent = ? WHERE estate_id = ? AND owners_id = ?`,
-            [ownershipPercent, estateId, ownersId]
+            `UPDATE estate_owners SET ownership_precent = ? WHERE id = ?`,
+            [ownershipPercent, id]
         );
         return result.affectedRows > 0;
     }
 
-    // Eliminar
-    static async delete(estateId, ownersId) {
+    // Eliminar por ID ÚNICO
+    static async deleteById(id) {
         const [result] = await db.query(
-            `DELETE FROM estate_owners WHERE estate_id = ? AND owners_id = ?`,
-            [estateId, ownersId]
+            `DELETE FROM estate_owners WHERE id = ?`,
+            [id]
         );
         return result.affectedRows;
     }
