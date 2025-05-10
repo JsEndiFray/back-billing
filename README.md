@@ -1,25 +1,23 @@
 # 📦 Backend de Facturación - Sistema de Gestión Inmobiliaria
 
-Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gestión integral de **clientes**, **facturas**, **propietarios** e **inmuebles** en un contexto de administración inmobiliaria.
-
----
+Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gestión integral de **clientes**, **facturas**, **propietarios** e **inmuebles** en un contexto de administración inmobiliaria, con especial énfasis en la generación y gestión de facturas.
 
 ## 🚀 Características principales
 
 - Gestión completa de clientes (particulares, autónomos y empresas)
-- Administración de propietarios e inmuebles
-- Sistema de facturación con validaciones avanzadas
+- Administración de propietarios e inmuebles con relaciones M:M
+- Sistema de facturación con validaciones avanzadas y cálculos automáticos
+- Sistema de abonos (facturas rectificativas) con generación de PDFs
 - Autenticación mediante JWT con sistema de rotación de tokens
 - Control de acceso basado en roles (admin, employee)
-- Validaciones robustas para todos los datos de entrada
+- Validaciones robustas para todos los datos de entrada (NIF/NIE/CIF)
 - Arquitectura en capas para mejor mantenibilidad
-
----
+- Documentación de API con Swagger/OpenAPI
 
 ## 🛠️ Tecnologías utilizadas
 
 - **Node.js** – Entorno de ejecución
-- **Express** – Framework para la API
+- **Express** – Framework para la API (Versión 5.1.0)
 - **MySQL** - Base de datos relacional (usando mysql2/promise)
 - **JWT** - Autenticación con tokens de acceso y refresco
 - **bcrypt** - Hash seguro de contraseñas
@@ -28,48 +26,46 @@ Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gest
 - **cors** - Control de acceso entre orígenes
 - **morgan** - Logging de solicitudes HTTP
 - **rate-limit** - Protección contra ataques de fuerza bruta
-
----
+- **PDFKit** - Generación de facturas en PDF
 
 ## 📌 Roles del sistema
 
-- **admin** → Acceso completo (CRUD)
-- **employee** → Acceso limitado (lectura y creación de facturas)
-
----
+- **admin** → Acceso completo (CRUD en todas las entidades)
+- **employee** → Acceso limitado:
+    - Lectura en todas las entidades
+    - Creación de facturas
+    - Creación de clientes e inmuebles
+    - No puede modificar ni eliminar recursos
 
 ## 🛡️ Seguridad implementada
 
-- **Autenticación JWT** con tokens de acceso (corta duración) y refresco (larga duración)
-- **Rate limiting** para prevenir ataques de fuerza bruta
+- **Autenticación JWT** con tokens de acceso (15 minutos) y refresco (7 días)
+- **Rate limiting** para prevenir ataques de fuerza bruta (100 peticiones/15min general, 5 intentos/hora para autenticación)
 - **Headers de seguridad** con Helmet
-- **Validación estricta** de datos de entrada
+- **Validación estricta** de datos de entrada con express-validator
 - **Hashing de contraseñas** con bcrypt
 - **Middlewares de autorización** por roles
 - **Sanitización** de datos de entrada
-
----
 
 ## 🧱 Estructura del proyecto
 
 ```
 src/
-├── controllers/    # Controladores HTTP
-├── db/             # Conexión y configuración de base de datos
-├── helpers/        # Utilidades y mensajes de error
-├── middlewares/    # Middlewares (auth, rate-limit, roles)
-├── repository/     # Consultas SQL a la base de datos
-├── routes/         # Definición de rutas Express
-├── services/       # Lógica de negocio
-└── validator/      # Validaciones 
+├── controllers/    # Controladores HTTP para cada entidad
+├── db/            # Configuración de conexión a la base de datos
+├── helpers/       # Funciones útiles (validación NIF, manejo de errores)
+├── middlewares/   # Middlewares (auth, roles, rate-limit)
+├── repository/    # Capa de acceso a datos para cada entidad
+├── routes/        # Definición de rutas para la API
+├── services/      # Lógica de negocio para cada entidad
+├── utils/         # Utilidades específicas (generación de PDFs)
+└── validator/     # Validadores para cada entidad
 ```
-
----
 
 ## ⚙️ Instalación y configuración
 
 ### Requisitos previos
-- Node.js 20+
+- Node.js 18+
 - MySQL 8.0+
 
 ### Pasos para instalar
@@ -107,9 +103,7 @@ npm run dev
 npm start
 ```
 
----
-
-## 🚦 Endpoints de la API
+## 🚦 Endpoints principales de la API
 
 ### Autenticación
 - `POST /api/auth/login` - Iniciar sesión (devuelve accessToken y refreshToken)
@@ -118,6 +112,8 @@ npm start
 ### Clientes
 - `GET /api/clients` - Obtener todos los clientes
 - `GET /api/clients/:id` - Obtener cliente por ID
+- `GET /api/clients/type/:clientType` - Buscar clientes por tipo
+- `GET /api/clients/search/identification/:identification` - Buscar cliente por NIF/NIE/CIF
 - `POST /api/clients` - Crear nuevo cliente
 - `PUT /api/clients/:id` - Actualizar cliente
 - `DELETE /api/clients/:id` - Eliminar cliente
@@ -125,6 +121,7 @@ npm start
 ### Inmuebles
 - `GET /api/estates` - Obtener todos los inmuebles
 - `GET /api/estates/:id` - Obtener inmueble por ID
+- `GET /api/estates/search/cadastral/:cadastral` - Buscar por referencia catastral
 - `POST /api/estates` - Crear nuevo inmueble
 - `PUT /api/estates/:id` - Actualizar inmueble
 - `DELETE /api/estates/:id` - Eliminar inmueble
@@ -136,12 +133,26 @@ npm start
 - `PUT /api/owners/:id` - Actualizar propietario
 - `DELETE /api/owners/:id` - Eliminar propietario
 
+### Relación Inmuebles-Propietarios
+- `GET /api/estate-owners` - Obtener todas las relaciones
+- `POST /api/estate-owners` - Crear nueva relación
+- `PUT /api/estate-owners/:id` - Actualizar relación
+- `DELETE /api/estate-owners/:id` - Eliminar relación
+
 ### Facturas
 - `GET /api/bills` - Obtener todas las facturas
 - `GET /api/bills/:id` - Obtener factura por ID
+- `GET /api/bills/:id/pdf` - Descargar factura en PDF
+- `GET /api/bills/search/:bill_number` - Buscar factura por número
+- `GET /api/bills/clients/nif/:nif` - Historial de facturas por NIF
 - `POST /api/bills` - Crear nueva factura
 - `PUT /api/bills/:id` - Actualizar factura
 - `DELETE /api/bills/:id` - Eliminar factura
+
+### Abonos (Facturas rectificativas)
+- `GET /api/bills/refunds` - Obtener todos los abonos
+- `GET /api/bills/refunds/:id/pdf` - Descargar abono en PDF
+- `POST /api/bills/refunds` - Crear nuevo abono
 
 ### Usuarios
 - `GET /api/users` - Obtener todos los usuarios (admin)
@@ -149,27 +160,13 @@ npm start
 - `PUT /api/users/:id` - Actualizar usuario (admin)
 - `DELETE /api/users/:id` - Eliminar usuario (admin)
 
----
-
-## 🧪 Pruebas
-
-Para probar la API, puedes usar Postman o cualquier cliente HTTP:
-
-1. Autentícate con el endpoint `/api/auth/login`
-2. Guarda el token recibido
-3. Incluye el token en el header `Authorization: Bearer {token}` para las peticiones protegidas
-
-Puedes importar la colección de Postman incluida en `/docs/postman-collection.json` para empezar rápidamente.
-
----
-
 ## 🔄 Flujo de autenticación
 
 El sistema implementa una estrategia de autenticación con rotación de tokens:
 
 1. **Login**: El usuario se autentica y recibe:
-  - `accessToken`: Token de corta duración (15 minutos)
-  - `refreshToken`: Token de larga duración (7 días)
+- `accessToken`: Token de corta duración (15 minutos)
+- `refreshToken`: Token de larga duración (7 días)
 
 2. **Autorización**: El cliente utiliza el `accessToken` para acceder a rutas protegidas
 
@@ -177,35 +174,48 @@ El sistema implementa una estrategia de autenticación con rotación de tokens:
 
 4. **Seguridad**: Si el `refreshToken` es comprometido, tiene acceso limitado y expira en 7 días
 
----
-
 ## 📝 Validaciones implementadas
 
-- **Clientes**: Validación de NIF/NIE/CIF según tipo de cliente
-- **Inmuebles**: Validación de referencia catastral
+- **Clientes**: Validación de NIF/NIE/CIF según tipo de cliente (particular, autónomo, empresa)
+- **Inmuebles**: Validación de referencia catastral (20 caracteres alfanuméricos)
+- **Propietarios**: Validación de NIF (8 números + 1 letra)
 - **Facturas**: Prevención de duplicados en mismo mes/año/propietario
 - **Usuarios**: Validación de roles y credenciales
 
----
+## 🧪 Pruebas
 
-## 📚 Documentación adicional
+Para ejecutar las pruebas unitarias y de integración:
 
-- [Guía de despliegue](./docs/deployment.md)
-- [Estructura de la base de datos](./docs/database.md)
-- [Guía de desarrollo](./docs/development.md)
+```bash
+# Ejecutar todas las pruebas
+npm test
 
----
+# Ejecutar pruebas con watch mode
+npm run test:watch
+
+# Ver cobertura de pruebas
+npm run test:coverage
+```
+
+## 📚 Documentación de la API
+
+La documentación de la API está pendiente a través de Swagger UI:
+
+```
+http://localhost:3600/api-docs
+```
 
 ## 🚧 Próximas funcionalidades
 
-- Generación de facturas en PDF (usando PDFKit)
-- Documentación de API con Swagger/OpenAPI
-- Tests automatizados
-- Integración con frontend Angular
-- Copias de seguridad automáticas
+- Implementación de tests más completos
+- Sistema de logs estructurados
+- Soporte para múltiples idiomas
+- Sistema de notificaciones para facturas vencidas
 - Dashboard con estadísticas de facturación
-
----
+- Integración con servicios de firma digital
+- Exportación de datos en múltiples formatos
+- Sistema de búsqueda avanzada
+- Implementación de caché para optimizar consultas frecuentes
 
 ## 👥 Contribuciones
 
@@ -217,11 +227,9 @@ Las contribuciones son bienvenidas. Por favor, sigue estos pasos:
 4. Haz push a la rama (`git push origin feature/amazing-feature`)
 5. Abre un Pull Request
 
----
-
 ## 📞 Contacto
 
-Endi - [endifraymv@hotmail.com](mailto:tu-email@ejemplo.com)
+Endi - [endifraymv@hotmail.com](mailto:endifraymv@hotmail.com)
 
 ---
 
