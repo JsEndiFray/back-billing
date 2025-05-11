@@ -8,7 +8,7 @@ const swaggerDefinition = {
     description: 'API para gestión de clientes, inmuebles, propietarios y facturas',
     contact: {
       name: 'Endi',
-      email: 'tu-email@ejemplo.com'
+      email: 'endifraymv@hotmail.com'
     }
   },
   servers: [

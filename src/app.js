@@ -1,3 +1,6 @@
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from "./config/swagger.js";
+
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -31,7 +34,17 @@ app.use(helmet({
     noSniff: true,
     referrerPolicy: {policy: 'same-origin'},
 }));
-app.use(cors());
+
+// Configuración más específica para producción
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:4200', // URL de tu app Angular
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400 // 24 horas
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(morgan('dev'));
 //Aplicar a todas las rutas
@@ -47,6 +60,8 @@ app.use('/api/users', usersRoutes)
 app.use('/api/auth', authLimiter, authRoutes) //Aplicar solo a rutas de autenticación
 app.use('/api/estate-owners', estatesOwnersRoutes)
 
+//Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Middleware para rutas no encontradas (404)
 app.use((req, res) => {
