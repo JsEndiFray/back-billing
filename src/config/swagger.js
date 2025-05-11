@@ -35,7 +35,7 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/routes/*.js'], // Rutas donde buscar anotaciones de swagger
+  apis: ['./src/routes/*.js'], //Rutas donde buscar anotaciones de swagger
 };
 
 const swaggerSpec = swaggerJSDoc(options);
