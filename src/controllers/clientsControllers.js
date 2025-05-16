@@ -1,21 +1,20 @@
 import ClientsServices from "../services/clientsServices.js";
-import {ErrorMessage} from "../helpers/msgError.js";
-import {sanitizeString} from "../helpers/stringHelpers.js";
+import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
+import { sanitizeString } from "../helpers/stringHelpers.js";
 
 export default class ClientsControllers {
-
 
     //obtener los datos de los clientes
     static async getAllClients(req, res) {
         try {
             const clients = await ClientsServices.getAllClients()
             if (!clients || clients.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, clients})
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { clients });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     };
 
@@ -24,11 +23,11 @@ export default class ClientsControllers {
         try {
             const clients = await ClientsServices.getAllForDropdownClients();
             if (!clients || clients.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, Clients: clients});
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { Clients: clients });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
@@ -36,23 +35,23 @@ export default class ClientsControllers {
     static async getByClientType(req, res) {
         try {
             //Obtienes el parámetro de la ruta (:clientType).
-            const {clientType} = req.params;
+            const { clientType } = req.params;
             //normalizamos para los espacios o mayúsculas y minúsculas
             const clientTypeNormalized = sanitizeString(clientType);
             //tipos permitidos
             const allowedTypes = ['particular', 'autónomo', 'empresa'];
             if (!allowedTypes.includes(clientTypeNormalized)) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.TYPE});
+                return sendError(res, ErrorCodes.CLIENT_TYPE);
             }
 
             const clientsType = await ClientsServices.getByClientType(clientTypeNormalized);
             if (!clientsType || clientsType.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA})
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DATA, clientes: clientsType})
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { clientes: clientsType });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
@@ -60,29 +59,28 @@ export default class ClientsControllers {
     static async getCompany(req, res) {
         try {
             //Obtienes el parámetro de la ruta (:company_name).
-            const {company_name} = req.params;
+            const { company_name } = req.params;
             if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.NAME_REQUIRED});
+                return sendError(res, ErrorCodes.CLIENT_NAME_REQUIRED);
             }
             const result = await ClientsServices.getCompany(company_name);
             if (!result || result.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({
-                msg: ErrorMessage.GLOBAL.DATA,
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
                 clientes: result
-            })
+            });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
     //búsqueda por nombre y apellidos
     static async getFullName(req, res) {
         try {
-            const {name, lastname} = req.query;
+            const { name, lastname } = req.query;
             if (!name && !lastname) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.NAME_LASTNAME_REQUIRED});
+                return sendError(res, ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED);
             }
             // Sanitizar individualmente
             const nameSanitized = name ? sanitizeString(name) : null;
@@ -90,59 +88,56 @@ export default class ClientsControllers {
 
             const result = await ClientsServices.getFullName(nameSanitized, lastnameSanitized);
             if (!result || result.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({
-                msg: ErrorMessage.GLOBAL.DATA,
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
                 clientes: result
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
     //búsqueda por identificación
     static async getByIdentification(req, res) {
         try {
-            const {identification} = req.params;
+            const { identification } = req.params;
             const identificationNormalized = sanitizeString(identification);
             if (!identificationNormalized || identificationNormalized.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.ID_REQUIRED});
+                return sendError(res, ErrorCodes.CLIENT_ID_REQUIRED);
             }
             const result = await ClientsServices.getByIdentification(identificationNormalized);
 
             if (!result || result.length === 0) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({
-                msg: ErrorMessage.GLOBAL.DATA,
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
                 clientes: result
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
     //búsqueda por ID
     static async getById(req, res) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID});
+                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
             const result = await ClientsServices.getById(id);
             if (!result) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.NO_DATA});
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return res.status(200).json({
-                msg: ErrorMessage.GLOBAL.DATA,
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
                 clientes: result
             });
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
@@ -152,54 +147,52 @@ export default class ClientsControllers {
         try {
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE})
+                return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
             }
-            return res.status(201).json({msg: ErrorMessage.GLOBAL.CREATE})
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], {}, 201);
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
     //actualizar clientes
     static async updateClient(req, res) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
+                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
             const existing = await ClientsServices.getById(id);
             if (!existing) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.NOT_FOUND})
+                return sendError(res, ErrorCodes.CLIENT_NOT_FOUND);
             }
             const updated = await ClientsServices.updateClient(id, req.body);
             if (!updated) {
-                return res.status(400).json({msg: ErrorMessage.CLIENTS.DUPLICATE});
+                return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
             }
 
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.UPDATE, client: updated});
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { client: updated });
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
     //eliminar el cliente
     static async deleteClient(req, res) {
         try {
-            const {id} = req.params;
+            const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(404).json({msg: ErrorMessage.GLOBAL.INVALID_ID})
+                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
             const deleted = await ClientsServices.deleteClient(id);
             if (!deleted) {
-                return res.status(404).json({msg: ErrorMessage.CLIENTS.NOT_FOUND})
+                return sendError(res, ErrorCodes.CLIENT_NOT_FOUND);
             }
-            return res.status(200).json({msg: ErrorMessage.GLOBAL.DELETE})
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
 
         } catch (error) {
-            return res.status(500).json({msg: ErrorMessage.GLOBAL.INTERNAL});
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
-
-
 }

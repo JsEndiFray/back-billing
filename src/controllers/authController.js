@@ -1,5 +1,5 @@
 import UserService from "../services/usersServices.js";
-import { ErrorMessage } from "../helpers/msgError.js";
+import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
 
 export default class AuthController {
 
@@ -7,17 +7,16 @@ export default class AuthController {
         const { username, password } = req.body;
 
         if (!username || !password) {
-            return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_VALIDATE });
+            return sendError(res, ErrorCodes.GLOBAL_VALIDATION_ERROR);
         }
 
         const result = await UserService.login(username, password);
 
         if (!result) {
-            return res.status(401).json({ msg: ErrorMessage.USERS.INVALID_CREDENTIALS });
+            return sendError(res, ErrorCodes.USER_CREDENTIALS_INVALID);
         }
 
-        return res.status(200).json({
-            msg: ErrorMessage.USERS.LOGIN,
+        return sendSuccess(res, ErrorMessages[ErrorCodes.USER_LOGIN], {
             user: result.user,
             accessToken: result.accessToken,
             refreshToken: result.refreshToken
@@ -29,17 +28,16 @@ export default class AuthController {
         const { refreshToken } = req.body;
 
         if (!refreshToken) {
-            return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_VALIDATE });
+            return sendError(res, ErrorCodes.GLOBAL_VALIDATION_ERROR);
         }
 
         const tokens = await UserService.refreshToken(refreshToken);
 
         if (!tokens) {
-            return res.status(401).json({ msg: ErrorMessage.USERS.INVALID_TOKEN });
+            return sendError(res, ErrorCodes.USER_TOKEN_EXPIRED);
         }
 
-        return res.status(200).json({
-            msg: ErrorMessage.USERS.RENOVATE_TOKEN,
+        return sendSuccess(res, ErrorMessages[ErrorCodes.USER_RENOVATE_TOKEN], {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken
         });

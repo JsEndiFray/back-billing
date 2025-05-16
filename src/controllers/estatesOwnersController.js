@@ -1,5 +1,5 @@
 import EstateOwnersService from "../services/estatesOwnersServices.js";
-import { ErrorMessage } from "../helpers/msgError.js";
+import {ErrorMessage} from "../errors/index.js";
 
 export default class EstateOwnersController {
 

@@ -13,6 +13,7 @@ Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gest
 - Validaciones robustas para todos los datos de entrada (NIF/NIE/CIF)
 - Arquitectura en capas para mejor mantenibilidad
 - Documentación de API con Swagger/OpenAPI
+- **Sistema centralizado de manejo de errores con códigos estandarizados**
 
 ## 🛠️ Tecnologías utilizadas
 
@@ -27,15 +28,16 @@ Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gest
 - **morgan** - Logging de solicitudes HTTP
 - **rate-limit** - Protección contra ataques de fuerza bruta
 - **PDFKit** - Generación de facturas en PDF
+- **SweetAlert2** - Interfaz de usuario para mensajes de error en el frontend
 
 ## 📌 Roles del sistema
 
 - **admin** → Acceso completo (CRUD en todas las entidades)
 - **employee** → Acceso limitado:
-    - Lectura en todas las entidades
-    - Creación de facturas
-    - Creación de clientes e inmuebles
-    - No puede modificar ni eliminar recursos
+  - Lectura en todas las entidades
+  - Creación de facturas
+  - Creación de clientes e inmuebles
+  - No puede modificar ni eliminar recursos
 
 ## 🛡️ Seguridad implementada
 
@@ -46,6 +48,7 @@ Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gest
 - **Hashing de contraseñas** con bcrypt
 - **Middlewares de autorización** por roles
 - **Sanitización** de datos de entrada
+- **Sistema centralizado de errores** con códigos estandarizados y mensajes descriptivos
 
 ## 🧱 Estructura del proyecto
 
@@ -53,6 +56,9 @@ Este proyecto es una API REST desarrollada en **Node.js** diseñada para la gest
 src/
 ├── controllers/    # Controladores HTTP para cada entidad
 ├── db/            # Configuración de conexión a la base de datos
+├── errors/        # Sistema centralizado de manejo de errores
+│   ├── errorCodes.js     # Definición de códigos de error
+│   └── index.js         # Funciones de utilidad para manejo de errores
 ├── helpers/       # Funciones útiles (validación NIF, manejo de errores)
 ├── middlewares/   # Middlewares (auth, roles, rate-limit)
 ├── repository/    # Capa de acceso a datos para cada entidad
@@ -182,20 +188,34 @@ El sistema implementa una estrategia de autenticación con rotación de tokens:
 - **Facturas**: Prevención de duplicados en mismo mes/año/propietario
 - **Usuarios**: Validación de roles y credenciales
 
-## 🧪 Pruebas
+## 🚨 Sistema de manejo de errores
 
-Para ejecutar las pruebas unitarias y de integración:
+Hemos implementado un sistema centralizado de manejo de errores que incluye:
 
-```bash
-# Ejecutar todas las pruebas
-npm test
+- **Códigos de error estandarizados**: Cada tipo de error tiene un código único que lo identifica.
+- **Mensajes descriptivos**: Mensajes claros y útiles para el usuario final.
+- **Mapeo de parámetros a errores**: Sistema que asocia automáticamente campos con sus errores específicos.
+- **Respuestas HTTP apropiadas**: Códigos de estado HTTP correctos según el tipo de error.
+- **Interceptor en el frontend**: Manejo consistente de errores en la interfaz de usuario.
 
-# Ejecutar pruebas con watch mode
-npm run test:watch
+### Estructura de respuestas de error:
 
-# Ver cobertura de pruebas
-npm run test:coverage
+```json
+{
+  "errorCode": "USER_EMAIL_INVALID",
+  "msg": "El formato del correo electrónico no es válido."
+}
 ```
+
+### Categorías de errores:
+
+- **GLOBAL_**: Errores generales del sistema
+- **USER_**: Errores relacionados con usuarios y autenticación
+- **CLIENT_**: Errores relacionados con clientes
+- **ESTATE_**: Errores relacionados con inmuebles
+- **OWNER_**: Errores relacionados con propietarios
+- **BILL_**: Errores relacionados con facturas
+
 
 ## 📚 Documentación de la API
 
@@ -209,23 +229,10 @@ http://localhost:3600/api-docs
 
 - Implementación de tests más completos
 - Sistema de logs estructurados
-- Soporte para múltiples idiomas
-- Sistema de notificaciones para facturas vencidas
-- Dashboard con estadísticas de facturación
-- Integración con servicios de firma digital
-- Exportación de datos en múltiples formatos
-- Sistema de búsqueda avanzada
-- Implementación de caché para optimizar consultas frecuentes
 
 ## 👥 Contribuciones
 
-Las contribuciones son bienvenidas. Por favor, sigue estos pasos:
-
-1. Haz fork del repositorio
-2. Crea una rama para tu característica (`git checkout -b feature/amazing-feature`)
-3. Haz commit de tus cambios (`git commit -m 'Add some amazing feature'`)
-4. Haz push a la rama (`git push origin feature/amazing-feature`)
-5. Abre un Pull Request
+Las contribuciones son bienvenidas.
 
 ## 📞 Contacto
 
