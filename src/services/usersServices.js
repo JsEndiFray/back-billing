@@ -122,18 +122,36 @@ export default class UserService {
         const existing = await UsersRepository.findById(id);
         if (!existing) return null;
 
-        // Hash contraseña
-        if (data.password) {
-            data.password = await bcrypt.hash(data.password, 10);
+        // Verificar si el username está duplicado (si se está actualizando)
+        if (data.username && data.username !== existing.username) {
+            const existingUsername = await UsersRepository.findByUsername(data.username);
+            if (existingUsername) return {duplicated: 'username'};
+
+            // Verificar si el email está duplicado (si se está actualizando)
+            if (data.email && data.email !== existing.email) {
+                const existingEmail = await UsersRepository.findByEmail(data.email);
+                if (existingEmail) return {duplicated: 'email'};
+
+                // Verificar si el teléfono está duplicado (si se está actualizando)
+                if (data.phone && data.phone !== existing.phone) {
+                    const existingPhone = await UsersRepository.findByPhone(data.phone);
+                    if (existingPhone) return {duplicated: 'phone'};
+
+                    // Hash contraseña
+                    if (data.password) {
+                        data.password = await bcrypt.hash(data.password, 10);
+                    }
+
+                    const updated = await UsersRepository.update({id, ...data});
+                    if (!updated) return null;
+
+                    return {id, ...data};
+                }
+            }
         }
-
-        const updated = await UsersRepository.update({id, ...data});
-        if(!updated) return null;
-
-        return {id, ...data};
     }
 
-// Eliminar usuario
+    // Eliminar usuario
     static async deleteUser(id) {
         if (!id || isNaN(Number(id))) return null;
 
@@ -144,4 +162,6 @@ export default class UserService {
         return result > 0;
     }
 
+
 }
+

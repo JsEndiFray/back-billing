@@ -10,7 +10,8 @@ export default class EstateController {
             if (!estate || estate.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { estate });
+            console.log(estate)
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],estate);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
@@ -24,7 +25,7 @@ export default class EstateController {
             if (!estates || estates.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { Estates: estates });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],estates );
         } catch (error) {
             console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -44,7 +45,7 @@ export default class EstateController {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { result });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result );
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
@@ -62,7 +63,7 @@ export default class EstateController {
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { result });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
@@ -110,7 +111,7 @@ export default class EstateController {
             if (!updated) {
                 return sendError(res, ErrorCodes.GLOBAL_ERROR_UPDATE);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { estate: updated });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated );
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);

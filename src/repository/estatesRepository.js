@@ -31,7 +31,7 @@ export default class EstatesRepository {
     //crear inmuebles
     static async create(estate) {
         const {cadastral_reference, price, address, postal_code, location, province, country, surface} = estate;
-        const [result] = await db.query('INSERT INTO estates (property_name, cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update)' +
+        const [result] = await db.query('INSERT INTO estates (cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update)' +
             'VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [cadastral_reference, price, address, postal_code, location, province, country, surface]);
         return result.insertId;
     }

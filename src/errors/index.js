@@ -101,7 +101,7 @@ export function sendError(res, errorCode, extras = {}) {
 export function sendSuccess(res, message, data = {}, status = 200) {
     return res.status(status).json({
         msg: message,
-        ...data
+        data: data
     });
 }
 

@@ -88,7 +88,7 @@ export default class UserController {
             const result = await UserService.createUser(user);
             if (result?.duplicated) {
                 console.log(result);
-                return sendError(res, ErrorCodes.USER_DUPLICATE, { duplicated: result });
+                return sendError(res, ErrorCodes.USER_DUPLICATE, { duplicated: result.duplicated });
             }
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_ERROR_CREATE);
@@ -108,6 +108,12 @@ export default class UserController {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
             const updated = await UserService.updateUser(id, data);
+
+            if (updated?.duplicated) {
+                return sendError(res, ErrorCodes.USER_DUPLICATE, {
+                    duplicated: updated.duplicated // 'username', 'email', 'phone', etc.
+                });
+            }
             if (!updated) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
