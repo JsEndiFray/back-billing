@@ -1,5 +1,5 @@
 import EstateService from '../services/estatesServices.js';
-import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
+import {ErrorCodes, sendError, sendSuccess, ErrorMessages} from "../errors/index.js";
 
 export default class EstateController {
 
@@ -10,9 +10,7 @@ export default class EstateController {
             if (!estate || estate.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            console.log(estate)
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],estate);
-
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], estate);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
         }
@@ -25,9 +23,8 @@ export default class EstateController {
             if (!estates || estates.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],estates );
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], estates);
         } catch (error) {
-            console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
@@ -37,7 +34,7 @@ export default class EstateController {
     //búsqueda de inmueble con el catastro.
     static async getByCadastralReference(req, res) {
         try {
-            const { cadastral } = req.params;
+            const {cadastral} = req.params;
             if (!cadastral || typeof cadastral !== 'string' || cadastral.trim() === '') {
                 return sendError(res, ErrorCodes.ESTATE_REFERENCE_REQUIRED);
             }
@@ -45,7 +42,7 @@ export default class EstateController {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result );
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
@@ -55,7 +52,7 @@ export default class EstateController {
     //búsqueda de inmuebles con el ID
     static async getById(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(id)) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
@@ -63,7 +60,7 @@ export default class EstateController {
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
@@ -75,7 +72,7 @@ export default class EstateController {
     //crear inmuebles
     static async createEstate(req, res) {
         try {
-            const { cadastral_reference } = req.body;
+            const {cadastral_reference} = req.body;
             const existing = await EstateService.getByCadastralReference(cadastral_reference);
             if (existing && existing.length > 0) {
                 return sendError(res, ErrorCodes.ESTATE_DUPLICATE);
@@ -91,7 +88,6 @@ export default class EstateController {
             }, 201);
 
         } catch (error) {
-            console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
@@ -99,7 +95,7 @@ export default class EstateController {
     //Actualizar inmuebles
     static async updateEstate(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
@@ -107,11 +103,11 @@ export default class EstateController {
             if (!existing) {
                 return sendError(res, ErrorCodes.ESTATE_NOT_FOUND);
             }
-            const updated = await EstateService.updateEstate({ id: Number(id), ...req.body });
+            const updated = await EstateService.updateEstate({id: Number(id), ...req.body});
             if (!updated) {
                 return sendError(res, ErrorCodes.GLOBAL_ERROR_UPDATE);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated );
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -121,7 +117,7 @@ export default class EstateController {
     //eliminar inmueble
     static async deleteEstate(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
