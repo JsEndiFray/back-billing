@@ -10,7 +10,7 @@ export default class UserController {
             if (!users || users.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { users: users });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], users);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -26,7 +26,7 @@ export default class UserController {
             if (!user) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { user: user });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],user);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -40,7 +40,7 @@ export default class UserController {
             if (!userEmail) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { email: userEmail });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],userEmail);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -55,7 +55,7 @@ export default class UserController {
             if (!userPhone) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { phone: userPhone });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], userPhone);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -73,7 +73,7 @@ export default class UserController {
             if (!userId) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { id: userId });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],userId);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -93,7 +93,7 @@ export default class UserController {
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_ERROR_CREATE);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], { users: result });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE],result);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -117,7 +117,7 @@ export default class UserController {
             if (!updated) {
                 return sendError(res, ErrorCodes.USER_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { update: updated });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE],updated);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }

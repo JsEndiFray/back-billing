@@ -15,6 +15,7 @@ export default class EstateController {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
         }
     }
+
     //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdownEstates(req, res) {
         try {
@@ -27,7 +28,9 @@ export default class EstateController {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
+
     //MÉTODOS DE BÚSQUEDAS
+
     //búsqueda de inmueble con el catastro.
     static async getByCadastralReference(req, res) {
         try {
@@ -40,10 +43,12 @@ export default class EstateController {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
             return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
         }
     }
+
     //búsqueda de inmuebles con el ID
     static async getById(req, res) {
         try {
@@ -56,12 +61,14 @@ export default class EstateController {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
             return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
         }
     }
 
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+
     //crear inmuebles
     static async createEstate(req, res) {
         try {
@@ -106,6 +113,7 @@ export default class EstateController {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
+
     //eliminar inmueble
     static async deleteEstate(req, res) {
         try {
