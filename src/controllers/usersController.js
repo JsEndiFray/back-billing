@@ -75,6 +75,7 @@ export default class UserController {
             }
             return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],userId);
         } catch (error) {
+            console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
@@ -119,6 +120,7 @@ export default class UserController {
             }
             return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE],updated);
         } catch (error) {
+            console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }

@@ -68,6 +68,74 @@ src/
 └── validator/     # Validadores para cada entidad
 ```
 
+---
+
+## 🚀 Despliegue con Docker (Global)
+
+Este backend forma parte de un sistema **fullstack dockerizado**, compuesto por:
+
+- 🚀 Backend: Node.js + Express
+- 🎨 Frontend: Angular
+- 📂 Base de datos: MySQL 8.0
+- 📄 Gestor de BD: phpMyAdmin
+
+### ✅ Para lanzar todo con un solo comando:
+```bash
+docker-compose -f docker-compose.fullstack.yml up -d
+```
+
+Esto levantará:
+
+- Backend en: `http://localhost:3600`
+- Frontend en: `http://localhost:4200`
+- phpMyAdmin en: `http://localhost:8080`
+- Base de datos MySQL en: `localhost:3306`
+
+### 📄 Archivos necesarios:
+- `docker-compose.fullstack.yml`
+- `backend/Dockerfile`, `frontend/Dockerfile`
+- `.env.fullstack` con todas las variables
+
+### 📁 Estructura sugerida del proyecto:
+```
+facturas-project/
+├── backend/
+│   ├── Dockerfile
+│   └── .dockerignore
+├── frontend/
+│   ├── Dockerfile
+│   ├── Dockerfile.prod
+│   └── .dockerignore
+├── database/
+│   └── init.sql (opcional)
+├── docker-compose.fullstack.yml
+├── .env.fullstack
+├── start-fullstack.sh
+└── stop-fullstack.sh
+```
+
+---
+
+## 🅰️ Integración con Angular (Frontend)
+
+Este backend está preparado para conectarse con una aplicación Angular (v19+) dockerizada. Configura la URL de la API en Angular así:
+
+### 🔧 `src/environments/environment.ts`
+```ts
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3600/api'
+};
+```
+
+### 🔧 `src/environments/environment.prod.ts`
+```ts
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.tu-dominio.com/api'
+};
+```
+
 ## ⚙️ Instalación y configuración
 
 ### Requisitos previos
@@ -225,10 +293,6 @@ La documentación de la API está pendiente a través de Swagger UI:
 http://localhost:3600/api-docs
 ```
 
-## 🚧 Próximas funcionalidades
-
-- Implementación de tests más completos
-- Sistema de logs estructurados
 
 ## 👥 Contribuciones
 
