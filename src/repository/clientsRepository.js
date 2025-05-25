@@ -4,7 +4,7 @@ export default class ClientsRepository {
 
     //obtener los datos de los clientes
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM clients');
+        const [rows] = await db.query('SELECT * FROM clients ORDER BY name ASC');
         return rows;
     }
 
@@ -69,14 +69,16 @@ export default class ClientsRepository {
             lastname,
             company_name,
             identification,
+            phone,
+            email,
             address,
             postal_code,
             location,
             province,
             country
         } = client;
-        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, NOW(), NOW())', [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country]);
+        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, date_create, date_update )' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?,  NOW(), NOW())', [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country]);
         return result.insertId;
     }
 
@@ -89,14 +91,16 @@ export default class ClientsRepository {
             lastname,
             company_name,
             identification,
+            phone,
+            email,
             address,
             postal_code,
             location,
             province,
             country
         } = client;
-        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
-            [type_client, name, lastname, company_name, identification, address, postal_code, location, province, country, id]
+        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, phone = ?, email = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
+            [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, id]
         );
         return result.affectedRows;
     }

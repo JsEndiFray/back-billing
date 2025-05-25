@@ -11,7 +11,7 @@ export default class ClientsControllers {
             if (!clients || clients.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { clients });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clients);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -25,7 +25,7 @@ export default class ClientsControllers {
             if (!clients || clients.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { Clients: clients });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clients);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -48,7 +48,7 @@ export default class ClientsControllers {
             if (!clientsType || clientsType.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { clientes: clientsType });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clientsType);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -67,9 +67,7 @@ export default class ClientsControllers {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
-                clientes: result
-            });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -90,9 +88,7 @@ export default class ClientsControllers {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
-                clientes: result
-            });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -112,9 +108,7 @@ export default class ClientsControllers {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
-                clientes: result
-            });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -132,9 +126,7 @@ export default class ClientsControllers {
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], {
-                clientes: result
-            });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -149,7 +141,7 @@ export default class ClientsControllers {
             if (!created) {
                 return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], {}, 201);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE],created);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -172,7 +164,7 @@ export default class ClientsControllers {
                 return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
             }
 
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { client: updated });
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }

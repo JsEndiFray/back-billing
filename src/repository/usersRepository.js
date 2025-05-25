@@ -4,7 +4,7 @@ export default class UsersRepository {
 
     //obtener todos los usuarios registrados
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM users');
+        const [rows] = await db.query('SELECT * FROM users ORDER BY name ASC');
         return rows;
     }
 

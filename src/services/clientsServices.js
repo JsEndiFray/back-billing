@@ -7,6 +7,7 @@ export default class ClientsServices {
     static async getAllClients() {
         return await ClientsRepository.getAll();
     }
+
     //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdownClients() {
         return await ClientsRepository.getAllForDropdown();
@@ -24,7 +25,7 @@ export default class ClientsServices {
         if (!company_name || typeof company_name !== 'string') return null;
 
         const companyNameNormalized = sanitizeString(company_name);
-        if(!companyNameNormalized || companyNameNormalized.length === 0) return null;
+        if (!companyNameNormalized || companyNameNormalized.length === 0) return null;
 
         return await ClientsRepository.findByCompany(sanitizeString(companyNameNormalized));
     }
@@ -51,27 +52,52 @@ export default class ClientsServices {
 
     //crear clientes
     static async createClient(data) {
-        const {identification} = data;
-
+        const clientstData = {
+            name: data.name?.trim(),
+            lastname: data.lastname?.trim(),
+            company_name: data.company_name?.toUpperCase().trim(),
+            identification: data.identification?.toUpperCase().trim(),
+            phone: data.phone?.trim(),
+            email: data.email?.toLowerCase().trim(),
+            address: data.address?.toUpperCase().trim(),
+            code_postal: data.code_postal?.trim(),
+            location: data.location?.toUpperCase().trim(),
+            province: data.province?.toUpperCase().trim(),
+            country: data.country?.toUpperCase().trim(),
+        };
         //verificamos si existe el cliente
-        const existing = await ClientsRepository.findByIdentification(identification);
+        const existing = await ClientsRepository.findByIdentification(clientstData.identification);
         if (existing) return null;
 
-        const new_client = await ClientsRepository.create(data)
-        return {id: new_client, ...data}
+        const new_client = await ClientsRepository.create(clientstData)
+        return new_client;
     }
 
     //actualizar clientes
     static async updateClient(id, data) {
         if (!id || isNaN(Number(id))) return null;
 
+        const cleanClientsData = {
+            id: id,
+            name: data.name?.trim(),
+            lastname: data.lastname?.trim(),
+            company_name: data.company_name?.toUpperCase().trim(),
+            identification: data.identification?.toUpperCase().trim(),
+            phone: data.phone?.trim(),
+            email: data.email?.toLowerCase().trim(),
+            address: data.address?.toUpperCase().trim(),
+            code_postal: data.code_postal?.trim(),
+            location: data.location?.toUpperCase().trim(),
+            province: data.province?.toUpperCase().trim(),
+            country: data.country?.toUpperCase().trim(),
+        }
         // verificar si existe el cliente
-        const existing = await ClientsRepository.findById(id);
+        const existing = await ClientsRepository.findById(cleanClientsData.id);
         if (!existing) return null;
 
         // comprobar si el nuevo identification está en uso por otro cliente
-        if (data.identification) {
-            const clientWithSameIdentification = await ClientsRepository.findByIdentification(data.identification);
+        if (cleanClientsData.identification) {
+            const clientWithSameIdentification = await ClientsRepository.findByIdentification(cleanClientsData.identification);
 
             // si existe otro cliente con el mismo identification y NO es este
             if (clientWithSameIdentification && clientWithSameIdentification.id !== Number(id)) {
@@ -79,10 +105,9 @@ export default class ClientsServices {
                 return null;
             }
         }
-
         // actualizar
-        const updated = await ClientsRepository.update({id, ...data});
-        return updated ? {id, ...data} : null;
+        const updated = await ClientsRepository.update(cleanClientsData);
+        return updated ? cleanClientsData : null;
     }
 
     //eliminar el cliente

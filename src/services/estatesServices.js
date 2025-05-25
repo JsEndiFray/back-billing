@@ -7,6 +7,7 @@ export default class EstatesServices {
     static async getAllEstate() {
         return await EstatesRepository.getAll();
     }
+
     //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdownEstates() {
         return await EstatesRepository.getAllForDropdown();
@@ -37,34 +38,55 @@ export default class EstatesServices {
     //crear inmuebles
     static async createEstate(estate) {
         //verificamos antes si existe antes de crear
-        const {cadastral_reference} = estate;
-        const existing = await EstatesRepository.findByCadastralReference(cadastral_reference);
+        const estatesData = {
+            cadastral_reference: estate.cadastral_reference?.toUpperCase().trim(),
+            price: estate.price,
+            address: estate.address?.toUpperCase().trim(),
+            postal_code: estate.postal_code?.trim(),
+            location: estate.location?.toUpperCase().trim(),
+            province: estate.province?.toUpperCase().trim(),
+            country: estate.country?.toUpperCase().trim(),
+            surface: estate.surface,
+        };
+        const existing = await EstatesRepository.findByCadastralReference(estatesData.cadastral_reference);
         if (existing && existing.length > 0) return null;
 
-        const estateID = await EstatesRepository.create(estate);
+        const estateID = await EstatesRepository.create(estatesData);
         if (!estateID) return null;
-        return {estateID, estate};
+        return {estateID, estatesData};
     }
 
     //actualizar usuarios
     static async updateEstate(estate) {
         if (!estate.id || isNaN(estate.id)) return null;
+
+        const cleanEstateData = {
+            id: estate.id, // ← Mantener el ID
+            cadastral_reference: estate.cadastral_reference?.toUpperCase().trim(),
+            price: estate.price,
+            address: estate.address?.toUpperCase().trim(),
+            postal_code: estate.postal_code?.trim(),
+            location: estate.location?.toUpperCase().trim(),
+            province: estate.province?.toUpperCase().trim(),
+            country: estate.country?.toUpperCase().trim(),
+            surface: estate.surface,
+        };
         //verificamos antes si existe antes de actualizar
-        const existing = await EstatesRepository.findById(estate.id);
+        const existing = await EstatesRepository.findById(cleanEstateData.id);
         if (!existing) return null;
 
         const {cadastral_reference} = estate;
         const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
         if (duplicate && duplicate.length > 0) {
             const duplicateId = duplicate[0].id;
-            if (Number(duplicateId) !== Number(estate.id)) {
+            if (Number(duplicateId) !== Number(cleanEstateData.id)) {
                 // Si existe otro inmueble con esa referencia -> error
                 return null;
             }
         }
 
-        const updated = await EstatesRepository.update(estate);
-        return updated ? estate : null;
+        const updated = await EstatesRepository.update(cleanEstateData);
+        return updated ? cleanEstateData : null;
     }
 
     //eliminar usuarios
