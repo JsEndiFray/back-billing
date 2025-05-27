@@ -1,6 +1,6 @@
 import ClientsServices from "../services/clientsServices.js";
-import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
-import { sanitizeString } from "../helpers/stringHelpers.js";
+import {ErrorCodes, sendError, sendSuccess, ErrorMessages} from "../errors/index.js";
+import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class ClientsControllers {
 
@@ -11,7 +11,7 @@ export default class ClientsControllers {
             if (!clients || clients.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clients);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clients);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -25,21 +25,67 @@ export default class ClientsControllers {
             if (!clients || clients.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clients);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clients);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
 
+    //Obtener solo empresas para dropdown
+    static async getCompanies(req, res) {
+        try {
+            const companies = await ClientsServices.getCompanies();
+            if (!companies || companies.length === 0) {
+                //Para empresas, devolver array vacío en lugar de error
+                return sendSuccess(res, ErrorMessages[ErrorCodes.CLIENT_COMPANIES_NOT_FOUND], []);
+            }
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], companies);
+        } catch (error) {
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+        }
+    }
+
+    //Obtener autónomos con información de empresa
+    static async getAutonomsWithCompanies(req, res) {
+        try {
+            const autonoms = await ClientsServices.getAutonomsWithCompanies();
+            if (!autonoms || autonoms.length === 0) {
+                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+            }
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], autonoms);
+        } catch (error) {
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+        }
+    }
+
+    //Obtener administradores de una empresa específica
+    static async getAdministratorsByCompany(req, res) {
+        try {
+            const {companyId} = req.params;
+            if (!companyId || isNaN(Number(companyId))) {
+                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+            }
+
+            const administrators = await ClientsServices.getAdministratorsByCompany(companyId);
+            if (!administrators || administrators.length === 0) {
+                return sendSuccess(res, ErrorMessages[ErrorCodes.CLIENT_NOT_ADMIN], []);
+            }
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], administrators);
+        } catch (error) {
+            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+        }
+    }
+
+
     //búsqueda por tipo de cliente.
     static async getByClientType(req, res) {
         try {
             //Obtienes el parámetro de la ruta (:clientType).
-            const { clientType } = req.params;
+            const {clientType} = req.params;
             //normalizamos para los espacios o mayúsculas y minúsculas
             const clientTypeNormalized = sanitizeString(clientType);
             //tipos permitidos
-            const allowedTypes = ['particular', 'autónomo', 'empresa'];
+            const allowedTypes = ['particular', 'autonomo', 'empresa'];
             if (!allowedTypes.includes(clientTypeNormalized)) {
                 return sendError(res, ErrorCodes.CLIENT_TYPE);
             }
@@ -48,7 +94,7 @@ export default class ClientsControllers {
             if (!clientsType || clientsType.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],clientsType);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clientsType);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -59,7 +105,7 @@ export default class ClientsControllers {
     static async getCompany(req, res) {
         try {
             //Obtienes el parámetro de la ruta (:company_name).
-            const { company_name } = req.params;
+            const {company_name} = req.params;
             if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
                 return sendError(res, ErrorCodes.CLIENT_NAME_REQUIRED);
             }
@@ -67,7 +113,7 @@ export default class ClientsControllers {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
@@ -76,7 +122,7 @@ export default class ClientsControllers {
     //búsqueda por nombre y apellidos
     static async getFullName(req, res) {
         try {
-            const { name, lastname } = req.query;
+            const {name, lastname} = req.query;
             if (!name && !lastname) {
                 return sendError(res, ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED);
             }
@@ -88,7 +134,7 @@ export default class ClientsControllers {
             if (!result || result.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -98,7 +144,7 @@ export default class ClientsControllers {
     //búsqueda por identificación
     static async getByIdentification(req, res) {
         try {
-            const { identification } = req.params;
+            const {identification} = req.params;
             const identificationNormalized = sanitizeString(identification);
             if (!identificationNormalized || identificationNormalized.length === 0) {
                 return sendError(res, ErrorCodes.CLIENT_ID_REQUIRED);
@@ -118,7 +164,7 @@ export default class ClientsControllers {
     //búsqueda por ID
     static async getById(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
@@ -126,7 +172,7 @@ export default class ClientsControllers {
             if (!result) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],result);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
 
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
@@ -141,17 +187,15 @@ export default class ClientsControllers {
             if (!created) {
                 return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE],created);
-
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], created);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
-
     //actualizar clientes
     static async updateClient(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
@@ -173,7 +217,7 @@ export default class ClientsControllers {
     //eliminar el cliente
     static async deleteClient(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }

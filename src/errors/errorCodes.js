@@ -34,6 +34,8 @@ export const ErrorCodes = {
     CLIENT_NAME_REQUIRED: 'CLIENT_NAME_REQUIRED',
     CLIENT_NAME_LASTNAME_REQUIRED: 'CLIENT_NAME_LASTNAME_REQUIRED',
     CLIENT_ID_REQUIRED: 'CLIENT_ID_REQUIRED',
+    CLIENT_NOT_ADMIN: 'CLIENT_NOT_ADMIN',
+    CLIENT_COMPANIES_NOT_FOUND: 'CLIENT_COMPANIES_NOT_FOUND',
 
     //ESTATES
     ESTATE_DUPLICATE: 'ESTATE_DUPLICATE',
@@ -96,6 +98,8 @@ export const ErrorMessages = {
     [ErrorCodes.CLIENT_NAME_REQUIRED]: 'El nombre del cliente es obligatorio.',
     [ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED]: 'Debes proporcionar al menos nombre o apellidos para buscar.',
     [ErrorCodes.CLIENT_ID_REQUIRED]: 'El identificador (NIF/NIE/CIF) del cliente es obligatorio.',
+    [ErrorCodes.CLIENT_NOT_ADMIN]: "Esta empresa no tiene administradores registrados",
+    [ErrorCodes.CLIENT_COMPANIES_NOT_FOUND]: "No hay empresas registradas",
 
     //ESTATES
     [ErrorCodes.ESTATE_DUPLICATE]: 'Ya existe un inmueble registrado con la misma referencia catastral.',
@@ -156,6 +160,8 @@ export const ErrorHttpCodes = {
     [ErrorCodes.CLIENT_NAME_REQUIRED]: 400,
     [ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED]: 400,
     [ErrorCodes.CLIENT_ID_REQUIRED]: 400,
+    [ErrorCodes.CLIENT_NOT_ADMIN]: 200,
+    [ErrorCodes.CLIENT_COMPANIES_NOT_FOUND]: 200,
 
     //ESTATES
     [ErrorCodes.ESTATE_DUPLICATE]: 409,

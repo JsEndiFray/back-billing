@@ -97,63 +97,77 @@ export default class UserService {
 
     //crear el usuario
     static async createUser(user) {
-
-        const existsUsername = await UsersRepository.findByUsername(user.username);
+        //Limpiar y transformar datos
+        const userData = {
+            username: user.username.toLowerCase().trim(),
+            password: user.password.trim(),
+            email: user.email.toLowerCase().trim(),
+            phone: user.phone.trim(),
+        }
+        const existsUsername = await UsersRepository.findByUsername(userData.username);
         if (existsUsername) return {duplicated: 'username'};
 
-        const existsEmail = await UsersRepository.findByEmail(user.email);
+        const existsEmail = await UsersRepository.findByEmail(userData.email);
         if (existsEmail) return {duplicated: 'email'};
 
-        const existsPhone = await UsersRepository.findByPhone(user.phone);
+        const existsPhone = await UsersRepository.findByPhone(userData.phone);
         if (existsPhone) return {duplicated: 'phone'};
 
         // Hash contraseña
-        user.password = await bcrypt.hash(user.password, 10);
+        user.password = await bcrypt.hash(userData.password, 10);
 
-        const created = await UsersRepository.create(user);
+        const created = await UsersRepository.create(userData);
         if (!created) return null;
 
-        return {id: created};
+        return userData;
     }
 
     //update el usuario
     static async updateUser(id, data) {
         // Validación: ID debe existir y ser numérico
         if (!id || isNaN(Number(id))) return null;
+        //Limpiar y transformar datos
+        const cleanUserData = {
+            id: id,
+            username: data.username.toLowerCase().trim(),
+            password: data.password.trim(),
+            email: data.email.toLowerCase().trim(),
+            phone: data.phone.trim(),
+        }
 
         // Buscar el usuario actual en la base de datos
         const existing = await UsersRepository.findById(id);
         if (!existing) return null; // No existe el usuario con ese ID
 
         // Verificar si se cambia el username y si está duplicado
-        if (data.username && data.username !== existing.username) {
-            const existingUsername = await UsersRepository.findByUsername(data.username);
+        if (cleanUserData.username && cleanUserData.username !== existing.username) {
+            const existingUsername = await UsersRepository.findByUsername(cleanUserData.username);
             if (existingUsername) return {duplicated: 'username'};
         }
 
         // Verificar si se cambia el email y si está duplicado
-        if (data.email && data.email !== existing.email) {
+        if (cleanUserData.email && cleanUserData.email !== existing.email) {
             const existingEmail = await UsersRepository.findByEmail(data.email);
             if (existingEmail) return {duplicated: 'email'};
         }
 
         // Verificar si se cambia el teléfono y si está duplicado
-        if (data.phone && data.phone !== existing.phone) {
-            const existingPhone = await UsersRepository.findByPhone(data.phone);
+        if (cleanUserData.phone && cleanUserData.phone !== existing.phone) {
+            const existingPhone = await UsersRepository.findByPhone(cleanUserData.phone);
             if (existingPhone) return {duplicated: 'phone'};
         }
 
         // Si hay nueva contraseña, hacer hash
-        if (data.password) {
-            data.password = await bcrypt.hash(data.password, 10);
+        if (cleanUserData.password) {
+            cleanUserData.password = await bcrypt.hash(cleanUserData.password, 10);
         }
 
         // Ejecutar el UPDATE con los nuevos datos
-        const updated = await UsersRepository.update({id, ...data});
+        const updated = await UsersRepository.update(cleanUserData);
         if (!updated) return null;
 
         // Devolver el resultado del update
-        return {id, ...data};
+        return cleanUserData;
     }
 
     // Eliminar usuario

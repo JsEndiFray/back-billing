@@ -46,6 +46,8 @@ export const ErrorMessage = {
         NAME_REQUIRED: ErrorMessages[ErrorCodes.CLIENT_NAME_REQUIRED],
         NAME_LASTNAME_REQUIRED: ErrorMessages[ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED],
         ID_REQUIRED: ErrorMessages[ErrorCodes.CLIENT_ID_REQUIRED],
+        NOT_ADMIN: ErrorMessages[ErrorCodes.CLIENT_NOT_ADMIN],
+        COMPANIES_NOT_FOUND: ErrorMessages[ErrorCodes.CLIENT_COMPANIES_NOT_FOUND],
     },
     ESTATES: {
         NOT_FOUND: ErrorMessages[ErrorCodes.ESTATE_NOT_FOUND],

@@ -10,7 +10,7 @@ export default class UserController {
             if (!users || users.length === 0) {
                 return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], users);
+            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],users);
         } catch (error) {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }

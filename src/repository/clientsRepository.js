@@ -4,13 +4,68 @@ export default class ClientsRepository {
 
     //obtener los datos de los clientes
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM clients ORDER BY name ASC');
+        const query = `
+            SELECT c.id,
+                   c.type_client,
+                   c.name,
+                   c.lastname,
+                   c.company_name,
+                   c.identification,
+                   c.phone,
+                   c.email,
+                   c.address,
+                   c.postal_code,
+                   c.location,
+                   c.province,
+                   c.country,
+                   c.date_create,
+                   c.date_update,
+                   c.parent_company_id,
+                   c.relationship_type,
+                   -- ✅ NUEVA COLUMNA: Nombre de la empresa padre
+                   parent.company_name as parent_company_name
+            FROM clients c
+                     LEFT JOIN clients parent ON c.parent_company_id = parent.id AND parent.type_client = 'empresa'
+            ORDER BY c.id ASC
+        `;
+        const [rows] = await db.query(query);
         return rows;
     }
 
     //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdown() {
         const [rows] = await db.query('SELECT id, name FROM clients ORDER BY name ASC');
+        return rows;
+    }
+
+    //Obtener solo empresas para dropdown
+    static async getCompanies() {
+        const [rows] = await db.query('SELECT id, company_name FROM clients WHERE type_client = ? ORDER BY company_name ASC', ['empresa']);
+        return rows;
+    }
+
+    //Obtener autónomos con sus empresas relacionadas
+    static async getAutonomsWithCompanies() {
+        const [rows] = await db.query(`
+            SELECT a.*,
+                   c.company_name as related_company_name
+            FROM clients a
+                     LEFT JOIN clients c ON a.parent_company_id = c.id
+            WHERE a.type_client = ?
+            ORDER BY a.id DESC
+        `, ['autonomo']);
+        return rows;
+    }
+
+    //Obtener administradores de una empresa específica
+    static async getAdministratorsByCompany(companyId) {
+        const [rows] = await db.query(`
+            SELECT *
+            FROM clients
+            WHERE parent_company_id = ?
+              AND relationship_type = ?
+            ORDER BY name ASC
+        `, [companyId, 'administrator']);
         return rows;
     }
 
@@ -75,10 +130,13 @@ export default class ClientsRepository {
             postal_code,
             location,
             province,
-            country
+            country,
+            parent_company_id,
+            relationship_type
         } = client;
-        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?,  NOW(), NOW())', [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country]);
+        const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update )' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?,  NOW(), NOW())',
+            [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type]);
         return result.insertId;
     }
 
@@ -97,10 +155,12 @@ export default class ClientsRepository {
             postal_code,
             location,
             province,
-            country
+            country,
+            parent_company_id,
+            relationship_type
         } = client;
-        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, phone = ?, email = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
-            [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, id]
+        const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, phone = ?, email = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, parent_company_id = ?, relationship_type = ?, date_update = NOW() WHERE id = ?',
+            [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, id]
         );
         return result.affectedRows;
     }

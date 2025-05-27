@@ -67,6 +67,49 @@ import role from "../middlewares/role.js";
  */
 
 const router = express.Router()
+
+    /**
+     * @swagger
+     * /clients/companies:
+     *   get:
+     *     summary: Obtiene lista de empresas para dropdown
+     *     tags: [Clientes]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: Lista de empresas
+     */
+    .get('/companies', auth, role(['admin', 'employee']), ClientsControllers.getCompanies)
+
+    /**
+     * @swagger
+     * /clients/autonoms-with-companies:
+     *   get:
+     *     summary: Obtiene autónomos con información de empresa
+     *     tags: [Clientes]
+     *     security:
+     *       - bearerAuth: []
+     */
+    .get('/autonoms-with-companies', auth, role(['admin', 'employee']), ClientsControllers.getAutonomsWithCompanies)
+
+    /**
+     * @swagger
+     * /clients/company/{companyId}/administrators:
+     *   get:
+     *     summary: Obtiene administradores de una empresa
+     *     tags: [Clientes]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: companyId
+     *         required: true
+     *         schema:
+     *           type: integer
+     */
+    .get('/company/:companyId/administrators', auth, role(['admin', 'employee']), ClientsControllers.getAdministratorsByCompany)
+
     //Búsquedas admin y employee
     /**
      * @swagger
@@ -286,7 +329,7 @@ const router = express.Router()
      *       403:
      *         description: No tiene permiso
      */
-    .post('/', auth, role(['admin','employee']), validateClient, errorHandler, ClientsControllers.createClient)
+    .post('/', auth, role(['admin', 'employee']), validateClient, errorHandler, ClientsControllers.createClient)
 
     /**
      * @swagger

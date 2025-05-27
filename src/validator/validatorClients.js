@@ -3,7 +3,7 @@ import {body} from 'express-validator'
 export const validateClient = [
     body('type_client')
         .notEmpty().withMessage('El tipo de cliente es obligatorio')
-        .isIn(['particular', 'autónomo', 'empresa']).withMessage('Tipo de cliente inválido'),
+        .isIn(['particular', 'autonomo', 'empresa']).withMessage('Tipo de cliente inválido'),
     body('name').trim().notEmpty().withMessage('El nombre es obligatorio'),
     body('lastname').trim().notEmpty().withMessage('El apellido es obligatorio'),
     body('company_name')
@@ -29,6 +29,12 @@ export const validateClient = [
             }
             return true;
         }),
+    body('phone').notEmpty()
+        .withMessage('El teléfono es obligatorio')
+        .isLength({min: 9, max: 9}).withMessage('El teléfono debe tener exactamente 9 dígitos')
+        .isNumeric().withMessage('El teléfono solo debe contener números'),
+    body('email').notEmpty().withMessage('El correo electrónico es obligatorio.')
+        .isEmail().withMessage('Debe ser un correo electrónico válido.'),
     body('address').trim().notEmpty().withMessage('La dirección es obligatorio'),
     body('postal_code').notEmpty().withMessage('El código postal es obligatorio').isPostalCode('ES'),
     body('location').trim().notEmpty().withMessage('La localidad es obligatorio'),

@@ -13,6 +13,23 @@ export default class ClientsServices {
         return await ClientsRepository.getAllForDropdown();
     }
 
+    // Obtener solo empresas para dropdown
+    static async getCompanies() {
+        const companies = await ClientsRepository.getCompanies();
+        return companies || [];
+    }
+
+    //Obtener autónomos con información de empresa
+    static async getAutonomsWithCompanies() {
+        return await ClientsRepository.getAutonomsWithCompanies();
+    }
+
+    //Obtener administradores de una empresa
+    static async getAdministratorsByCompany(companyId) {
+        if (!companyId || isNaN(Number(companyId))) return [];
+        return await ClientsRepository.getAdministratorsByCompany(companyId);
+    }
+
     //MÉTODOS DE BÚSQUEDAS
     //búsqueda por tipo de cliente.
     static async getByClientType(type_cliente) {
@@ -52,7 +69,9 @@ export default class ClientsServices {
 
     //crear clientes
     static async createClient(data) {
+        //Limpiar y transformar datos
         const clientstData = {
+            type_client: data.type_client.trim(),
             name: data.name?.trim(),
             lastname: data.lastname?.trim(),
             company_name: data.company_name?.toUpperCase().trim(),
@@ -60,11 +79,30 @@ export default class ClientsServices {
             phone: data.phone?.trim(),
             email: data.email?.toLowerCase().trim(),
             address: data.address?.toUpperCase().trim(),
-            code_postal: data.code_postal?.trim(),
+            postal_code: data.postal_code?.trim(),
             location: data.location?.toUpperCase().trim(),
             province: data.province?.toUpperCase().trim(),
             country: data.country?.toUpperCase().trim(),
+            parent_company_id: data.parent_company_id && data.parent_company_id !== '' ? Number(data.parent_company_id) : null,
+            relationship_type: data.relationship_type ? data.relationship_type.toUpperCase() : null
         };
+        //Si es autónomo con empresa, debe tener relationship_type
+        if (clientstData.type_client === 'autonomo' && clientstData.parent_company_id) {
+            if (!clientstData.relationship_type) {
+                clientstData.relationship_type = 'administrator'; // Por defecto
+            }
+
+            //Verificar que la empresa existe
+            const company = await ClientsRepository.findById(clientstData.parent_company_id);
+            if (!company || company.type_client !== 'empresa') {
+                return null; // Empresa no válida
+            }
+        }
+        //Si NO es autónomo, limpiar campos de relación
+        if (clientstData.type_client !== 'autonomo') {
+            clientstData.parent_company_id = null;
+            clientstData.relationship_type = null;
+        }
         //verificamos si existe el cliente
         const existing = await ClientsRepository.findByIdentification(clientstData.identification);
         if (existing) return null;
@@ -76,9 +114,10 @@ export default class ClientsServices {
     //actualizar clientes
     static async updateClient(id, data) {
         if (!id || isNaN(Number(id))) return null;
-
+        //Limpiar y transformar datos
         const cleanClientsData = {
             id: id,
+            type_client: data.type_client?.trim(),
             name: data.name?.trim(),
             lastname: data.lastname?.trim(),
             company_name: data.company_name?.toUpperCase().trim(),
@@ -86,11 +125,31 @@ export default class ClientsServices {
             phone: data.phone?.trim(),
             email: data.email?.toLowerCase().trim(),
             address: data.address?.toUpperCase().trim(),
-            code_postal: data.code_postal?.trim(),
+            postal_code: data.postal_code?.trim(),
             location: data.location?.toUpperCase().trim(),
             province: data.province?.toUpperCase().trim(),
             country: data.country?.toUpperCase().trim(),
+            parent_company_id: data.parent_company_id && data.parent_company_id !== '' ? Number(data.parent_company_id) : null,
+            relationship_type: data.relationship_type ? data.relationship_type.toUpperCase() : null
         }
+
+        //Mismas reglas que en create
+        if (cleanClientsData.type_client === 'autonomo' && cleanClientsData.parent_company_id) {
+            if (!cleanClientsData.relationship_type) {
+                cleanClientsData.relationship_type = 'administrator';
+            }
+
+            const company = await ClientsRepository.findById(cleanClientsData.parent_company_id);
+            if (!company || company.type_client !== 'empresa') {
+                return null;
+            }
+        }
+
+        if (cleanClientsData.type_client !== 'autonomo') {
+            cleanClientsData.parent_company_id = null;
+            cleanClientsData.relationship_type = null;
+        }
+
         // verificar si existe el cliente
         const existing = await ClientsRepository.findById(cleanClientsData.id);
         if (!existing) return null;
