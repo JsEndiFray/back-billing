@@ -192,6 +192,7 @@ export default class ClientsControllers {
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }
+
     //actualizar clientes
     static async updateClient(req, res) {
         try {
@@ -221,13 +222,35 @@ export default class ClientsControllers {
             if (!id || isNaN(Number(id))) {
                 return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
             }
-            const deleted = await ClientsServices.deleteClient(id);
-            if (!deleted) {
+
+            const result = await ClientsServices.deleteClient(id);
+
+            // Cliente no encontrado
+            if (result === null) {
                 return sendError(res, ErrorCodes.CLIENT_NOT_FOUND);
             }
+
+            // Errores específicos de validación (strings)
+            if (result === 'CLIENT_HAS_BILLS') {
+                return sendError(res, ErrorCodes.CLIENT_HAS_BILLS);
+            }
+            if (result === 'CLIENT_HAS_ADMINISTRATORS') {
+                return sendError(res, ErrorCodes.CLIENT_HAS_ADMINISTRATORS);
+            }
+            if (result === 'CLIENT_IS_ADMINISTRATOR') {
+                return sendError(res, ErrorCodes.CLIENT_IS_ADMINISTRATOR);
+            }
+
+            // No se pudo eliminar por motivo técnico
+            if (result === false) {
+                return sendError(res, ErrorCodes.GLOBAL_ERROR_DELETE);
+            }
+
+            // Éxito (result === true)
             return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
 
         } catch (error) {
+            console.log(error);
             return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
         }
     }

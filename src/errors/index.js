@@ -48,6 +48,9 @@ export const ErrorMessage = {
         ID_REQUIRED: ErrorMessages[ErrorCodes.CLIENT_ID_REQUIRED],
         NOT_ADMIN: ErrorMessages[ErrorCodes.CLIENT_NOT_ADMIN],
         COMPANIES_NOT_FOUND: ErrorMessages[ErrorCodes.CLIENT_COMPANIES_NOT_FOUND],
+        HAS_BILLS: ErrorMessages[ErrorCodes.CLIENT_HAS_BILLS],
+        HAS_ADMINISTRATORS: ErrorMessages[ErrorCodes.CLIENT_HAS_ADMINISTRATORS],
+        IS_ADMINISTRATOR: ErrorMessages[ErrorCodes.CLIENT_IS_ADMINISTRATOR],
     },
     ESTATES: {
         NOT_FOUND: ErrorMessages[ErrorCodes.ESTATE_NOT_FOUND],

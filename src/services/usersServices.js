@@ -103,6 +103,7 @@ export default class UserService {
             password: user.password.trim(),
             email: user.email.toLowerCase().trim(),
             phone: user.phone.trim(),
+            role: user.role.trim(),
         }
         const existsUsername = await UsersRepository.findByUsername(userData.username);
         if (existsUsername) return {duplicated: 'username'};
@@ -133,6 +134,7 @@ export default class UserService {
             password: data.password.trim(),
             email: data.email.toLowerCase().trim(),
             phone: data.phone.trim(),
+            role: data.role.trim(),
         }
 
         // Buscar el usuario actual en la base de datos

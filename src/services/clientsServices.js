@@ -172,8 +172,34 @@ export default class ClientsServices {
     //eliminar el cliente
     static async deleteClient(id) {
         if (!id || isNaN(Number(id))) return null;
+
+        // Obtener el cliente
+        const client = await ClientsRepository.findById(id);
+        if (!client) return null;
+
+        // 1. Verificar facturas
+        const billsCount = await ClientsRepository.countBillsByClient(id);
+        if (billsCount > 0) {
+            return 'CLIENT_HAS_BILLS';
+        }
+
+        // 2. Si es empresa, verificar administradores
+        if (client.type_client === 'empresa') {
+            const adminsCount = await ClientsRepository.countAdministratorsByCompany(id);
+            if (adminsCount > 0) {
+                return 'CLIENT_HAS_ADMINISTRATORS';
+            }
+        }
+
+        // 3. Si es autónomo administrador
+        if (client.type_client === 'autonomo' && client.parent_company_id && client.relationship_type === 'administrator') {
+            return 'CLIENT_IS_ADMINISTRATOR';
+        }
+
+        // Si llegamos aquí, eliminar
         const result = await ClientsRepository.delete(id);
-        return result > 0;
+        return result > 0; // true o false
     }
+
 
 }

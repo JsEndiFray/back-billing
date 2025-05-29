@@ -36,6 +36,9 @@ export const ErrorCodes = {
     CLIENT_ID_REQUIRED: 'CLIENT_ID_REQUIRED',
     CLIENT_NOT_ADMIN: 'CLIENT_NOT_ADMIN',
     CLIENT_COMPANIES_NOT_FOUND: 'CLIENT_COMPANIES_NOT_FOUND',
+    CLIENT_HAS_BILLS: 'CLIENT_HAS_BILLS',
+    CLIENT_HAS_ADMINISTRATORS: 'CLIENT_HAS_ADMINISTRATORS',
+    CLIENT_IS_ADMINISTRATOR: 'CLIENT_IS_ADMINISTRATOR',
 
     //ESTATES
     ESTATE_DUPLICATE: 'ESTATE_DUPLICATE',
@@ -100,6 +103,10 @@ export const ErrorMessages = {
     [ErrorCodes.CLIENT_ID_REQUIRED]: 'El identificador (NIF/NIE/CIF) del cliente es obligatorio.',
     [ErrorCodes.CLIENT_NOT_ADMIN]: "Esta empresa no tiene administradores registrados",
     [ErrorCodes.CLIENT_COMPANIES_NOT_FOUND]: "No hay empresas registradas",
+    [ErrorCodes.CLIENT_HAS_BILLS]: 'No se puede eliminar: el cliente tiene facturas asociadas',
+    [ErrorCodes.CLIENT_HAS_ADMINISTRATORS]: 'No se puede eliminar: la empresa tiene administradores asociados',
+    [ErrorCodes.CLIENT_IS_ADMINISTRATOR]: 'No se puede eliminar: el autónomo es administrador de una empresa',
+
 
     //ESTATES
     [ErrorCodes.ESTATE_DUPLICATE]: 'Ya existe un inmueble registrado con la misma referencia catastral.',
@@ -162,6 +169,9 @@ export const ErrorHttpCodes = {
     [ErrorCodes.CLIENT_ID_REQUIRED]: 400,
     [ErrorCodes.CLIENT_NOT_ADMIN]: 200,
     [ErrorCodes.CLIENT_COMPANIES_NOT_FOUND]: 200,
+    [ErrorCodes.CLIENT_HAS_BILLS]: 400,
+    [ErrorCodes.CLIENT_HAS_ADMINISTRATORS]: 400,
+    [ErrorCodes.CLIENT_IS_ADMINISTRATOR]: 400,
 
     //ESTATES
     [ErrorCodes.ESTATE_DUPLICATE]: 409,
