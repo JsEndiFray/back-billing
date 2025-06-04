@@ -65,18 +65,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Middleware para rutas no encontradas (404)
 app.use((req, res) => {
-    res.status(404).json({
-        msg: 'Ruta no encontrada'
-    });
+    res.status(404).json('Ruta no encontrada');
 });
 
 // Middleware para errores globales (500)
 app.use((err, req, res, next) => {
     console.error('Error inesperado:', err.stack);
 
-    res.status(500).json({
-        msg: 'Error interno del servidor'
-    });
+    res.status(500).json('Error interno del servidor');
 });
 
 

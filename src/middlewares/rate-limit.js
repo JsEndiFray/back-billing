@@ -6,7 +6,10 @@ export const generalLimiter = rateLimit({
     max: 100, //Limita cada IP a 100 peticiones por ventana
     standardHeaders: true, //Devuelve info de rate limit en los headers `RateLimit-*`
     legacyHeaders: false, //Deshabilita los headers `X-RateLimit-*`
-    message: 'Demasiadas peticiones desde esta IP, por favor intente de nuevo después de 15 minutos'
+    handler: (req, res) => {
+        // Respuesta directa sin objeto wrapper
+        return res.status(429).json('Demasiadas peticiones desde esta IP, por favor intente de nuevo después de 15 minutos');
+    }
 });
 
 //Limiter más estricto para rutas de autenticación (login, registro)
@@ -15,5 +18,7 @@ export const authLimiter = rateLimit({
     max: 5, //5 intentos por hora
     standardHeaders: true,
     legacyHeaders: false,
-    message: 'Demasiados intentos de autenticación, por favor intente después de 1 hora'
+    handler: (req, res) => {
+        return res.status(429).json('Demasiados intentos de autenticación, por favor intente después de 1 hora');
+    }
 });

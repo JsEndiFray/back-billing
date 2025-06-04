@@ -1,5 +1,24 @@
 import { validationResult } from "express-validator";
-import { ErrorCodes, ParamErrorMap, sendError } from "../errors/index.js";
+
+// Mapeo de parámetros a mensajes de error específicos
+const ParamErrorMessages = {
+    'email': 'Email inválido',
+    'phone': 'Teléfono inválido',
+    'username': 'Nombre de usuario duplicado',
+    'nif': 'Identificación requerida',
+    'clientName': 'Nombre de cliente requerido',
+    'referenceCadastral': 'Referencia catastral requerida'
+};
+
+// Mapeo de parámetros a códigos de estado HTTP
+const ParamHttpCodes = {
+    'email': 400,
+    'phone': 400,
+    'username': 409, // Conflicto por duplicado
+    'nif': 400,
+    'clientName': 400,
+    'referenceCadastral': 400
+};
 
 const errorHandler = (req, res, next) => {
     const errors = validationResult(req);
@@ -10,18 +29,15 @@ const errorHandler = (req, res, next) => {
         // Buscar si hay un error específico que tengamos mapeado
         for (const error of errorList) {
             const paramName = error.path || error.param;
-            if (ParamErrorMap[paramName]) {
-                return sendError(res, ParamErrorMap[paramName], {
-                    field: paramName,
-                    value: error.value
-                });
+
+            if (ParamErrorMessages[paramName]) {
+                const statusCode = ParamHttpCodes[paramName] || 400;
+                return res.status(statusCode).json(ParamErrorMessages[paramName]);
             }
         }
 
-        // Si no encontramos un error específico, devolver el mensaje genérico
-        return sendError(res, ErrorCodes.GLOBAL_VALIDATION_ERROR, {
-            errors: errorList
-        });
+        // Si no encontramos un error específico, devolver mensaje genérico
+        return res.status(400).json("Error de validación");
     }
     next();
 };

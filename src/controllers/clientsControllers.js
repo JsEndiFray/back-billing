@@ -1,5 +1,4 @@
 import ClientsServices from "../services/clientsServices.js";
-import {ErrorCodes, sendError, sendSuccess, ErrorMessages} from "../errors/index.js";
 import {sanitizeString} from "../helpers/stringHelpers.js";
 
 export default class ClientsControllers {
@@ -9,12 +8,12 @@ export default class ClientsControllers {
         try {
             const clients = await ClientsServices.getAllClients()
             if (!clients || clients.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron clientes");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clients);
+            return res.status(200).json(clients);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     };
 
@@ -23,11 +22,11 @@ export default class ClientsControllers {
         try {
             const clients = await ClientsServices.getAllForDropdownClients();
             if (!clients || clients.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron clientes");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clients);
+            return res.status(200).json(clients);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -37,11 +36,11 @@ export default class ClientsControllers {
             const companies = await ClientsServices.getCompanies();
             if (!companies || companies.length === 0) {
                 //Para empresas, devolver array vacío en lugar de error
-                return sendSuccess(res, ErrorMessages[ErrorCodes.CLIENT_COMPANIES_NOT_FOUND], []);
+                return res.status(200).json([]);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], companies);
+            return res.status(200).json(companies);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -50,11 +49,11 @@ export default class ClientsControllers {
         try {
             const autonoms = await ClientsServices.getAutonomsWithCompanies();
             if (!autonoms || autonoms.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron autónomos");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], autonoms);
+            return res.status(200).json(autonoms);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -63,19 +62,18 @@ export default class ClientsControllers {
         try {
             const {companyId} = req.params;
             if (!companyId || isNaN(Number(companyId))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID de empresa inválido");
             }
 
             const administrators = await ClientsServices.getAdministratorsByCompany(companyId);
             if (!administrators || administrators.length === 0) {
-                return sendSuccess(res, ErrorMessages[ErrorCodes.CLIENT_NOT_ADMIN], []);
+                return res.status(200).json([]);
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], administrators);
+            return res.status(200).json(administrators);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-
 
     //búsqueda por tipo de cliente.
     static async getByClientType(req, res) {
@@ -87,17 +85,17 @@ export default class ClientsControllers {
             //tipos permitidos
             const allowedTypes = ['particular', 'autonomo', 'empresa'];
             if (!allowedTypes.includes(clientTypeNormalized)) {
-                return sendError(res, ErrorCodes.CLIENT_TYPE);
+                return res.status(400).json("Tipo de cliente inválido");
             }
 
             const clientsType = await ClientsServices.getByClientType(clientTypeNormalized);
             if (!clientsType || clientsType.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron clientes de este tipo");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], clientsType);
+            return res.status(200).json(clientsType);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -107,15 +105,15 @@ export default class ClientsControllers {
             //Obtienes el parámetro de la ruta (:company_name).
             const {company_name} = req.params;
             if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
-                return sendError(res, ErrorCodes.CLIENT_NAME_REQUIRED);
+                return res.status(400).json("Nombre de empresa requerido");
             }
             const result = await ClientsServices.getCompany(company_name);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Empresa no encontrada");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -124,7 +122,7 @@ export default class ClientsControllers {
         try {
             const {name, lastname} = req.query;
             if (!name && !lastname) {
-                return sendError(res, ErrorCodes.CLIENT_NAME_LASTNAME_REQUIRED);
+                return res.status(400).json("Nombre o apellido requerido");
             }
             // Sanitizar individualmente
             const nameSanitized = name ? sanitizeString(name) : null;
@@ -132,12 +130,12 @@ export default class ClientsControllers {
 
             const result = await ClientsServices.getFullName(nameSanitized, lastnameSanitized);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Cliente no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -147,17 +145,17 @@ export default class ClientsControllers {
             const {identification} = req.params;
             const identificationNormalized = sanitizeString(identification);
             if (!identificationNormalized || identificationNormalized.length === 0) {
-                return sendError(res, ErrorCodes.CLIENT_ID_REQUIRED);
+                return res.status(400).json("Identificación requerida");
             }
             const result = await ClientsServices.getByIdentification(identificationNormalized);
 
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Cliente no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -166,16 +164,16 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const result = await ClientsServices.getById(id);
             if (!result) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Cliente no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -185,11 +183,11 @@ export default class ClientsControllers {
         try {
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
-                return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
+                return res.status(409).json("Cliente duplicado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], created);
+            return res.status(201).json(created);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -198,20 +196,20 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const existing = await ClientsServices.getById(id);
             if (!existing) {
-                return sendError(res, ErrorCodes.CLIENT_NOT_FOUND);
+                return res.status(404).json("Cliente no encontrado");
             }
             const updated = await ClientsServices.updateClient(id, req.body);
             if (!updated) {
-                return sendError(res, ErrorCodes.CLIENT_DUPLICATE);
+                return res.status(409).json("Cliente duplicado");
             }
 
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated);
+            return res.status(200).json(updated);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -220,38 +218,38 @@ export default class ClientsControllers {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
 
             const result = await ClientsServices.deleteClient(id);
 
             // Cliente no encontrado
             if (result === null) {
-                return sendError(res, ErrorCodes.CLIENT_NOT_FOUND);
+                return res.status(404).json("Cliente no encontrado");
             }
 
             // Errores específicos de validación (strings)
             if (result === 'CLIENT_HAS_BILLS') {
-                return sendError(res, ErrorCodes.CLIENT_HAS_BILLS);
+                return res.status(409).json("El cliente tiene facturas asociadas");
             }
             if (result === 'CLIENT_HAS_ADMINISTRATORS') {
-                return sendError(res, ErrorCodes.CLIENT_HAS_ADMINISTRATORS);
+                return res.status(409).json("La empresa tiene administradores asociados");
             }
             if (result === 'CLIENT_IS_ADMINISTRATOR') {
-                return sendError(res, ErrorCodes.CLIENT_IS_ADMINISTRATOR);
+                return res.status(409).json("El cliente es administrador de una empresa");
             }
 
             // No se pudo eliminar por motivo técnico
             if (result === false) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_DELETE);
+                return res.status(500).json("Error al eliminar cliente");
             }
 
-            // Éxito (result === true)
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
+            // Éxito (result === true) - Respuesta sin contenido
+            return res.status(204).send();
 
         } catch (error) {
             console.log(error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }

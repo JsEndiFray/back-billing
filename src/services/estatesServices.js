@@ -57,25 +57,25 @@ export default class EstatesServices {
     }
 
     //actualizar usuarios
-    static async updateEstate(estate) {
-        if (!estate.id || isNaN(estate.id)) return null;
+    static async updateEstate(id, data) {
+        if (!id || isNaN(id)) return null;
 
         const cleanEstateData = {
-            id: estate.id, // ← Mantener el ID
-            cadastral_reference: estate.cadastral_reference?.toUpperCase().trim(),
-            price: estate.price,
-            address: estate.address?.toUpperCase().trim(),
-            postal_code: estate.postal_code?.trim(),
-            location: estate.location?.toUpperCase().trim(),
-            province: estate.province?.toUpperCase().trim(),
-            country: estate.country?.toUpperCase().trim(),
-            surface: estate.surface,
+            id: Number(id),
+            cadastral_reference: data.cadastral_reference?.toUpperCase().trim(),
+            price: data.price,
+            address: data.address?.toUpperCase().trim(),
+            postal_code: data.postal_code?.trim(),
+            location: data.location?.toUpperCase().trim(),
+            province: data.province?.toUpperCase().trim(),
+            country: data.country?.toUpperCase().trim(),
+            surface: data.surface,
         };
         //verificamos antes si existe antes de actualizar
         const existing = await EstatesRepository.findById(cleanEstateData.id);
         if (!existing) return null;
 
-        const {cadastral_reference} = estate;
+        const {cadastral_reference} = data;
         const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
         if (duplicate && duplicate.length > 0) {
             const duplicateId = duplicate[0].id;

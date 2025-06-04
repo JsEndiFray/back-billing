@@ -1,144 +1,136 @@
 import UserService from "../services/usersServices.js";
-import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
 
 export default class UserController {
 
-    //obtener todos los usuarios registrados
+    // Obtener todos los usuarios registrados
     static async getAllUsers(req, res) {
         try {
             const users = await UserService.getAllUsers();
             if (!users || users.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron usuarios");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],users);
+            return res.status(200).json(users);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //métodos de búsquedas
-
-    //búsqueda por username
+    // Búsqueda por username
     static async getUsername(req, res) {
         try {
-            const { username } = req.params;
+            const {username} = req.params;
             const user = await UserService.getUsername(username);
             if (!user) {
-                return sendError(res, ErrorCodes.USER_NOT_FOUND);
+                return res.status(404).json("Usuario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],user);
+            return res.status(200).json(user);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //búsqueda por email
+    // Búsqueda por email
     static async getEmail(req, res) {
         try {
-            const { email } = req.params;
+            const {email} = req.params;
             const userEmail = await UserService.getUserEmail(email);
             if (!userEmail) {
-                return sendError(res, ErrorCodes.USER_NOT_FOUND);
+                return res.status(404).json("Usuario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],userEmail);
-
+            return res.status(200).json(userEmail);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //búsqueda por phone
+    // Búsqueda por phone
     static async getPhone(req, res) {
         try {
-            const { phone } = req.params;
+            const {phone} = req.params;
             const userPhone = await UserService.getUserPhone(phone);
             if (!userPhone) {
-                return sendError(res, ErrorCodes.USER_NOT_FOUND);
+                return res.status(404).json("Usuario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], userPhone);
-
+            return res.status(200).json(userPhone);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
     // Buscar por ID
     static async getUserId(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const userId = await UserService.getUserId(id);
             if (!userId) {
-                return sendError(res, ErrorCodes.USER_NOT_FOUND);
+                return res.status(404).json("Usuario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA],userId);
+            return res.status(200).json(userId);
         } catch (error) {
             console.log(error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //MÉTODOS CREATE UPDATE DELETE
-
-    //Crear usuario
+    // Crear usuario
     static async createUser(req, res) {
         try {
             const user = req.body;
             const result = await UserService.createUser(user);
             if (result?.duplicated) {
                 console.log(result);
-                return sendError(res, ErrorCodes.USER_DUPLICATE, { duplicated: result.duplicated });
+                return res.status(409).json(`Usuario duplicado: ${result.duplicated}`);
             }
             if (!result) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_CREATE);
+                return res.status(400).json("Error al crear usuario");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE],result);
+            return res.status(201).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //update el usuario
+
+    // Actualizar usuario
     static async updateUser(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             const data = req.body;
 
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const updated = await UserService.updateUser(id, data);
 
             if (updated?.duplicated) {
-                return sendError(res, ErrorCodes.USER_DUPLICATE, {
-                    duplicated: updated.duplicated // 'username', 'email', 'phone', etc.
-                });
+                return res.status(409).json(`Usuario duplicado: ${updated.duplicated}`);
             }
             if (!updated) {
-                return sendError(res, ErrorCodes.USER_NOT_FOUND);
+                return res.status(404).json("Usuario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE],updated);
+            return res.status(200).json(updated);
         } catch (error) {
             console.log(error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
+
     // Eliminar usuario
     static async deleteUser(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const deleted = await UserService.deleteUser(id);
             if (!deleted) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_DELETE);
+                return res.status(400).json("Error al eliminar usuario");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
-
+            return res.status(204).send();
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }

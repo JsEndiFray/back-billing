@@ -116,7 +116,7 @@ export default class ClientsServices {
         if (!id || isNaN(Number(id))) return null;
         //Limpiar y transformar datos
         const cleanClientsData = {
-            id: id,
+            id: Number(id),
             type_client: data.type_client?.trim(),
             name: data.name?.trim(),
             lastname: data.lastname?.trim(),

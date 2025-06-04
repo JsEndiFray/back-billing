@@ -3,7 +3,6 @@ import fs from 'fs';
 import { generateBillPdf } from '../utils/pdfGenerator.js';
 import BillsService from '../services/billsServices.js';
 import { validate } from '../helpers/nifHelpers.js';
-import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from '../errors/index.js';
 
 export default class BillsControllers {
     // Obtener todas las facturas
@@ -11,11 +10,11 @@ export default class BillsControllers {
         try {
             const bills = await BillsService.getAllBills();
             if (!bills || bills.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron facturas");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { taxes: bills });
+            return res.status(200).json(bills);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -25,12 +24,12 @@ export default class BillsControllers {
             const { bill_number } = req.params;
             const billNumberSanitized = bill_number.trim();
             if (!billNumberSanitized) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Factura no encontrada");
             }
             const bills = await BillsService.getBillByNumber(billNumberSanitized);
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { bills });
+            return res.status(200).json(bills);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -39,15 +38,15 @@ export default class BillsControllers {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const result = await BillsService.getBillById(id);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Factura no encontrada");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { bill: result });
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -56,15 +55,15 @@ export default class BillsControllers {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const result = await BillsService.getByOwnersId(id);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Facturas no encontradas");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { bills: result });
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -73,15 +72,15 @@ export default class BillsControllers {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const result = await BillsService.getByClientsId(id);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Facturas no encontradas");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { bills: result });
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -90,15 +89,15 @@ export default class BillsControllers {
         try {
             const { nif } = req.params;
             if (!validate(nif)) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("NIF inválido");
             }
             const result = await BillsService.getBillsByClientNif(nif);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Facturas no encontradas");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { data: result });
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -108,11 +107,11 @@ export default class BillsControllers {
             const data = req.body;
             const created = await BillsService.createBill(data);
             if (!created) {
-                return sendError(res, ErrorCodes.BILL_CREATE_ERROR);
+                return res.status(400).json("Error al crear factura");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], { Bill: created }, 201);
+            return res.status(201).json(created);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -122,19 +121,19 @@ export default class BillsControllers {
             const { id } = req.params;
             const updateData = req.body;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const existing = await BillsService.getBillById(id);
             if (!existing) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Factura no encontrada");
             }
             const updated = await BillsService.updateBill(Number(id), updateData);
             if (!updated) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_UPDATE);
+                return res.status(400).json("Error al actualizar factura");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { Bill: updated });
+            return res.status(200).json(updated);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -143,15 +142,15 @@ export default class BillsControllers {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const deleted = await BillsService.deleteBill(id);
             if (!deleted) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_DELETE);
+                return res.status(400).json("Error al eliminar factura");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
+            return res.status(204).send();
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -160,11 +159,11 @@ export default class BillsControllers {
         try {
             const refunds = await BillsService.getAllRefunds();
             if (!refunds || refunds.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron abonos");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { refunds });
+            return res.status(200).json(refunds);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -174,7 +173,7 @@ export default class BillsControllers {
             const billId = req.params.id;
             const bill = await BillsService.getBillWithDetails(billId);
             if (!bill) {
-                return sendError(res, ErrorCodes.BILL_NOT_FOUND);
+                return res.status(404).json("Factura no encontrada");
             }
             const dir = path.resolve('./pdfs');
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
@@ -184,12 +183,12 @@ export default class BillsControllers {
             res.download(filePath, fileName, (err) => {
                 if (err) {
                     console.error('Error al descargar el PDF:', err);
-                    return sendError(res, ErrorCodes.BILL_PDF_ERROR);
+                    return res.status(500).json("Error al generar PDF");
                 }
             });
         } catch (error) {
             console.error('Error:', error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -199,7 +198,7 @@ export default class BillsControllers {
             const refundId = req.params.id;
             const refund = await BillsService.getRefundWithDetails(refundId);
             if (!refund) {
-                return sendError(res, ErrorCodes.BILL_ABONO_NOT_FOUND);
+                return res.status(404).json("Abono no encontrado");
             }
             const dir = path.resolve('./pdfs');
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
@@ -210,12 +209,12 @@ export default class BillsControllers {
             res.download(filePath, fileName, (err) => {
                 if (err) {
                     console.error('Error al descargar el PDF:', err);
-                    return sendError(res, ErrorCodes.BILL_PDF_ERROR);
+                    return res.status(500).json("Error al generar PDF");
                 }
             });
         } catch (error) {
             console.error('Error:', error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -224,16 +223,16 @@ export default class BillsControllers {
         try {
             const { originalBillId } = req.body;
             if (!originalBillId) {
-                return sendError(res, ErrorCodes.BILL_ID_REQUIRED);
+                return res.status(400).json("ID de factura original requerido");
             }
             const refund = await BillsService.createRefund(originalBillId);
             if (!refund) {
-                return sendError(res, ErrorCodes.BILL_ABONO_ERROR);
+                return res.status(400).json("Error al crear abono");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.BILL_ABONO_OK], { refund }, 201);
+            return res.status(201).json(refund);
         } catch (error) {
             console.error('Error al crear abono:', error);
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }

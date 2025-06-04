@@ -1,5 +1,4 @@
 import EstateOwnersService from "../services/estatesOwnersServices.js";
-import {ErrorMessage} from "../errors/index.js";
 
 export default class EstateOwnersController {
 
@@ -8,12 +7,12 @@ export default class EstateOwnersController {
         try {
             const estateOwners = await EstateOwnersService.getAllEstateOwners();
             if (!estateOwners || estateOwners.length === 0) {
-                return res.status(404).json({ msg: ErrorMessage.GLOBAL.NO_DATA });
+                return res.status(404).json("No se encontraron relaciones inmueble-propietario");
             }
-            return res.status(200).json({ msg: ErrorMessage.GLOBAL.DATA, EstateOwners: estateOwners });
+            return res.status(200).json(estateOwners);
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
@@ -23,42 +22,50 @@ export default class EstateOwnersController {
             const data = req.body;
             const result = await EstateOwnersService.createEstateOwners(data);
             if (!result) {
-                return res.status(400).json({ msg: ErrorMessage.ESTATE_OWNERS.DUPLICATE });
+                return res.status(409).json("Relación inmueble-propietario duplicada");
             }
-            return res.status(201).json({ msg: ErrorMessage.GLOBAL.CREATE });
+            return res.status(201).json(result);
         } catch (error) {
-            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    // Actualizar por ID ÚNICO
+    // Actualizar por ID único
     static async updateEstateOwners(req, res) {
         try {
             const { id } = req.params;
-            const { ownership_precent } = req.body;
+            const { ownership_percent } = req.body;
 
-            const result = await EstateOwnersService.updateEstateOwners(id, ownership_precent);
-            if (!result) {
-                return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_UPDATE });
+            if (!id || isNaN(Number(id))) {
+                return res.status(400).json("ID inválido");
             }
-            return res.json({ msg: ErrorMessage.GLOBAL.UPDATE });
+
+            const result = await EstateOwnersService.updateEstateOwners(id, ownership_percent);
+            if (!result) {
+                return res.status(400).json("Error al actualizar relación inmueble-propietario");
+            }
+            return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    // Eliminar por ID ÚNICO
+    // Eliminar por ID único
     static async deleteEstateOwners(req, res) {
         try {
             const { id } = req.params;
 
+            if (!id || isNaN(Number(id))) {
+                return res.status(400).json("ID inválido");
+            }
+
             const result = await EstateOwnersService.deleteEstateOwners(id);
             if (!result) {
-                return res.status(400).json({ msg: ErrorMessage.GLOBAL.ERROR_DELETE });
+                return res.status(400).json("Error al eliminar relación inmueble-propietario");
             }
-            res.json({ msg: ErrorMessage.GLOBAL.DELETE });
+            return res.status(204).send();
         } catch (error) {
-            return res.status(500).json({ msg: ErrorMessage.GLOBAL.INTERNAL });
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }

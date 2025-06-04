@@ -1,123 +1,115 @@
 import OwnersServices from "../services/ownersServices.js";
-import { ErrorCodes, sendError, sendSuccess, ErrorMessages } from "../errors/index.js";
 
 export default class OwnersControllers {
 
-    //obtener los owners
+    // Obtener los owners
     static async getAllOwners(req, res) {
         try {
             const owners = await OwnersServices.getAllOwners();
             if (!owners || owners.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron propietarios");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { owners: owners });
-
+            return res.status(200).json(owners);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //obtener todos los propietarios con su ID y su nombre
+
+    // Obtener todos los propietarios para dropdown (ID y nombre)
     static async getAllForDropdownOwners(req, res) {
         try {
             const owners = await OwnersServices.getAllForDropdownOwners();
             if (!owners || owners.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron propietarios");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { Owners: owners });
+            return res.status(200).json(owners);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //MÉTODOS DE BÚSQUEDAS
-
-    //búsqueda por nombre, apellido o nif
+    // Búsqueda por nombre, apellido o nif
     static async getOwner(req, res) {
         try {
             const { name, lastname, nif } = req.query;
             const owner = await OwnersServices.getOwner(name, lastname, nif);
             if (!owner) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Propietario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { owner: owner });
+            return res.status(200).json(owner);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    // Obtener un usuario por ID
+    // Obtener un propietario por ID
     static async getOwnerId(req, res) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const owner = await OwnersServices.getOwnerId(id);
             if (!owner) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Propietario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], { owner: owner });
-
+            return res.status(200).json(owner);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
-    //crear usuario
+    // Crear propietario
     static async createOwner(req, res) {
         try {
             const created = await OwnersServices.createOwner(req.body);
             if (created?.duplicated) {
-                return sendError(res, ErrorCodes.OWNER_DUPLICATE);
+                return res.status(409).json("Propietario duplicado");
             }
             if (!created) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_CREATE);
+                return res.status(400).json("Error al crear propietario");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], {
-                owner: created
-            }, 201);
+            return res.status(201).json(created);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //actualizar usuarios
+    // Actualizar propietario
     static async updateOwner(req, res) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const existing = await OwnersServices.getOwnerId(id);
             if (!existing) {
-                return sendError(res, ErrorCodes.OWNER_NOT_FOUND);
+                return res.status(404).json("Propietario no encontrado");
             }
             const updated = await OwnersServices.updateOwner(id, req.body);
             if (!updated) {
-                return sendError(res, ErrorCodes.OWNER_DUPLICATE);
+                return res.status(409).json("Propietario duplicado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], { owner: updated });
-
+            return res.status(200).json(updated);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //eliminar owners
+
+    // Eliminar propietario
     static async deleteOwner(req, res) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const deleted = await OwnersServices.deleteOwner(id);
             if (!deleted) {
-                return sendError(res, ErrorCodes.OWNER_NOT_FOUND);
+                return res.status(404).json("Propietario no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
-
+            return res.status(204).send();
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }

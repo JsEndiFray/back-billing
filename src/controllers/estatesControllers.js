@@ -1,131 +1,131 @@
 import EstateService from '../services/estatesServices.js';
-import {ErrorCodes, sendError, sendSuccess, ErrorMessages} from "../errors/index.js";
 
 export default class EstateController {
 
-    //obtener los inmuebles
+    // Obtener los inmuebles
     static async getAllEstate(req, res) {
         try {
             const estate = await EstateService.getAllEstate();
             if (!estate || estate.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron inmuebles");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], estate);
+            return res.status(200).json(estate);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //obtener todos los propietarios con su ID y su nombre
+
+    // Obtener todos los inmuebles para dropdown (ID y datos básicos)
     static async getAllForDropdownEstates(req, res) {
         try {
             const estates = await EstateService.getAllForDropdownEstates();
             if (!estates || estates.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("No se encontraron inmuebles");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], estates);
+            return res.status(200).json(estates);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //MÉTODOS DE BÚSQUEDAS
-    //búsqueda de inmueble con el catastro.
+
+    // Búsqueda de inmueble por referencia catastral
     static async getByCadastralReference(req, res) {
         try {
             const {cadastral} = req.params;
             if (!cadastral || typeof cadastral !== 'string' || cadastral.trim() === '') {
-                return sendError(res, ErrorCodes.ESTATE_REFERENCE_REQUIRED);
+                return res.status(400).json("Referencia catastral requerida");
             }
             const result = await EstateService.getByCadastralReference(cadastral);
             if (!result || result.length === 0) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Inmueble no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //búsqueda de inmuebles con el ID
+
+    // Búsqueda de inmuebles por ID
     static async getById(req, res) {
         try {
             const {id} = req.params;
             if (!id || isNaN(id)) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const result = await EstateService.getById(id);
             if (!result) {
-                return sendError(res, ErrorCodes.GLOBAL_NOT_FOUND);
+                return res.status(404).json("Inmueble no encontrado");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DATA], result);
+            return res.status(200).json(result);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SEARCH_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
-    //crear inmuebles
+    // Crear inmueble
     static async createEstate(req, res) {
         try {
             const {cadastral_reference} = req.body;
             const existing = await EstateService.getByCadastralReference(cadastral_reference);
             if (existing && existing.length > 0) {
-                return sendError(res, ErrorCodes.ESTATE_DUPLICATE);
+                return res.status(409).json("Inmueble duplicado");
             }
 
             const created = await EstateService.createEstate(req.body);
             if (!created) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_CREATE);
+                return res.status(400).json("Error al crear inmueble");
             }
 
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_CREATE], {
-                estate: created
-            }, 201);
-
+            return res.status(201).json(created);
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //Actualizar inmuebles
+    // Actualizar inmueble
     static async updateEstate(req, res) {
         try {
             const {id} = req.params;
+
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const existing = await EstateService.getById(id);
             if (!existing) {
-                return sendError(res, ErrorCodes.ESTATE_NOT_FOUND);
+                return res.status(404).json("Inmueble no encontrado");
             }
-            const updated = await EstateService.updateEstate({id: Number(id), ...req.body});
+            const updated = await EstateService.updateEstate(id, req.body);
             if (!updated) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_UPDATE);
+                return res.status(400).json("Error al actualizar inmueble en la base de datos");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_UPDATE], updated);
+
+            return res.status(200).json(updated);
 
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            console.error('Error al actualizar inmueble:', error);
+            return res.status(500).json("Error interno del servidor");
         }
     }
-    //eliminar inmueble
+
+    // Eliminar inmueble
     static async deleteEstate(req, res) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return sendError(res, ErrorCodes.GLOBAL_INVALID_ID);
+                return res.status(400).json("ID inválido");
             }
             const existing = await EstateService.getById(id);
             if (!existing) {
-                return sendError(res, ErrorCodes.ESTATE_NOT_FOUND);
+                return res.status(404).json("Inmueble no encontrado");
             }
 
             const deleted = await EstateService.deleteService(id);
             if (!deleted) {
-                return sendError(res, ErrorCodes.GLOBAL_ERROR_DELETE);
+                return res.status(400).json("Error al eliminar inmueble");
             }
-            return sendSuccess(res, ErrorMessages[ErrorCodes.GLOBAL_DELETE]);
-
+            return res.status(204).send();
         } catch (error) {
-            return sendError(res, ErrorCodes.GLOBAL_SERVER_ERROR);
+            return res.status(500).json("Error interno del servidor");
         }
     }
 }
