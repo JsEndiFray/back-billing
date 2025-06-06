@@ -115,7 +115,7 @@ export default class UserService {
         if (existsPhone) return {duplicated: 'phone'};
 
         // Hash contraseña
-        user.password = await bcrypt.hash(userData.password, 10);
+        userData.password = await bcrypt.hash(userData.password, 10);
 
         const created = await UsersRepository.create(userData);
         if (!created) return null;

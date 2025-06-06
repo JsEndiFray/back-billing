@@ -39,4 +39,21 @@ export const validateClient = [
     body('postal_code').notEmpty().withMessage('El código postal es obligatorio').isPostalCode('ES'),
     body('location').trim().notEmpty().withMessage('La localidad es obligatorio'),
     body('province').trim().notEmpty().withMessage('La provincia es obligatorio'),
+    //validaciones para asosciar el administrador a la empresa. al editar la emresa
+    body('parent_company_id')
+        .optional({nullable: true, checkFalsy: true})
+        .custom((value) => {
+            if (value !== null && value !== undefined && value !== '' && !Number.isInteger(Number(value))) {
+                throw new Error('El ID de empresa padre debe ser numérico');
+            }
+            return true;
+        }),
+    body('relationship_type')
+        .optional({nullable: true, checkFalsy: true})
+        .custom((value) => {
+            if (value !== null && value !== undefined && value !== '' && !['administrator'].includes(value)) {
+                throw new Error('Tipo de relación inválido');
+            }
+            return true;
+        }),
 ];

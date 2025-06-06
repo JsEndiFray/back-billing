@@ -134,18 +134,17 @@ export default class ClientsServices {
         }
 
         //Mismas reglas que en create
-        if (cleanClientsData.type_client === 'autonomo' && cleanClientsData.parent_company_id) {
+        if ((cleanClientsData.type_client === 'autonomo' || cleanClientsData.type_client === 'particular') && cleanClientsData.parent_company_id) {
             if (!cleanClientsData.relationship_type) {
-                cleanClientsData.relationship_type = 'administrator';
+                cleanClientsData.relationship_type = 'ADMINISTRATOR';
             }
-
             const company = await ClientsRepository.findById(cleanClientsData.parent_company_id);
             if (!company || company.type_client !== 'empresa') {
                 return null;
             }
         }
-
-        if (cleanClientsData.type_client !== 'autonomo') {
+        // Solo limpiar relaciones para empresas (las empresas no pueden ser administradoras)
+        if (cleanClientsData.type_client === 'empresa') {
             cleanClientsData.parent_company_id = null;
             cleanClientsData.relationship_type = null;
         }

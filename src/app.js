@@ -48,7 +48,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('dev'));
 //Aplicar a todas las rutas
-//app.use(generalLimiter);
+app.use(generalLimiter);
 
 
 //Conexión a la DB
