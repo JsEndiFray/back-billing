@@ -1,21 +1,27 @@
 import EstatesRepository from "../repository/estatesRepository.js";
 import {sanitizeString} from "../helpers/stringHelpers.js";
 
+/**
+ * Servicio de propiedades inmobiliarias
+ * Validaciones y sanitización de datos
+ */
 export default class EstatesServices {
 
-    //obtener los inmuebles
     static async getAllEstate() {
         return await EstatesRepository.getAll();
     }
 
-    //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdownEstates() {
         return await EstatesRepository.getAllForDropdown();
     }
 
-    //MÉTODOS DE BÚSQUEDAS
+    // ========================================
+    // BÚSQUEDAS CON VALIDACIÓN
+    // ========================================
 
-    //búsqueda de inmueble con el catastro.
+    /**
+     * Busca por referencia catastral con sanitización
+     */
     static async getByCadastralReference(cadastral_reference) {
         if (!cadastral_reference || typeof cadastral_reference !== 'string') return null;
 
@@ -23,21 +29,23 @@ export default class EstatesServices {
         if (!refNormalized || refNormalized.length === 0) return null;
 
         return await EstatesRepository.findByCadastralReference(refNormalized);
-
-
     }
 
-    //búsqueda de inmuebles con el ID
     static async getById(id) {
         if (!id || isNaN(Number(id))) return null;
         return await EstatesRepository.findById(id);
     }
 
-    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+    // ========================================
+    // CRUD CON VALIDACIONES
+    // ========================================
 
-    //crear inmuebles
+    /**
+     * Crea propiedad con validación de duplicados
+     * REGLA: Referencia catastral única
+     */
     static async createEstate(estate) {
-        //verificamos antes si existe antes de crear
+        // Limpiar datos
         const estatesData = {
             cadastral_reference: estate.cadastral_reference?.toUpperCase().trim(),
             price: estate.price,
@@ -48,6 +56,8 @@ export default class EstatesServices {
             country: estate.country?.toUpperCase().trim(),
             surface: estate.surface,
         };
+
+        // Verificar referencia catastral única
         const existing = await EstatesRepository.findByCadastralReference(estatesData.cadastral_reference);
         if (existing && existing.length > 0) return null;
 
@@ -56,7 +66,9 @@ export default class EstatesServices {
         return {estateID, estatesData};
     }
 
-    //actualizar usuarios
+    /**
+     * Actualiza propiedad con validación de duplicados
+     */
     static async updateEstate(id, data) {
         if (!id || isNaN(id)) return null;
 
@@ -71,17 +83,18 @@ export default class EstatesServices {
             country: data.country?.toUpperCase().trim(),
             surface: data.surface,
         };
-        //verificamos antes si existe antes de actualizar
+
+        // Verificar que existe
         const existing = await EstatesRepository.findById(cleanEstateData.id);
         if (!existing) return null;
 
+        // Verificar referencia catastral única (excepto esta misma propiedad)
         const {cadastral_reference} = data;
         const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
         if (duplicate && duplicate.length > 0) {
             const duplicateId = duplicate[0].id;
             if (Number(duplicateId) !== Number(cleanEstateData.id)) {
-                // Si existe otro inmueble con esa referencia -> error
-                return null;
+                return null; // Referencia duplicada
             }
         }
 
@@ -89,16 +102,22 @@ export default class EstatesServices {
         return updated ? cleanEstateData : null;
     }
 
-    //eliminar usuarios
-    static async deleteService(id) {
+    /**
+     * Elimina propiedad
+     * Nota: Método llamado deleteService en lugar de deleteEstate
+     */
+    static async deleteEstate(id) {
         if (!id || isNaN(Number(id))) return null;
-        //verificamos antes si existe antes de eliminar
+
+        // Verificar que existe
         const existing = await EstatesRepository.findById(id);
         if (!existing) return null;
 
         const result = await EstatesRepository.delete(id);
         return result > 0;
     }
-
-
 }
+
+/**
+ * REGLA PRINCIPAL: Referencia catastral única por propiedad
+ */

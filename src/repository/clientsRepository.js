@@ -1,8 +1,14 @@
 import db from '../db/dbConnect.js';
 
+/**
+ * Repositorio para gestionar clientes
+ * Maneja empresas, autónomos y administradores con relaciones jerárquicas
+ */
 export default class ClientsRepository {
 
-    //obtener los datos de los clientes
+    /**
+     * Obtiene todos los clientes con relaciones de empresa padre
+     */
     static async getAll() {
         const query = `
             SELECT c.id,
@@ -22,7 +28,7 @@ export default class ClientsRepository {
                    c.date_update,
                    c.parent_company_id,
                    c.relationship_type,
-                   parent.company_name as parent_company_name
+                   parent.company_name as parent_company_name  -- Nombre de empresa padre
             FROM clients c
                      LEFT JOIN clients parent ON c.parent_company_id = parent.id AND parent.type_client = 'empresa'
             ORDER BY c.id ASC
@@ -31,19 +37,25 @@ export default class ClientsRepository {
         return rows;
     }
 
-    //obtener todos los propietarios con su ID y su nombre
+    /**
+     * Para dropdowns - solo ID y nombre
+     */
     static async getAllForDropdown() {
         const [rows] = await db.query('SELECT id, name FROM clients ORDER BY name ASC');
         return rows;
     }
 
-    //Obtener solo empresas para dropdown
+    /**
+     * Solo empresas para dropdown
+     */
     static async getCompanies() {
         const [rows] = await db.query('SELECT id, company_name FROM clients WHERE type_client = ? ORDER BY company_name ASC', ['empresa']);
         return rows;
     }
 
-    //Obtener autónomos con sus empresas relacionadas
+    /**
+     * Autónomos con sus empresas relacionadas
+     */
     static async getAutonomsWithCompanies() {
         const [rows] = await db.query(`
             SELECT a.*,
@@ -56,7 +68,9 @@ export default class ClientsRepository {
         return rows;
     }
 
-    //Obtener administradores de una empresa específica
+    /**
+     * Administradores de una empresa específica
+     */
     static async getAdministratorsByCompany(companyId) {
         const [rows] = await db.query(`
             SELECT *
@@ -68,21 +82,30 @@ export default class ClientsRepository {
         return rows;
     }
 
-    //MÉTODOS DE BÚSQUEDAS
+    // ========================================
+    // MÉTODOS DE BÚSQUEDA
+    // ========================================
 
-    //búsqueda por tipo de cliente.
+    /**
+     * Busca por tipo de cliente (empresa, autonomo, etc.)
+     */
     static async findByType(type_client) {
         const [rows] = await db.query('SELECT * FROM clients WHERE type_client = ?', [type_client]);
         return rows;
     }
 
-    //búsqueda por nombre de empresa.
+    /**
+     * Busca por nombre de empresa (case-insensitive)
+     */
     static async findByCompany(company_name) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(company_name)) = LOWER(TRIM(?))', [company_name]);
         return rows;
     }
 
-    //búsqueda por nombre y apellido
+    /**
+     * Búsqueda dinámica por nombre y/o apellido
+     * Permite buscar solo por uno de los campos
+     */
     static async findByNameOrLastname(name, lastname) {
         let query = 'SELECT * FROM clients WHERE 1=1';
         const values = [];
@@ -101,21 +124,30 @@ export default class ClientsRepository {
         return rows;
     }
 
-    //búsqueda por identificación
+    /**
+     * Busca por identificación (NIF/CIF) - único
+     */
     static async findByIdentification(identification) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
         return rows[0] || null;
     }
 
-    //búsqueda por ID
+    /**
+     * Busca por ID único
+     */
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM clients WHERE id = ?', [id]);
         return rows[0] || null;
     }
 
-    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
+    // ========================================
+    // MÉTODOS CRUD
+    // ========================================
 
-    //crear usuario
+    /**
+     * Crea un nuevo cliente
+     * @returns {Object} Cliente recién creado con todos sus datos
+     */
     static async create(client) {
         const {
             type_client,
@@ -130,20 +162,22 @@ export default class ClientsRepository {
             location,
             province,
             country,
-            parent_company_id,
-            relationship_type
+            parent_company_id,      // FK a empresa padre (null para empresas independientes)
+            relationship_type       // 'administrator' para admins de empresa
         } = client;
         const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update )' +
             'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?,  NOW(), NOW())',
             [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type]);
         const insertId = result.insertId;
-        // Obtener el cliente recién creado
+
+        // Retorna el cliente completo recién creado
         const newClient = await this.findById(insertId);
         return newClient;
-
     }
 
-    //actualizar clientes
+    /**
+     * Actualiza un cliente existente
+     */
     static async update(client) {
         const {
             id,
@@ -168,22 +202,29 @@ export default class ClientsRepository {
         return result.affectedRows;
     }
 
-    //eliminar usuarios
+    /**
+     * Elimina un cliente
+     */
     static async delete(id) {
         const [result] = await db.query('DELETE FROM clients WHERE id = ?', [id]);
         return result.affectedRows;
     }
 
+    // ========================================
+    // MÉTODOS DE CONTEO/ESTADÍSTICAS
+    // ========================================
 
-    //metodos de conteo relacionado con facturas y empresas
-
-    // Devuelve el número total de facturas asociadas a un cliente
+    /**
+     * Cuenta facturas asociadas a un cliente
+     */
     static async countBillsByClient(clientId) {
         const [rows] = await db.query('SELECT COUNT(*) as count FROM bills WHERE clients_id = ?', [clientId]);
         return rows[0].count;
     }
 
-    //Cuenta el número de administradores dentro de una empresa.
+    /**
+     * Cuenta administradores de una empresa
+     */
     static async countAdministratorsByCompany(companyId) {
         const [rows] = await db.query(
             'SELECT COUNT(*) as count FROM clients WHERE parent_company_id = ? AND relationship_type = ?',
@@ -191,6 +232,21 @@ export default class ClientsRepository {
         );
         return rows[0].count;
     }
-
-
 }
+
+/**
+ * TIPOS DE CLIENTE Y RELACIONES:
+ *
+ * type_client:
+ * - 'empresa': Empresa principal
+ * - 'autonomo': Trabajador autónomo
+ * - 'particular': Cliente particular
+ *
+ * relationship_type:
+ * - 'administrator': Administrador de empresa
+ * - null: Cliente independiente
+ *
+ * parent_company_id:
+ * - null: Cliente independiente/empresa principal
+ * - ID: Referencia a empresa padre (para administradores)
+ */

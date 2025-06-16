@@ -1,6 +1,14 @@
 import { body } from 'express-validator';
 
+/**
+ * Validador para propiedades inmobiliarias
+ */
 export const validateEstate = [
+    /**
+     * Referencia catastral española: 20 caracteres alfanuméricos
+     * Formato: 14 dígitos + 2 letras + 4 caracteres adicionales
+     * Ejemplo: 1234567890123456AB12
+     */
     body('cadastral_reference')
         .notEmpty().withMessage('La referencia catastral es obligatoria')
         .isLength({ min: 20, max: 20 }).withMessage('La referencia catastral debe tener 20 caracteres')

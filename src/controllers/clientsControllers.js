@@ -1,9 +1,16 @@
 import ClientsServices from "../services/clientsServices.js";
 import {sanitizeString} from "../helpers/stringHelpers.js";
 
+/**
+ * Controlador de clientes - Capa HTTP que maneja requests/responses
+ * Convierte resultados del servicio en respuestas HTTP apropiadas
+ */
 export default class ClientsControllers {
 
-    //obtener los datos de los clientes
+    // ========================================
+    // MÉTODOS DE CONSULTA
+    // ========================================
+
     static async getAllClients(req, res) {
         try {
             const clients = await ClientsServices.getAllClients()
@@ -11,13 +18,11 @@ export default class ClientsControllers {
                 return res.status(404).json("No se encontraron clientes");
             }
             return res.status(200).json(clients);
-
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     };
 
-    //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdownClients(req, res) {
         try {
             const clients = await ClientsServices.getAllForDropdownClients();
@@ -30,13 +35,15 @@ export default class ClientsControllers {
         }
     }
 
-    //Obtener solo empresas para dropdown
+    /**
+     * Obtiene empresas para dropdown
+     * Nota: Retorna array vacío en lugar de 404 para mejor UX
+     */
     static async getCompanies(req, res) {
         try {
             const companies = await ClientsServices.getCompanies();
             if (!companies || companies.length === 0) {
-                //Para empresas, devolver array vacío en lugar de error
-                return res.status(200).json([]);
+                return res.status(200).json([]); // Array vacío, no error
             }
             return res.status(200).json(companies);
         } catch (error) {
@@ -44,7 +51,6 @@ export default class ClientsControllers {
         }
     }
 
-    //Obtener autónomos con información de empresa
     static async getAutonomsWithCompanies(req, res) {
         try {
             const autonoms = await ClientsServices.getAutonomsWithCompanies();
@@ -57,7 +63,6 @@ export default class ClientsControllers {
         }
     }
 
-    //Obtener administradores de una empresa específica
     static async getAdministratorsByCompany(req, res) {
         try {
             const {companyId} = req.params;
@@ -67,7 +72,7 @@ export default class ClientsControllers {
 
             const administrators = await ClientsServices.getAdministratorsByCompany(companyId);
             if (!administrators || administrators.length === 0) {
-                return res.status(200).json([]);
+                return res.status(200).json([]); // Array vacío para dropdown
             }
             return res.status(200).json(administrators);
         } catch (error) {
@@ -75,14 +80,18 @@ export default class ClientsControllers {
         }
     }
 
-    //búsqueda por tipo de cliente.
+    // ========================================
+    // BÚSQUEDAS CON VALIDACIÓN DE PARÁMETROS
+    // ========================================
+
+    /**
+     * Busca por tipo de cliente con validación de tipos permitidos
+     */
     static async getByClientType(req, res) {
         try {
-            //Obtienes el parámetro de la ruta (:clientType).
             const {clientType} = req.params;
-            //normalizamos para los espacios o mayúsculas y minúsculas
             const clientTypeNormalized = sanitizeString(clientType);
-            //tipos permitidos
+
             const allowedTypes = ['particular', 'autonomo', 'empresa'];
             if (!allowedTypes.includes(clientTypeNormalized)) {
                 return res.status(400).json("Tipo de cliente inválido");
@@ -93,16 +102,13 @@ export default class ClientsControllers {
                 return res.status(404).json("No se encontraron clientes de este tipo");
             }
             return res.status(200).json(clientsType);
-
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //búsqueda por nombre de empresa.
     static async getCompany(req, res) {
         try {
-            //Obtienes el parámetro de la ruta (:company_name).
             const {company_name} = req.params;
             if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
                 return res.status(400).json("Nombre de empresa requerido");
@@ -117,14 +123,17 @@ export default class ClientsControllers {
         }
     }
 
-    //búsqueda por nombre y apellidos
+    /**
+     * Búsqueda por nombre/apellido usando query parameters
+     * Permite buscar por uno o ambos campos
+     */
     static async getFullName(req, res) {
         try {
             const {name, lastname} = req.query;
             if (!name && !lastname) {
                 return res.status(400).json("Nombre o apellido requerido");
             }
-            // Sanitizar individualmente
+
             const nameSanitized = name ? sanitizeString(name) : null;
             const lastnameSanitized = lastname ? sanitizeString(lastname) : null;
 
@@ -133,13 +142,11 @@ export default class ClientsControllers {
                 return res.status(404).json("Cliente no encontrado");
             }
             return res.status(200).json(result);
-
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //búsqueda por identificación
     static async getByIdentification(req, res) {
         try {
             const {identification} = req.params;
@@ -148,18 +155,15 @@ export default class ClientsControllers {
                 return res.status(400).json("Identificación requerida");
             }
             const result = await ClientsServices.getByIdentification(identificationNormalized);
-
             if (!result || result.length === 0) {
                 return res.status(404).json("Cliente no encontrado");
             }
             return res.status(200).json(result);
-
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //búsqueda por ID
     static async getById(req, res) {
         try {
             const {id} = req.params;
@@ -171,49 +175,53 @@ export default class ClientsControllers {
                 return res.status(404).json("Cliente no encontrado");
             }
             return res.status(200).json(result);
-
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
-    //crear clientes
+    // ========================================
+    // CRUD CON MANEJO DE CÓDIGOS HTTP
+    // ========================================
+
     static async createClient(req, res) {
         try {
             const created = await ClientsServices.createClient(req.body);
             if (!created) {
-                return res.status(409).json("Cliente duplicado");
+                return res.status(409).json("Cliente duplicado"); // Conflict
             }
-            return res.status(201).json(created);
+            return res.status(201).json(created); // Created
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //actualizar clientes
     static async updateClient(req, res) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
+
             const existing = await ClientsServices.getById(id);
             if (!existing) {
                 return res.status(404).json("Cliente no encontrado");
             }
+
             const updated = await ClientsServices.updateClient(id, req.body);
             if (!updated) {
-                return res.status(409).json("Cliente duplicado");
+                return res.status(409).json("Cliente duplicado"); // Conflict
             }
-
             return res.status(200).json(updated);
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    //eliminar el cliente
+    /**
+     * Eliminar cliente con manejo de múltiples tipos de error del servicio
+     * El servicio retorna strings específicos para diferentes escenarios
+     */
     static async deleteClient(req, res) {
         try {
             const {id} = req.params;
@@ -223,12 +231,12 @@ export default class ClientsControllers {
 
             const result = await ClientsServices.deleteClient(id);
 
-            // Cliente no encontrado
+            // Mapeo de respuestas del servicio a códigos HTTP
             if (result === null) {
                 return res.status(404).json("Cliente no encontrado");
             }
 
-            // Errores específicos de validación (strings)
+            // Errores de integridad referencial
             if (result === 'CLIENT_HAS_BILLS') {
                 return res.status(409).json("El cliente tiene facturas asociadas");
             }
@@ -239,17 +247,27 @@ export default class ClientsControllers {
                 return res.status(409).json("El cliente es administrador de una empresa");
             }
 
-            // No se pudo eliminar por motivo técnico
+            // Error técnico en eliminación
             if (result === false) {
                 return res.status(500).json("Error al eliminar cliente");
             }
 
-            // Éxito (result === true) - Respuesta sin contenido
+            // Éxito - Sin contenido
             return res.status(204).send();
-
         } catch (error) {
             console.log(error);
             return res.status(500).json("Error interno del servidor");
         }
     }
 }
+
+/**
+ * CÓDIGOS HTTP UTILIZADOS:
+ * - 200: OK (consultas exitosas)
+ * - 201: Created (creación exitosa)
+ * - 204: No Content (eliminación exitosa)
+ * - 400: Bad Request (parámetros inválidos)
+ * - 404: Not Found (recurso no encontrado)
+ * - 409: Conflict (duplicados, integridad referencial)
+ * - 500: Internal Server Error (errores técnicos)
+ */

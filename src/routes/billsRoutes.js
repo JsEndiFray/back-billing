@@ -331,6 +331,7 @@ const router = express.Router()
     .get('/', auth, role(['admin', 'employee']), BillsControllers.getAllBills)
 
     //RUTAS PARA GESTIÓN DE FACTURAS NORMALES
+
     /**
      * @swagger
      * /bills/{id}/pdf:
@@ -385,7 +386,6 @@ const router = express.Router()
      *         description: Factura no encontrada
      */
     .get('/:id', auth, role(['admin', 'employee']), BillsControllers.getBillById)
-
 
     //RUTAS PARA CREAR/ACTUALIZAR/ELIMINAR FACTURAS
     /**
@@ -471,5 +471,8 @@ const router = express.Router()
      *         description: Factura no encontrada
      */
     .delete('/:id', auth, role(['admin']), BillsControllers.deleteBill)
+
+
+
 
 export default router;

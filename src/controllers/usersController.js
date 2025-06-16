@@ -1,8 +1,11 @@
 import UserService from "../services/usersServices.js";
 
+/**
+ * Controlador de usuarios del sistema
+ * ✅ CORREGIDO: Maneja correctamente los retornos null del servicio
+ */
 export default class UserController {
 
-    // Obtener todos los usuarios registrados
     static async getAllUsers(req, res) {
         try {
             const users = await UserService.getAllUsers();
@@ -15,7 +18,10 @@ export default class UserController {
         }
     }
 
-    // Búsqueda por username
+    // ========================================
+    // BÚSQUEDAS ESPECÍFICAS
+    // ========================================
+
     static async getUsername(req, res) {
         try {
             const {username} = req.params;
@@ -29,7 +35,6 @@ export default class UserController {
         }
     }
 
-    // Búsqueda por email
     static async getEmail(req, res) {
         try {
             const {email} = req.params;
@@ -43,7 +48,6 @@ export default class UserController {
         }
     }
 
-    // Búsqueda por phone
     static async getPhone(req, res) {
         try {
             const {phone} = req.params;
@@ -57,7 +61,6 @@ export default class UserController {
         }
     }
 
-    // Buscar por ID
     static async getUserId(req, res) {
         try {
             const {id} = req.params;
@@ -75,17 +78,20 @@ export default class UserController {
         }
     }
 
-    // Crear usuario
+    // ========================================
+    // CRUD CON MANEJO CORREGIDO
+    // ========================================
+
+    /**
+     * Crear usuario
+     * ✅ CORREGIDO: Maneja null como duplicado con mensaje informativo
+     */
     static async createUser(req, res) {
         try {
-            const user = req.body;
-            const result = await UserService.createUser(user);
-            if (result?.duplicated) {
-                console.log(result);
-                return res.status(409).json(`Usuario duplicado: ${result.duplicated}`);
-            }
+            const result = await UserService.createUser(req.body);
             if (!result) {
-                return res.status(400).json("Error al crear usuario");
+                // Mensaje informativo que ayuda al usuario a identificar el problema
+                return res.status(409).json('Usuario duplicado.. Puede ser nombre de usuario email o teléfono.');
             }
             return res.status(201).json(result);
         } catch (error) {
@@ -93,31 +99,28 @@ export default class UserController {
         }
     }
 
-    // Actualizar usuario
+    /**
+     * Actualizar usuario
+     * ✅ CORREGIDO: Maneja null apropiadamente
+     */
     static async updateUser(req, res) {
         try {
             const {id} = req.params;
-            const data = req.body;
-
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const updated = await UserService.updateUser(id, data);
 
-            if (updated?.duplicated) {
-                return res.status(409).json(`Usuario duplicado: ${updated.duplicated}`);
-            }
+            const updated = await UserService.updateUser(id, req.body);
             if (!updated) {
-                return res.status(404).json("Usuario no encontrado");
+                // Mensaje que cubre tanto duplicados como usuario no encontrado
+                return res.status(409).json('Usuario duplicado o no encontrado');
             }
             return res.status(200).json(updated);
         } catch (error) {
-            console.log(error);
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    // Eliminar usuario
     static async deleteUser(req, res) {
         try {
             const {id} = req.params;
@@ -128,9 +131,21 @@ export default class UserController {
             if (!deleted) {
                 return res.status(400).json("Error al eliminar usuario");
             }
-            return res.status(204).send();
+            return res.status(204).send(); // No content - eliminación exitosa
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 }
+
+/**
+ * ✅ MEJORAS APLICADAS:
+ * 1. Eliminó manejo de objetos {duplicated}
+ * 2. Mensajes informativos para duplicados
+ * 3. Códigos HTTP apropiados (409 para conflictos)
+ * 4. Consistencia con otros controladores
+ *
+ * MENSAJES UX-FRIENDLY:
+ * - "Usuario duplicado.. Puede ser nombre de usuario email o teléfono."
+ * - "Usuario duplicado o no encontrado"
+ */

@@ -66,7 +66,7 @@ const router = express.Router()
      *         description: No autorizado
      */
     // Ver estate owners
-    .get("/", auth, role(['employee']), EstateOwnersController.getAllEstateOwners)
+    .get("/", auth, role(['employee', 'admin']), EstateOwnersController.getAllEstateOwners)
 
     /**
      * @swagger

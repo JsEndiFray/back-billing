@@ -1,8 +1,15 @@
 import OwnersServices from "../services/ownersServices.js";
 
+/**
+ * Controlador de propietarios
+ * Maneja personas físicas o jurídicas que poseen inmuebles
+ */
 export default class OwnersControllers {
 
-    // Obtener los owners
+    // ========================================
+    // MÉTODOS DE CONSULTA
+    // ========================================
+
     static async getAllOwners(req, res) {
         try {
             const owners = await OwnersServices.getAllOwners();
@@ -15,12 +22,16 @@ export default class OwnersControllers {
         }
     }
 
-    // Obtener todos los propietarios para dropdown (ID y nombre)
+    /**
+     * Para dropdown de propietarios
+     * Nota: Usa 404 - podrías considerar 200+[] para mejor UX
+     */
     static async getAllForDropdownOwners(req, res) {
         try {
             const owners = await OwnersServices.getAllForDropdownOwners();
             if (!owners || owners.length === 0) {
                 return res.status(404).json("No se encontraron propietarios");
+                // Alternativa UX: return res.status(200).json([]);
             }
             return res.status(200).json(owners);
         } catch (error) {
@@ -28,7 +39,14 @@ export default class OwnersControllers {
         }
     }
 
-    // Búsqueda por nombre, apellido o nif
+    // ========================================
+    // BÚSQUEDAS ESPECÍFICAS
+    // ========================================
+
+    /**
+     * Búsqueda flexible por nombre, apellido o NIF usando query parameters
+     * Permite buscar por uno o varios campos simultáneamente
+     */
     static async getOwner(req, res) {
         try {
             const { name, lastname, nif } = req.query;
@@ -42,7 +60,6 @@ export default class OwnersControllers {
         }
     }
 
-    // Obtener un propietario por ID
     static async getOwnerId(req, res) {
         try {
             const { id } = req.params;
@@ -59,10 +76,17 @@ export default class OwnersControllers {
         }
     }
 
-    // Crear propietario
+    // ========================================
+    // OPERACIONES CRUD
+    // ========================================
+
+    /**
+     * Crear propietario
+     */
     static async createOwner(req, res) {
         try {
             const created = await OwnersServices.createOwner(req.body);
+
             if (created?.duplicated) {
                 return res.status(409).json("Propietario duplicado");
             }
@@ -71,21 +95,23 @@ export default class OwnersControllers {
             }
             return res.status(201).json(created);
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
 
-    // Actualizar propietario
     static async updateOwner(req, res) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
+
             const existing = await OwnersServices.getOwnerId(id);
             if (!existing) {
                 return res.status(404).json("Propietario no encontrado");
             }
+
             const updated = await OwnersServices.updateOwner(id, req.body);
             if (!updated) {
                 return res.status(409).json("Propietario duplicado");
@@ -96,20 +122,28 @@ export default class OwnersControllers {
         }
     }
 
-    // Eliminar propietario
     static async deleteOwner(req, res) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
+
             const deleted = await OwnersServices.deleteOwner(id);
             if (!deleted) {
                 return res.status(404).json("Propietario no encontrado");
             }
-            return res.status(204).send();
+            return res.status(204).send(); // No content - eliminación exitosa
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
     }
 }
+
+/**
+ * CARACTERÍSTICAS DISTINTIVAS:
+ * 1. getOwner usa query parameters (?name=Juan&lastname=Pérez)
+ *    en lugar de path parameters (/owners/:name/:lastname)
+ * 2. Búsqueda flexible por múltiples campos
+ * 3. Patrón estándar de validaciones y códigos HTTP
+ */

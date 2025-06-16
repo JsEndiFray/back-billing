@@ -7,6 +7,7 @@ export default class OwnersRepository {
         const [rows] = await db.query('SELECT * FROM owners');
         return rows;
     }
+
     //obtener todos los propietarios con su ID y su nombre
     static async getAllForDropdown() {
         const [rows] = await db.query('SELECT id, name FROM owners ORDER BY name ASC');
@@ -28,30 +29,32 @@ export default class OwnersRepository {
     }
 
     //búsqueda por nif
-    static async findByNif(nif) {
-        const [rows] = await db.query('SELECT * FROM owners WHERE LOWER(TRIM(nif)) = LOWER(TRIM(?))', [nif]);
+    static async findByIdentification(identification) {
+        const [rows] = await db.query('SELECT * FROM owners WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
         return rows[0] || null;
     }
+
     //búsqueda por ID
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM owners WHERE id = ?', [id]);
         return rows[0] || null;
     }
+
     //SIGUIENTE MÉTODOS CREATE, UPDATE, DELETE
 
     //crear usuario
     static async create(data) {
-        const {name, lastname, email, nif, address, postal_code, location, province} = data;
-        const [result] = await db.query('INSERT INTO owners (name, lastname, email, nif, address, postal_code, location, province, date_create, date_update )' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [name, lastname, email, nif, address, postal_code, location, province]);
+        const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = data;
+        const [result] = await db.query('INSERT INTO owners (name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update )' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [name, lastname, email, identification, phone, address, postal_code, location, province, country]);
         return result.insertId;
     }
 
     //actualizar usuarios
     static async update(data) {
-        const {id, name, lastname, email, nif, address, postal_code, location, province} = data;
-        const [result] = await db.query('UPDATE owners SET  name = ?, lastname = ?, email = ?, nif = ?, address = ?, postal_code = ?, location = ?, province = ?, date_update = NOW() WHERE id = ?',
-            [name, lastname, email, nif, address, postal_code, location, province, id]);
+        const {id, name, lastname, email, identification, phone, address, postal_code, location, province, country} = data;
+        const [result] = await db.query('UPDATE owners SET  name = ?, lastname = ?, email = ?, identification = ?, phone = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, date_update = NOW() WHERE id = ?',
+            [name, lastname, email, identification, phone, address, postal_code, location, province, country, id]);
         return result.affectedRows;
     }
 
