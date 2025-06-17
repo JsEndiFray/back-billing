@@ -14,11 +14,33 @@ export default class EstateOwnersController {
         try {
             const estateOwners = await EstateOwnersService.getAllEstateOwners();
             if (!estateOwners || estateOwners.length === 0) {
+                console.log(estateOwners)
                 return res.status(404).json("No se encontraron relaciones inmueble-propietario");
             }
             return res.status(200).json(estateOwners);
         } catch (error) {
             console.error(error);
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+    /**
+     * Busca relación propiedad-propietario por ID
+     */
+    static async getEstateOwnersById(req, res) {
+        try {
+            const {id} = req.params;
+            if (!id || isNaN(Number(id)) || Number(id) <= 0) {
+                return res.status(400).json("ID inválido");
+            }
+            const result = await EstateOwnersService.getEstateOwnersById(Number(id));
+            if (!result) {
+                return res.status(404).json("Inmueble y propietario no encontrado");
+            }
+            return res.status(200).json(result);
+
+        } catch (error) {
+            console.error("Error in getEstateOwnersById:", error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -46,8 +68,8 @@ export default class EstateOwnersController {
      */
     static async updateEstateOwners(req, res) {
         try {
-            const { id } = req.params;
-            const { ownership_percentage  } = req.body;
+            const {id} = req.params;
+            const {ownership_percentage} = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
@@ -68,7 +90,7 @@ export default class EstateOwnersController {
      */
     static async deleteEstateOwners(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");

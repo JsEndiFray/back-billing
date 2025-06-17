@@ -91,7 +91,7 @@ export default class EstateOwnersRepository {
             [estateId, ownersId, ownershipPercent]
         );
         // Retorna los datos insertados (no incluye el ID generado automáticamente)
-        return estateId, ownersId, ownershipPercent;
+        return {estateId, ownersId, ownershipPercent};
     }
 
     /**

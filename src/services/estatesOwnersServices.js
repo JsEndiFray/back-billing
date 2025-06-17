@@ -12,14 +12,22 @@ export default class EstateOwnersService {
     static async getAllEstateOwners() {
         const rows = await EstateOwnersRepository.getAll();
         return rows;
-    }
+    };
+
+    /**
+     * Busca relación por ID único
+     */
+    static async getEstateOwnersById(id) {
+        if (!id || isNaN(Number(id))) return null;
+        return await EstateOwnersRepository.findById(id);
+    };
 
     /**
      * Crea relación propiedad-propietario
      * REGLA: No duplicar combinación estate_id + owners_id
      */
     static async createEstateOwners(data) {
-        const { estate_id, owners_id, ownership_percentage  } = data;
+        const {estate_id, owners_id, ownership_percentage} = data;
 
         // Validar que no exista ya esta combinación
         const existing = await EstateOwnersRepository.findByEstateAndOwners(estate_id, owners_id);

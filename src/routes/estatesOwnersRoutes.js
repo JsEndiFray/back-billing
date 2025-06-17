@@ -10,23 +10,52 @@ import role from "../middlewares/role.js";
  *   name: Inmuebles-Propietarios
  *   description: Relación entre inmuebles y propietarios
  */
-
-/**
- * @swagger
- * /estates-owners:
- *   get:
- *     summary: Obtener todas las relaciones entre inmuebles y propietarios
- *     tags: [Inmuebles-Propietarios]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de relaciones
- *       403:
- *         description: No autorizado
- */
-
 const router = express.Router()
+
+    /**
+     * @swagger
+     * /estates-owners:
+     *   get:
+     *     summary: Obtener todas las relaciones entre inmuebles y propietarios
+     *     tags: [Inmuebles-Propietarios]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: Lista de relaciones
+     *       403:
+     *         description: No autorizado
+     */
+    // Ver estate owners
+    .get("/", auth, role(['employee', 'admin']), EstateOwnersController.getAllEstateOwners)
+
+    /**
+     * @swagger
+     * /estates-owners/{id}:
+     *   get:
+     *     summary: Obtener una relación por ID
+     *     tags: [Inmuebles-Propietarios]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID de la relación
+     *     responses:
+     *       200:
+     *         description: Relación encontrada
+     *       404:
+     *         description: No encontrada
+     *       400:
+     *         description: ID inválido
+     *       403:
+     *         description: No autorizado
+     */
+    //búsqueda por ID
+    .get("/:id", auth, role(['employee', 'admin']), EstateOwnersController.getEstateOwnersById)
 
     /**
      * @swagger
@@ -65,9 +94,8 @@ const router = express.Router()
      *       403:
      *         description: No autorizado
      */
-    // Ver estate owners
-    .get("/", auth, role(['employee', 'admin']), EstateOwnersController.getAllEstateOwners)
-
+    // Crear
+    .post("/", auth, role(['admin']), EstateOwnersController.createEstateOwners)
     /**
      * @swagger
      * /estates-owners/{id}:
@@ -102,9 +130,6 @@ const router = express.Router()
      *       403:
      *         description: No autorizado
      */
-    // Crear
-    .post("/", auth, role(['admin']), EstateOwnersController.createEstateOwners)
-
     // Actualizar por ID ÚNICO
     .put("/:id", auth, role(['admin']), EstateOwnersController.updateEstateOwners)
 

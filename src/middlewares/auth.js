@@ -73,7 +73,7 @@ export default function auth(req, res, next) {
         // - Token firmado con secret diferente
         // - Token malformado (no es JWT válido)
         // - Error en el proceso de verificación
-        return res.status(401).json('Token inválido o expirado.');
+        return res.status(401).json('La sesion se ha expirado.');
     }
 
     // ==========================================
