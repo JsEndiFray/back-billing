@@ -15,21 +15,28 @@ export default class BillsRepository {
         SELECT 
             b.id,
             b.bill_number,
+            b.estates_id,
+            b.clients_id,
+            b.owners_id,
             b.ownership_percent,
             b.date,
             b.tax_base,
             b.iva,
             b.irpf,
             b.total,
+            b.is_refund,
+            b.original_bill_id,
             b.date_create,
             b.date_update,
             e.address AS estate_name,      -- Dirección de la propiedad
             o.name AS owner_name,          -- Nombre del propietario
-            c.name AS client_name          -- Nombre del cliente
+            c.name AS client_name,          -- Nombre del cliente
+            ob.bill_number AS original_bill_number
         FROM bills b
-        JOIN estates e ON b.estate_id = e.id
+        JOIN estates e ON b.estates_id = e.id
         JOIN owners o ON b.owners_id = o.id
         JOIN clients c ON b.clients_id = c.id
+        LEFT JOIN bills ob ON b.original_bill_id = ob.id
         ORDER BY b.date DESC
     `);
         return rows;
@@ -87,7 +94,7 @@ export default class BillsRepository {
      */
     static async findByOwnersAndEstate(ownersId, estateId) {
         const [rows] = await db.query(
-            `SELECT * FROM bills WHERE owners_id = ? AND estate_id = ?`,
+            `SELECT * FROM bills WHERE owners_id = ? AND estates_id = ?`,
             [ownersId, estateId]
         );
         return rows;
@@ -113,11 +120,11 @@ export default class BillsRepository {
      * @returns {number} ID de la factura creada
      */
     static async create(bill) {
-        const {bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent} = bill;
+        const {bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent} = bill;
         // Campos por defecto: is_refund = FALSE, original_bill_id = NULL
-        const [result] = await db.query('INSERT INTO bills (bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, is_refund, original_bill_id, date_create, date_update)' +
+        const [result] = await db.query('INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, is_refund, original_bill_id, date_create, date_update)' +
             ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, NULL, NOW(), NOW())',
-            [bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent]);
+            [bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent]);
         return result.insertId;
     }
 
@@ -182,14 +189,13 @@ export default class BillsRepository {
                        o.phone               as owner_phone
                 FROM bills b
                          LEFT JOIN clients c ON b.clients_id = c.id
-                         LEFT JOIN estates e ON b.estate_id = e.id
+                         LEFT JOIN estates e ON b.estates_id = e.id
                          LEFT JOIN owners o ON b.owners_id = o.id
                 WHERE b.id = ?
             `, [id]);
 
             return rows[0];
         } catch (error) {
-            console.error('Error en findByIdWithDetails:', error);
             throw error;
         }
     }
@@ -203,10 +209,10 @@ export default class BillsRepository {
      * @param {Object} bill - Datos del abono, incluye original_bill_id
      */
     static async createRefund(bill) {
-        const {bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, original_bill_id} = bill;
-        const [result] = await db.query('INSERT INTO bills (bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, is_refund, original_bill_id, date_create, date_update)' +
+        const {bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, original_bill_id} = bill;
+        const [result] = await db.query('INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, is_refund, original_bill_id, date_create, date_update)' +
             ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, NOW(), NOW())',
-            [bill_number, estate_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, original_bill_id]);
+            [bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total, ownership_percent, original_bill_id]);
         return result.insertId;
     }
 
@@ -229,24 +235,28 @@ export default class BillsRepository {
             SELECT
                 b.id,
                 b.bill_number,
+                b.estates_id,             
+                b.clients_id,             
+                b.owners_id,              
                 b.ownership_percent,
                 b.date,
                 b.tax_base,
                 b.iva,
                 b.irpf,
                 b.total,
+                b.is_refund,              
                 b.date_create,
                 b.date_update,
                 b.original_bill_id,
                 e.address AS estate_name,
                 o.name AS owner_name,
                 c.name AS client_name,
-                ob.bill_number AS original_bill_number  -- Número de factura original
+                ob.bill_number AS original_bill_number
             FROM bills b
-                     JOIN estates e ON b.estate_id = e.id
+                     JOIN estates e ON b.estates_id = e.id
                      JOIN owners o ON b.owners_id = o.id
                      JOIN clients c ON b.clients_id = c.id
-                     LEFT JOIN bills ob ON b.original_bill_id = ob.id  -- JOIN con factura original
+                     LEFT JOIN bills ob ON b.original_bill_id = ob.id
             WHERE b.is_refund = TRUE
             ORDER BY b.date DESC
         `);
@@ -293,7 +303,7 @@ export default class BillsRepository {
                        ob.bill_number        as original_bill_number
                 FROM bills b
                          LEFT JOIN clients c ON b.clients_id = c.id
-                         LEFT JOIN estates e ON b.estate_id = e.id
+                         LEFT JOIN estates e ON b.estates_id = e.id
                          LEFT JOIN owners o ON b.owners_id = o.id
                          LEFT JOIN bills ob ON b.original_bill_id = ob.id
                 WHERE b.id = ?
@@ -302,7 +312,6 @@ export default class BillsRepository {
 
             return rows[0];
         } catch (error) {
-            console.error('Error en findRefundByIdWithDetails:', error);
             throw error;
         }
     }

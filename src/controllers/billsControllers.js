@@ -50,6 +50,7 @@ export default class BillsControllers {
             }
             return res.status(200).json(bills);
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -223,10 +224,12 @@ export default class BillsControllers {
             const data = req.body;
             const created = await BillsService.createBill(data);
             if (!created) {
+                console.log(created)
                 return res.status(400).json("Error al crear factura");
             }
             return res.status(201).json(created);
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -364,12 +367,10 @@ export default class BillsControllers {
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
                 if (err) {
-                    console.error('Error al descargar el PDF:', err);
                     return res.status(500).json("Error al generar PDF");
                 }
             });
         } catch (error) {
-            console.error('Error:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -415,12 +416,10 @@ export default class BillsControllers {
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
                 if (err) {
-                    console.error('Error al descargar el PDF:', err);
                     return res.status(500).json("Error al generar PDF");
                 }
             });
         } catch (error) {
-            console.error('Error:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -455,7 +454,6 @@ export default class BillsControllers {
             }
             return res.status(201).json(refund);
         } catch (error) {
-            console.error('Error al crear abono:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }

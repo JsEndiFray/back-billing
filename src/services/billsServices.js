@@ -20,17 +20,20 @@ export default class BillsService {
         return bills.map(bill => ({
             id: bill.id,
             bill_number: bill.bill_number,
-            property: bill.estate_name,      // Alias más limpio
-            owner: bill.owner_name,          // Alias más limpio
-            client: bill.client_name,        // Alias más limpio
+            estates_id: bill.estate_name,      // Alias más limpio
+            owners_id: bill.owner_name,          // Alias más limpio
+            clients_id: bill.client_name,        // Alias más limpio
             date: bill.date,
             tax_base: bill.tax_base,
             iva: bill.iva,
             irpf: bill.irpf,
             total: bill.total,
             ownership_percent: bill.ownership_percent,
-            createdAt: bill.date_create,     // Formato camelCase
-            updatedAt: bill.date_update      // Formato camelCase
+            is_refund: bill.is_refund,
+            original_bill_id: bill.original_bill_id,
+            original_bill_number: bill.original_bill_number,
+            date_create: bill.date_create,     // Formato camelCase
+            date_update: bill.date_update      // Formato camelCase
         }));
     }
 
@@ -86,15 +89,15 @@ export default class BillsService {
      * Crea factura con validaciones y cálculos automáticos
      */
     static async createBill(data) {
-        const {owners_id, estate_id, date, tax_base, iva, irpf} = data;
+        const {owners_id, estates_id, date, tax_base, iva, irpf} = data;
 
         // Validación de datos obligatorios
-        if (!owners_id || !estate_id || !date) {
+        if (!owners_id || !estates_id || !date) {
             return null;
         }
 
         // REGLA DE NEGOCIO: Solo una factura por mes por owner+estate
-        const existingBills = await BillsRepository.findByOwnersAndEstate(owners_id, estate_id);
+        const existingBills = await BillsRepository.findByOwnersAndEstate(owners_id, estates_id);
         if (existingBills.length > 0) {
             const newBillMonth = format(new Date(date), 'yyyy-MM');
             const sameMonthBill = existingBills.find(bill => {
@@ -107,7 +110,7 @@ export default class BillsService {
         }
 
         // Obtener porcentaje de propiedad automáticamente
-        const ownershipPercent = await EstatesOwnersRepository.getOwnershipPercent(estate_id, owners_id);
+        const ownershipPercent = await EstatesOwnersRepository.getOwnershipPercent(estates_id, owners_id);
 
         // Generar número de factura secuencial
         const lastBillNumber = await BillsRepository.getLastBillNumber();
@@ -191,19 +194,20 @@ export default class BillsService {
         return refunds.map(refund => ({
             id: refund.id,
             bill_number: refund.bill_number,
-            property: refund.estate_name,
-            owner: refund.owner_name,
-            client: refund.client_name,
+            estates_id: refund.estates_id,
+            clients_id: refund.clients_id,
+            owners_id: refund.owners_id,
+            ownership_percent: refund.ownership_percent,
             date: refund.date,
             tax_base: refund.tax_base,
             iva: refund.iva,
             irpf: refund.irpf,
             total: refund.total,
-            ownership_percent: refund.ownership_percent,
+            is_refund: refund.is_refund,
             original_bill_id: refund.original_bill_id,
             original_bill_number: refund.original_bill_number,  // Referencia a factura original
-            createdAt: refund.date_create,
-            updatedAt: refund.date_update
+            date_create: refund.date_create,
+            date_update: refund.date_update
         }));
     }
 
@@ -258,7 +262,7 @@ export default class BillsService {
         // Crear abono con valores negativos
         const refundToCreate = {
             bill_number: newRefundNumber,
-            estate_id: originalBill.estate_id,
+            estates_id: originalBill.estates_id,
             owners_id: originalBill.owners_id,
             clients_id: originalBill.clients_id,
             date: new Date(),
