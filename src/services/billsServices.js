@@ -11,7 +11,7 @@ import {calculateTotal} from "../helpers/calculateTotal.js";
 export default class BillsService {
 
     /**
-     * Obtiene todas las facturas con formato estandarizado
+     * Obtiene todas las facturas con formato estandarizado y con metodos de pagos
      */
     static async getAllBills() {
         const bills = await BillsRepository.getAll();
@@ -20,9 +20,9 @@ export default class BillsService {
         return bills.map(bill => ({
             id: bill.id,
             bill_number: bill.bill_number,
-            estates_id: bill.estate_name,      // Alias más limpio
-            owners_id: bill.owner_name,          // Alias más limpio
-            clients_id: bill.client_name,        // Alias más limpio
+            estates_id: bill.estate_name,
+            owners_id: bill.owner_name,
+            clients_id: bill.client_name,
             date: bill.date,
             tax_base: bill.tax_base,
             iva: bill.iva,
@@ -32,8 +32,13 @@ export default class BillsService {
             is_refund: bill.is_refund,
             original_bill_id: bill.original_bill_id,
             original_bill_number: bill.original_bill_number,
-            date_create: bill.date_create,     // Formato camelCase
-            date_update: bill.date_update      // Formato camelCase
+            //NUEVOS CAMPOS DE PAGO
+            payment_status: bill.payment_status || 'pending',
+            payment_method: bill.payment_method || 'transfer',
+            payment_date: bill.payment_date,
+            payment_notes: bill.payment_notes,
+            date_create: bill.date_create,
+            date_update: bill.date_update
         }));
     }
 
@@ -148,7 +153,7 @@ export default class BillsService {
         if (updateData.bill_number) {
             const billWithSameNumber = await BillsRepository.findByBillNumber(updateData.bill_number);
             if (billWithSameNumber && billWithSameNumber.id !== Number(id)) {
-                return null; // Número duplicado
+                return null;
             }
         }
 
@@ -165,11 +170,20 @@ export default class BillsService {
             iva: updateData.iva,
             irpf: updateData.irpf,
             total,
-            ownership_percent: updateData.ownership_percent
+            ownership_percent: updateData.ownership_percent !== null && updateData.ownership_percent !== undefined
+                ? updateData.ownership_percent
+                : existing.ownership_percent,
+            payment_status: updateData.payment_status || existing.payment_status,
+            payment_method: updateData.payment_method || existing.payment_method,
+            payment_date: updateData.payment_date || existing.payment_date,
+            payment_notes: updateData.payment_notes || existing.payment_notes
         };
-
-        const updated = await BillsRepository.update(billToUpdate);
-        return updated ? billToUpdate : null;
+        try {
+            const updated = await BillsRepository.update(billToUpdate);
+            return updated ? billToUpdate : null;
+        } catch (error) {
+            return null;
+        }
     }
 
     /**
@@ -259,29 +273,86 @@ export default class BillsService {
             newRefundNumber = `ABONO-${String(nextNumber).padStart(4, '0')}`;
         }
 
-        // Crear abono con valores negativos
+        // Crear abono con valores negativos Y campos de pago
         const refundToCreate = {
             bill_number: newRefundNumber,
             estates_id: originalBill.estates_id,
             owners_id: originalBill.owners_id,
             clients_id: originalBill.clients_id,
             date: new Date(),
-            tax_base: -Math.abs(originalBill.tax_base),    // Negativo
-            iva: originalBill.iva,                         // Porcentaje se mantiene
-            irpf: originalBill.irpf,                       // Porcentaje se mantiene
-            total: -Math.abs(originalBill.total),          // Negativo
+            tax_base: -Math.abs(originalBill.tax_base),
+            iva: originalBill.iva,
+            irpf: originalBill.irpf,
+            total: -Math.abs(originalBill.total),
             ownership_percent: originalBill.ownership_percent,
-            original_bill_id: originalBill.id
+            original_bill_id: originalBill.id,
+            //AGREGAR campos de pago con valores por defecto
+            payment_status: 'pending',
+            payment_method: 'transfer',
+            payment_date: null,
+            payment_notes: `Abono de factura ${originalBill.bill_number}`
         };
 
         const newRefundId = await BillsRepository.createRefund(refundToCreate);
         return {id: newRefundId, ...refundToCreate};
     }
+
+    /**
+     * PATRÓN DE ARQUITECTURA:
+     * Repository -> Acceso a datos
+     * Service -> Lógica de negocio + validaciones + orquestación
+     * Controller -> Manejo HTTP + respuestas
+     */
+
+
+    // ========================================
+    // GESTIÓN DE PAGOS
+    // ========================================
+
+    /**
+     * Actualiza el estado de pago de una factura con validaciones
+     * @param {number} id - ID de la factura
+     * @param {Object} paymentData - Datos del pago
+     * @returns {Object|null} Factura actualizada o null si hay error
+     */
+    static async updatePaymentStatus(id, paymentData) {
+        // Validar ID
+        if (!id || isNaN(Number(id))) return null;
+
+        // Validar que la factura existe
+        const existing = await BillsRepository.findById(id);
+        if (!existing) return null;
+
+        // Validar estados permitidos
+        const validStatuses = ['pending', 'paid'];
+        if (!validStatuses.includes(paymentData.payment_status)) {
+            return null;
+        }
+
+        // Validar métodos permitidos
+        const validMethods = ['direct_debit', 'cash', 'card', 'transfer'];
+        if (!validMethods.includes(paymentData.payment_method)) {
+            return null;
+        }
+
+        // REGLA DE NEGOCIO: Si se marca como pagado, debe tener fecha
+        if (paymentData.payment_status === 'paid' && !paymentData.payment_date) {
+            paymentData.payment_date = new Date().toISOString().split('T')[0]; // Hoy
+        }
+
+        // REGLA DE NEGOCIO: Si se marca como pendiente, limpiar fecha de pago
+        if (paymentData.payment_status === 'pending') {
+            paymentData.payment_date = null;
+        }
+
+        // Actualizar en base de datos
+        const updated = await BillsRepository.updatePaymentStatus(Number(id), paymentData);
+        if (!updated) return null;
+
+        // Devolver la factura actualizada
+        const updatedBill = await BillsRepository.findById(id);
+        return updatedBill;
+    }
+
 }
 
-/**
- * PATRÓN DE ARQUITECTURA:
- * Repository -> Acceso a datos
- * Service -> Lógica de negocio + validaciones + orquestación
- * Controller -> Manejo HTTP + respuestas
- */

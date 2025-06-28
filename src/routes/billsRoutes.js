@@ -388,6 +388,64 @@ const router = express.Router()
     .get('/:id', auth, role(['admin', 'employee']), BillsControllers.getBillById)
 
     //RUTAS PARA CREAR/ACTUALIZAR/ELIMINAR FACTURAS
+
+    /**
+     * @swagger
+     * /bills/{id}/payment:
+     *   put:
+     *     summary: Actualiza el estado de pago de una factura
+     *     tags: [Facturas]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID de la factura
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - payment_status
+     *               - payment_method
+     *             properties:
+     *               payment_status:
+     *                 type: string
+     *                 enum: [pending, paid]
+     *                 description: Estado del pago
+     *               payment_method:
+     *                 type: string
+     *                 enum: [direct_debit, cash, card, transfer]
+     *                 description: Método de pago
+     *               payment_date:
+     *                 type: string
+     *                 format: date
+     *                 description: Fecha de pago
+     *               payment_notes:
+     *                 type: string
+     *                 description: Notas del pago
+     *           example:
+     *             payment_status: "paid"
+     *             payment_method: "card"
+     *             payment_date: "2025-06-28"
+     *             payment_notes: "Pagado con tarjeta Visa"
+     *     responses:
+     *       200:
+     *         description: Estado de pago actualizado correctamente
+     *       400:
+     *         description: Datos inválidos
+     *       403:
+     *         description: No tiene permiso
+     *       404:
+     *         description: Factura no encontrada
+     */
+    .put('/:id/payment', auth, role(['admin', 'employee']), BillsControllers.updatePaymentStatus)
+
     /**
      * @swagger
      * /bills:

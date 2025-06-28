@@ -224,12 +224,10 @@ export default class BillsControllers {
             const data = req.body;
             const created = await BillsService.createBill(data);
             if (!created) {
-                console.log(created)
                 return res.status(400).json("Error al crear factura");
             }
             return res.status(201).json(created);
         } catch (error) {
-            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -454,6 +452,66 @@ export default class BillsControllers {
             }
             return res.status(201).json(refund);
         } catch (error) {
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+
+    /**
+     * Actualiza el estado y método de pago de una factura
+     *
+     * @async
+     * @function updatePaymentStatus
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // PUT /api/bills/123/payment
+     * // Body: {
+     * //   payment_status: "paid",
+     * //   payment_method: "card",
+     * //   payment_date: "2025-06-28",
+     * //   payment_notes: "Pagado con tarjeta Visa"
+     * // }
+     */
+    static async updatePaymentStatus(req, res) {
+        try {
+            const {id} = req.params;
+            const {payment_status, payment_method, payment_date, payment_notes} = req.body;
+
+            // Validar ID de factura
+            if (!id || isNaN(Number(id))) {
+                return res.status(400).json("ID de factura inválido");
+            }
+
+            // Validar que se envíen los datos requeridos
+            if (!payment_status || !payment_method) {
+                return res.status(400).json("Estado y método de pago son requeridos");
+            }
+
+            // Preparar datos para actualizar
+            const paymentData = {
+                payment_status,
+                payment_method,
+                payment_date: payment_date || null,
+                payment_notes: payment_notes || null
+            };
+
+            // Actualizar usando el servicio
+            const updated = await BillsService.updatePaymentStatus(Number(id), paymentData);
+
+            if (!updated) {
+                return res.status(400).json("Error al actualizar el estado de pago");
+            }
+
+            return res.status(200).json({
+                message: "Estado de pago actualizado correctamente",
+                bill: updated
+            });
+
+        } catch (error) {
+            console.log("Error al actualizar pago:", error);
             return res.status(500).json("Error interno del servidor");
         }
     }
