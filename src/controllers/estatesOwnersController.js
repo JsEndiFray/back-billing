@@ -13,13 +13,11 @@ export default class EstateOwnersController {
     static async getAllEstateOwners(req, res) {
         try {
             const estateOwners = await EstateOwnersService.getAllEstateOwners();
-            if (!estateOwners || estateOwners.length === 0) {
-                console.log(estateOwners)
+            if (!estateOwners.length) {
                 return res.status(404).json("No se encontraron relaciones inmueble-propietario");
             }
             return res.status(200).json(estateOwners);
         } catch (error) {
-            console.error(error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -34,13 +32,12 @@ export default class EstateOwnersController {
                 return res.status(400).json("ID inválido");
             }
             const result = await EstateOwnersService.getEstateOwnersById(Number(id));
-            if (!result) {
+            if (!result.length) {
                 return res.status(404).json("Inmueble y propietario no encontrado");
             }
             return res.status(200).json(result);
 
         } catch (error) {
-            console.error("Error in getEstateOwnersById:", error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -53,12 +50,11 @@ export default class EstateOwnersController {
         try {
             const data = req.body;
             const result = await EstateOwnersService.createEstateOwners(data);
-            if (!result) {
+            if (!result.length) {
                 return res.status(409).json("Relación inmueble-propietario duplicada");
             }
-            return res.status(201).json(result); // Created
+            return res.status(201).json(result);
         } catch (error) {
-            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -75,8 +71,8 @@ export default class EstateOwnersController {
                 return res.status(400).json("ID inválido");
             }
 
-            const result = await EstateOwnersService.updateEstateOwners(id, ownership_percentage);
-            if (!result) {
+            const result = await EstateOwnersService.updateEstateOwners(id, req.body);
+            if (!result.length) {
                 return res.status(400).json("Error al actualizar relación inmueble-propietario");
             }
             return res.status(200).json(result);
@@ -97,7 +93,7 @@ export default class EstateOwnersController {
             }
 
             const result = await EstateOwnersService.deleteEstateOwners(id);
-            if (!result) {
+            if (!result.length) {
                 return res.status(400).json("Error al eliminar relación inmueble-propietario");
             }
             return res.status(204).send(); // No content - eliminación exitosa
@@ -108,10 +104,12 @@ export default class EstateOwnersController {
 }
 
 /**
- * CARACTERÍSTICAS:
+ *CARACTERÍSTICAS FINALES:
  * - Controlador más simple: solo CRUD básico
  * - Sin búsquedas complejas o filtros
  * - Sin validaciones duplicadas (el servicio las maneja)
+ * - Verificaciones consistentes con array.length
  * - Manejo estándar de códigos HTTP
  * - Enfocado en tabla de relaciones pura
+ * - Consistencia total con patrón de otros controladores
  */

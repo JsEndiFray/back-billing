@@ -2,14 +2,14 @@ import UserService from "../services/usersServices.js";
 
 /**
  * Controlador de usuarios del sistema
- * ✅ CORREGIDO: Maneja correctamente los retornos null del servicio
+ *  Maneja correctamente los retornos null del servicio
  */
 export default class UserController {
 
     static async getAllUsers(req, res) {
         try {
             const users = await UserService.getAllUsers();
-            if (!users || users.length === 0) {
+            if (!users.length) {
                 return res.status(404).json("No se encontraron usuarios");
             }
             return res.status(200).json(users);
@@ -26,7 +26,7 @@ export default class UserController {
         try {
             const {username} = req.params;
             const user = await UserService.getUsername(username);
-            if (!user) {
+            if (!user.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
             return res.status(200).json(user);
@@ -39,7 +39,7 @@ export default class UserController {
         try {
             const {email} = req.params;
             const userEmail = await UserService.getUserEmail(email);
-            if (!userEmail) {
+            if (!userEmail.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
             return res.status(200).json(userEmail);
@@ -52,7 +52,7 @@ export default class UserController {
         try {
             const {phone} = req.params;
             const userPhone = await UserService.getUserPhone(phone);
-            if (!userPhone) {
+            if (!userPhone.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
             return res.status(200).json(userPhone);
@@ -68,7 +68,7 @@ export default class UserController {
                 return res.status(400).json("ID inválido");
             }
             const userId = await UserService.getUserId(id);
-            if (!userId) {
+            if (!userId.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
             return res.status(200).json(userId);
@@ -89,7 +89,7 @@ export default class UserController {
     static async createUser(req, res) {
         try {
             const result = await UserService.createUser(req.body);
-            if (!result) {
+            if (!result.length) {
                 // Mensaje informativo que ayuda al usuario a identificar el problema
                 return res.status(409).json('Usuario duplicado.. Puede ser nombre de usuario email o teléfono.');
             }
@@ -111,7 +111,7 @@ export default class UserController {
             }
 
             const updated = await UserService.updateUser(id, req.body);
-            if (!updated) {
+            if (!updated.length) {
                 // Mensaje que cubre tanto duplicados como usuario no encontrado
                 return res.status(409).json('Usuario duplicado o no encontrado');
             }
@@ -128,7 +128,7 @@ export default class UserController {
                 return res.status(400).json("ID inválido");
             }
             const deleted = await UserService.deleteUser(id);
-            if (!deleted) {
+            if (!deleted.length) {
                 return res.status(400).json("Error al eliminar usuario");
             }
             return res.status(204).send(); // No content - eliminación exitosa

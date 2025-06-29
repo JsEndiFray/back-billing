@@ -33,7 +33,7 @@ export default class OwnersServices {
      * ES búsqueda por prioridad (name OR lastname OR identification)
      */
     static async getOwner(name, lastname, identification) {
-        if (!name && !lastname && !identification) return null;
+        if (!name && !lastname && !identification) return [];
 
         // Prioridad 1: Nombre
         if (name) {
@@ -51,11 +51,11 @@ export default class OwnersServices {
         if (identification) {
             return await OwnersRepository.findByIdentification(sanitizeString(identification));
         }
-        return null;
+        return [];
     }
 
     static async getOwnerId(id) {
-        if (!id || isNaN(Number(id))) return null; // ✅ Corregido: && → ||
+        if (!id || isNaN(Number(id))) return [];
         return await OwnersRepository.findById(id);
     }
 
@@ -82,19 +82,19 @@ export default class OwnersServices {
 
         // Validar identificación única
         const existing = await OwnersRepository.findByIdentification(ownersData.identification);
-        if (existing) return null; // ✅ Corregido: consistente con otros servicios
+        if (existing.length > 0) return [];
 
-        const ownerID = await OwnersRepository.create(ownersData);
-        if (!ownerID) return null;
+        const created = await OwnersRepository.create(ownersData);
+        if (!created.length) return [];
 
-        return ownersData;
+        return [{...ownersData, id: created[0].id}];
     }
 
     /**
      * Actualizar propietario con validación de duplicados
      */
     static async updateOwner(id, data) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const cleanOwnerData = {
             id: Number(id),
@@ -112,28 +112,29 @@ export default class OwnersServices {
 
         // Verificar que existe
         const existing = await OwnersRepository.findById(cleanOwnerData.id);
-        if (!existing) return null;
+        if (!existing.length) return [];
 
         // Validar identificación única (excepto este mismo propietario)
         if (cleanOwnerData.identification) {
             const ownerWithSameIdentification = await OwnersRepository.findByIdentification(cleanOwnerData.identification);
-            if (ownerWithSameIdentification && ownerWithSameIdentification.id !== Number(id)) {
-                return null; // Identificación duplicada
+            if (ownerWithSameIdentification.length > 0 && ownerWithSameIdentification[0].id !== Number(id)) {
+                return [];
             }
         }
 
         const updated = await OwnersRepository.update(cleanOwnerData);
-        return updated ? cleanOwnerData : null;
+        return updated.length > 0 ? [cleanOwnerData] : [];
     }
 
     static async deleteOwner(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const existing = await OwnersRepository.findById(id);
-        if (!existing) return null;
+        if (!existing.length) return [];
 
         const result = await OwnersRepository.delete(id);
-        return result > 0;
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
+        ;
     }
 }
 
@@ -142,5 +143,5 @@ export default class OwnersServices {
  * 1. Búsqueda por PRIORIDAD (no combinada): nombre → apellido → identificación
  * 2. Sanitización consistente: uppercase/lowercase según campo
  * 3. Validación de identificación única
- * 4. Patrón limpio: null para errores, datos para éxito
+ * 4. PATRÓN CONSISTENTE: SIEMPRE arrays - [] para errores, [datos] para éxito
  */

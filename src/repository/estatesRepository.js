@@ -38,7 +38,7 @@ export default class EstatesRepository {
      */
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM estates WHERE id = ?', [id]);
-        return rows[0] || null;
+        return rows;
     }
 
     // ========================================
@@ -53,7 +53,7 @@ export default class EstatesRepository {
         const {cadastral_reference, price, address, postal_code, location, province, country, surface} = estate;
         const [result] = await db.query('INSERT INTO estates (cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update)' +
             'VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())', [cadastral_reference, price, address, postal_code, location, province, country, surface]);
-        return result.insertId;
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -63,7 +63,7 @@ export default class EstatesRepository {
         const {id, cadastral_reference, price, address, postal_code, location, province, country, surface} = estate;
         const [result] = await db.query('UPDATE estates SET cadastral_reference = ?, price = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, surface = ?, date_update = NOW() WHERE id = ?',
             [cadastral_reference, price, address, postal_code, location, province, country, surface, id]);
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
 
     /**
@@ -71,7 +71,7 @@ export default class EstatesRepository {
      */
     static async delete(id) {
         const [result] = await db.query('DELETE FROM estates WHERE id = ?', [id]);
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), deleted: true}] : [];
     }
 }
 

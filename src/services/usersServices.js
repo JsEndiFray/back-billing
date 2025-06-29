@@ -19,7 +19,10 @@ export default class UserService {
      * Nota: Retorna objeto completo (único caso donde es apropiado)
      */
     static async login(username, password) {
-        const user = await UsersRepository.findByUsername(username);
+        const users = await UsersRepository.findByUsername(username);
+        if (!users.length) return null;
+
+        const user = users[0];
         if (!user) return null;
 
         const isValid = await bcrypt.compare(password, user.password);
@@ -52,13 +55,14 @@ export default class UserService {
 
         if (!decoded) return null;
 
-        const user = await UsersRepository.findById(decoded.id);
-        if (!user || user.length === 0) return null;
+        const users = await UsersRepository.findById(decoded.id);
+        if (!users.length) return null;
 
-        const userData = Array.isArray(user) ? user[0] : user;
+        const user = users[0];
+        if (!user) return null;
 
-        const newAccessToken = generateAccessToken(userData);
-        const newRefreshToken = generateRefreshToken(userData);
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
 
         return {
             accessToken: newAccessToken,
@@ -75,27 +79,27 @@ export default class UserService {
     }
 
     static async getUsername(username) {
-        if (!username) return null;
-        const user = await UsersRepository.findByUsername(username);
-        return user || null;
+        if (!username) return [];
+        return await UsersRepository.findByUsername(username);
+
     }
 
     static async getUserEmail(email) {
-        if (!email) return null;
-        const userEmail = await UsersRepository.findByEmail(email);
-        return userEmail || null;
+        if (!email) return [];
+        return await UsersRepository.findByEmail(email);
+
     }
 
     static async getUserPhone(phone) {
-        if (!phone) return null;
-        const userPhone = await UsersRepository.findByPhone(phone);
-        return userPhone || null;
+        if (!phone) return [];
+        return await UsersRepository.findByPhone(phone);
+
     }
 
     static async getUserId(id) {
-        if (!id || isNaN(Number(id))) return null;
-        const userId = await UsersRepository.findById(id);
-        return userId || null;
+        if (!id || isNaN(Number(id))) return [];
+        return await UsersRepository.findById(id);
+
     }
 
     // ========================================
@@ -117,33 +121,33 @@ export default class UserService {
 
         // Validar campos únicos - ahora retorna null para consistencia
         const existsUsername = await UsersRepository.findByUsername(userData.username);
-        if (existsUsername) return null; // ✅ Cambiado de objeto a null
+        if (existsUsername.length) return [];
 
         const existsEmail = await UsersRepository.findByEmail(userData.email);
-        if (existsEmail) return null; // ✅ Cambiado de objeto a null
+        if (existsEmail.length) return [];
 
         const existsPhone = await UsersRepository.findByPhone(userData.phone);
-        if (existsPhone) return null; // ✅ Cambiado de objeto a null
+        if (existsPhone.length) return [];
 
         // Hash contraseña antes de guardar
         userData.password = await bcrypt.hash(userData.password, 10);
 
         const created = await UsersRepository.create(userData);
-        if (!created) return null;
+        if (!created.length) return [];
 
-        return userData;
+        return [{...userData, id: created[0].id}];
     }
 
     /**
      * Actualizar usuario con validaciones de duplicados
-     * ✅ CORREGIDO: Consistente con createUser
+     * Consistente con createUser
      */
     static async updateUser(id, data) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const cleanUserData = {
             id: id,
-            username: data.username.toLowerCase().trim(),
+           username: data.username.toLowerCase().trim(),
             password: data.password.trim(),
             email: data.email.toLowerCase().trim(),
             phone: data.phone.trim(),
@@ -151,22 +155,25 @@ export default class UserService {
         }
 
         const existing = await UsersRepository.findById(id);
-        if (!existing) return null;
+        if (!existing.length) return [];
+
+        const currentUser = existing[0];
+        if (!currentUser) return [];
 
         // Verificar duplicados solo si cambian los valores
-        if (cleanUserData.username && cleanUserData.username !== existing.username) {
+        if (cleanUserData.username && cleanUserData.username !== currentUser.username) {
             const existingUsername = await UsersRepository.findByUsername(cleanUserData.username);
-            if (existingUsername) return null; // ✅ Consistente con createUser
+            if (existingUsername.length > 0) return [];
         }
 
-        if (cleanUserData.email && cleanUserData.email !== existing.email) {
+        if (cleanUserData.email && cleanUserData.email !== currentUser.email) {
             const existingEmail = await UsersRepository.findByEmail(data.email);
-            if (existingEmail) return null; // ✅ Consistente con createUser
+            if (existingEmail.length > 0) return [];
         }
 
-        if (cleanUserData.phone && cleanUserData.phone !== existing.phone) {
+        if (cleanUserData.phone && cleanUserData.phone !== currentUser.phone) {
             const existingPhone = await UsersRepository.findByPhone(cleanUserData.phone);
-            if (existingPhone) return null; // ✅ Consistente con createUser
+            if (existingPhone.length > 0) return [];
         }
 
         // Hash nueva contraseña si existe
@@ -175,26 +182,29 @@ export default class UserService {
         }
 
         const updated = await UsersRepository.update(cleanUserData);
-        if (!updated) return null;
-
-        return cleanUserData;
+        return updated.length > 0 ? [cleanUserData] : [];
     }
 
     static async deleteUser(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const existing = await UsersRepository.findById(id);
-        if (!existing) return null;
+        if (!existing.length) return [];
+
+        const user = existing[0];
+        if (!user) return [];
 
         const result = await UsersRepository.delete(id);
-        return result > 0;
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
     }
 }
 
 /**
- * ✅ PATRÓN CORREGIDO Y CONSISTENTE:
- * - null para duplicados/errores simples
- * - Objetos solo para autenticación (login/refresh)
+ * ✅ PATRÓN CONSISTENTE APLICADO:
+ * - Arrays [] para duplicados/errores
+ * - Arrays [data] para éxito
+ * - Verificaciones .length > 0 para arrays
+ * - EXCEPCIÓN: login/refresh retornan objetos de auth (caso especial)
  * - Sanitización lowercase/trim apropiada
  * - Hash de contraseñas seguro
  */

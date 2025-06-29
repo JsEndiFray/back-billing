@@ -255,7 +255,6 @@ export default class ClientsControllers {
             // Éxito - Sin contenido
             return res.status(204).send();
         } catch (error) {
-            console.log(error);
             return res.status(500).json("Error interno del servidor");
         }
     }

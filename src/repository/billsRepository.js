@@ -143,7 +143,7 @@ export default class BillsRepository {
         const [rows] = await db.query(
             `SELECT bill_number
              FROM bills
-             ORDER BY id DESC LIMIT 1`
+             ORDER BY id ASC LIMIT 1`
         );
         return rows[0]?.bill_number || null;
     }

@@ -511,7 +511,6 @@ export default class BillsControllers {
             });
 
         } catch (error) {
-            console.log("Error al actualizar pago:", error);
             return res.status(500).json("Error interno del servidor");
         }
     }

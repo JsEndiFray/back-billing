@@ -22,7 +22,7 @@ export default class EstateOwnersRepository {
             [estateId, ownersId]
         );
         // Retorna el porcentaje o 0 si no existe la relación
-        return rows[0]?.ownership_percentage || 0;
+        return rows.length > 0 ? [{percentage: rows[0].ownership_percentage}] : [{percentage: 0}];
     }
 
     /**
@@ -74,7 +74,7 @@ export default class EstateOwnersRepository {
             'SELECT * FROM estate_owners WHERE id = ?',
             [id]
         );
-        return rows[0] || null;
+        return rows;
     }
 
     /**
@@ -90,8 +90,8 @@ export default class EstateOwnersRepository {
              VALUES (?, ?, ?)`,
             [estateId, ownersId, ownershipPercent]
         );
-        // Retorna los datos insertados (no incluye el ID generado automáticamente)
-        return {estateId, ownersId, ownershipPercent};
+
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -108,7 +108,7 @@ export default class EstateOwnersRepository {
             [ownershipPercent, id]
         );
         // Retorna true si se afectó al menos una fila
-        return result.affectedRows > 0;
+        return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
 
     /**
@@ -123,7 +123,7 @@ export default class EstateOwnersRepository {
              WHERE id = ?`,
             [id]
         );
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), deleted: true}] : [];
     }
 }
 

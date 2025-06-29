@@ -21,16 +21,16 @@ export default class UsersRepository {
      * Busca por nombre de usuario (para login)
      */
     static async findByUsername(username) {
-        const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]); // Corregido: faltaban []
-        return rows[0] || null;
+        const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
+        return rows;
     }
 
     /**
      * Busca por email (único)
      */
     static async findByEmail(email) {
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]); // Corregido: faltaban []
-        return rows[0] || null;
+        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        return rows;
     }
 
     /**
@@ -38,7 +38,7 @@ export default class UsersRepository {
      */
     static async findByPhone(phone) {
         const [rows] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]); // Corregido: faltaban []
-        return rows[0] || null;
+        return rows;
     }
 
     /**
@@ -46,7 +46,7 @@ export default class UsersRepository {
      */
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-        return rows[0] || null;
+        return rows;
     }
 
     // ========================================
@@ -61,7 +61,7 @@ export default class UsersRepository {
         const {username, password, email, phone, role} = user;
         const [result] = await db.query('INSERT INTO users (username, password, email, phone, role, date_create, date_update)' +
             'VALUES (?, ?, ?, ?, ?, NOW(), NOW())', [username, password, email, phone, role]);
-        return result.insertId;
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -71,7 +71,7 @@ export default class UsersRepository {
         const {id, username, password, email, phone, role} = user;
         const [result] = await db.query('UPDATE users SET username = ?, password = ?, email = ?, phone = ?, role = ?, date_update = NOW() WHERE id = ? ',
             [username, password, email, phone, role, id]);
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
 
     /**
@@ -79,7 +79,7 @@ export default class UsersRepository {
      */
     static async delete(id) {
         const [result] = await db.query('DELETE FROM users WHERE id = ?', [id]); // Corregido: ID -> id
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), deleted: true}] : [];
     }
 }
 
