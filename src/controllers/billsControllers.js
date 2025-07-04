@@ -223,7 +223,7 @@ export default class BillsControllers {
         try {
             const data = req.body;
             const created = await BillsService.createBill(data);
-            if (!created) {
+            if (!created || created.length === 0){
                 return res.status(400).json("Error al crear factura");
             }
             return res.status(201).json(created);
@@ -258,11 +258,11 @@ export default class BillsControllers {
             }
             // Verificar que la factura existe antes de actualizar
             const existing = await BillsService.getBillById(id);
-            if (!existing) {
+            if (!existing || existing.length === 0) {
                 return res.status(404).json("Factura no encontrada");
             }
             const updated = await BillsService.updateBill(Number(id), updateData);
-            if (!updated) {
+            if (!updated || updated.length === 0) {
                 return res.status(400).json("Error al actualizar factura");
             }
             return res.status(200).json(updated);
@@ -291,7 +291,7 @@ export default class BillsControllers {
                 return res.status(400).json("ID inválido");
             }
             const deleted = await BillsService.deleteBill(id);
-            if (!deleted) {
+            if (!deleted || deleted.length === 0) {
                 return res.status(400).json("Error al eliminar factura");
             }
             return res.status(204).send();
@@ -347,7 +347,7 @@ export default class BillsControllers {
 
             // Obtener factura con todos los detalles necesarios para el PDF
             const bill = await BillsService.getBillWithDetails(billId);
-            if (!bill) {
+            if (!bill || bill.length === 0) {
                 return res.status(404).json("Factura no encontrada");
             }
 
@@ -356,11 +356,11 @@ export default class BillsControllers {
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
             // Generar nombre de archivo seguro (reemplazar / por -)
-            const fileName = `factura_${bill.bill_number.replace(/\//g, '-')}.pdf`;
+            const fileName = `factura_${bill[0].bill_number.replace(/\//g, '-')}.pdf`;
             const filePath = path.join(dir, fileName);
 
             // Generar PDF usando el generador de facturas
-            await generateBillPdf(bill, filePath);
+            await generateBillPdf(bill[0], filePath);
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
@@ -395,7 +395,7 @@ export default class BillsControllers {
 
             // Obtener abono con todos los detalles necesarios
             const refund = await BillsService.getRefundWithDetails(refundId);
-            if (!refund) {
+            if (!refund || refund.length === 0)  {
                 return res.status(404).json("Abono no encontrado");
             }
 
@@ -404,12 +404,12 @@ export default class BillsControllers {
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 
             // Generar nombre de archivo para abono
-            const fileName = `abono_${refund.bill_number.replace(/\//g, '-')}.pdf`;
+            const fileName = `abono_${refund[0].bill_number.replace(/\//g, '-')}.pdf`;
             const filePath = path.join(dir, fileName);
 
             // Importar generador de PDFs de abono dinámicamente
             const {generateRefundPdf} = await import('../utils/refundPdfGenerator.js');
-            await generateRefundPdf(refund, filePath);
+            await generateRefundPdf(refund[0], filePath);
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
@@ -447,7 +447,7 @@ export default class BillsControllers {
             }
 
             const refund = await BillsService.createRefund(originalBillId);
-            if (!refund) {
+            if (!refund || refund.length === 0) {
                 return res.status(400).json("Error al crear abono");
             }
             return res.status(201).json(refund);
@@ -501,7 +501,7 @@ export default class BillsControllers {
             // Actualizar usando el servicio
             const updated = await BillsService.updatePaymentStatus(Number(id), paymentData);
 
-            if (!updated) {
+            if (!updated || updated.length === 0) {
                 return res.status(400).json("Error al actualizar el estado de pago");
             }
 

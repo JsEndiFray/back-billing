@@ -38,29 +38,29 @@ export default class ClientsServices {
     // ========================================
 
     static async getByClientType(type_cliente) {
-        if (!type_cliente) return null;
+        if (!type_cliente) return [];
         return await ClientsRepository.findByType(type_cliente);
     }
 
     static async getCompany(company_name) {
-        if (!company_name || typeof company_name !== 'string') return null;
+        if (!company_name || typeof company_name !== 'string') return [];
         const companyNameNormalized = sanitizeString(company_name);
-        if (!companyNameNormalized || companyNameNormalized.length === 0) return null;
+        if (!companyNameNormalized || companyNameNormalized.length === 0) return [];
         return await ClientsRepository.findByCompany(sanitizeString(companyNameNormalized));
     }
 
     static async getFullName(name, lastname) {
-        if (!name && !lastname) return null;
+        if (!name && !lastname) return [];
         return await ClientsRepository.findByNameOrLastname(sanitizeString(name, lastname));
     }
 
     static async getByIdentification(identification) {
-        if (!identification) return null;
+        if (!identification) return [];
         return await ClientsRepository.findByIdentification(sanitizeString(identification));
     }
 
     static async getById(id) {
-        if (!id || isNaN(id)) return null;
+        if (!id || isNaN(id)) return [];
         return await ClientsRepository.findById(id);
     }
 
@@ -95,8 +95,8 @@ export default class ClientsServices {
 
             // Verificar que la empresa existe y es válida
             const company = await ClientsRepository.findById(clientstData.parent_company_id);
-            if (!company || company.type_client !== 'empresa') {
-                return null;
+            if (!company.length || company[0].type_client !== 'empresa') {
+                return [];
             }
         }
 
@@ -108,7 +108,7 @@ export default class ClientsServices {
 
         // Verificar identificación única
         const existing = await ClientsRepository.findByIdentification(clientstData.identification);
-        if (existing) return null;
+        if (existing.length > 0) return [];
 
         const new_client = await ClientsRepository.create(clientstData)
         return new_client;
@@ -119,7 +119,7 @@ export default class ClientsServices {
     // ========================================
 
     static async updateClient(id, data) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         // Limpiar datos (mismo proceso que create)
         const cleanClientsData = {
@@ -146,8 +146,8 @@ export default class ClientsServices {
                 cleanClientsData.relationship_type = 'ADMINISTRATOR';
             }
             const company = await ClientsRepository.findById(cleanClientsData.parent_company_id);
-            if (!company || company.type_client !== 'empresa') {
-                return null;
+            if (!company.length || company[0].type_client !== 'empresa') {
+                return [];
             }
         }
 
@@ -159,18 +159,18 @@ export default class ClientsServices {
 
         // Verificar que existe
         const existing = await ClientsRepository.findById(cleanClientsData.id);
-        if (!existing) return null;
+        if (!existing.length) return [];
 
         // Verificar identificación única (excepto este mismo cliente)
         if (cleanClientsData.identification) {
             const clientWithSameIdentification = await ClientsRepository.findByIdentification(cleanClientsData.identification);
-            if (clientWithSameIdentification && clientWithSameIdentification.id !== Number(id)) {
-                return null;
+            if (clientWithSameIdentification.length > 0 && clientWithSameIdentification[0].id !== Number(id)) {
+                return [];
             }
         }
 
         const updated = await ClientsRepository.update(cleanClientsData);
-        return updated ? cleanClientsData : null;
+        return updated.length > 0 ? updated : [];
     }
 
     // ========================================
@@ -178,32 +178,32 @@ export default class ClientsServices {
     // ========================================
 
     static async deleteClient(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const client = await ClientsRepository.findById(id);
-        if (!client) return null;
+        if (!client.length) return [];
 
         // REGLA 1: No eliminar si tiene facturas
         const billsCount = await ClientsRepository.countBillsByClient(id);
-        if (billsCount > 0) {
-            return 'CLIENT_HAS_BILLS';
+        if (billsCount[0].count > 0) {
+            return ['CLIENT_HAS_BILLS'];
         }
 
         // REGLA 2: No eliminar empresa si tiene administradores
-        if (client.type_client === 'empresa') {
+        if (client[0].type_client === 'empresa') {
             const adminsCount = await ClientsRepository.countAdministratorsByCompany(id);
-            if (adminsCount > 0) {
-                return 'CLIENT_HAS_ADMINISTRATORS';
+            if (adminsCount[0].count > 0) {
+                return ['CLIENT_HAS_ADMINISTRATORS'];
             }
         }
 
         // REGLA 3: No eliminar administrador activo
-        if (client.type_client === 'autonomo' && client.parent_company_id && client.relationship_type === 'administrator') {
-            return 'CLIENT_IS_ADMINISTRATOR';
+        if (client[0].type_client === 'autonomo' && client[0].parent_company_id && client[0].relationship_type === 'administrator') {
+            return ['CLIENT_IS_ADMINISTRATOR'];
         }
 
         const result = await ClientsRepository.delete(id);
-        return result > 0;
+        return result;
     }
 }
 

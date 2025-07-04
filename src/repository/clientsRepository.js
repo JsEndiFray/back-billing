@@ -28,7 +28,7 @@ export default class ClientsRepository {
                    c.date_update,
                    c.parent_company_id,
                    c.relationship_type,
-                   parent.company_name as parent_company_name  -- Nombre de empresa padre
+                   parent.company_name as parent_company_name -- Nombre de empresa padre
             FROM clients c
                      LEFT JOIN clients parent ON c.parent_company_id = parent.id AND parent.type_client = 'empresa'
             ORDER BY c.id ASC
@@ -129,7 +129,7 @@ export default class ClientsRepository {
      */
     static async findByIdentification(identification) {
         const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
-        return rows[0] || null;
+        return rows;
     }
 
     /**
@@ -137,7 +137,7 @@ export default class ClientsRepository {
      */
     static async findById(id) {
         const [rows] = await db.query('SELECT * FROM clients WHERE id = ?', [id]);
-        return rows[0] || null;
+        return rows;
     }
 
     // ========================================
@@ -168,11 +168,8 @@ export default class ClientsRepository {
         const [result] = await db.query('INSERT INTO clients (type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update )' +
             'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?,  NOW(), NOW())',
             [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type]);
-        const insertId = result.insertId;
 
-        // Retorna el cliente completo recién creado
-        const newClient = await this.findById(insertId);
-        return newClient;
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -199,7 +196,7 @@ export default class ClientsRepository {
         const [result] = await db.query('UPDATE clients SET type_client = ?, name = ?, lastname = ?, company_name = ?, identification = ?, phone = ?, email = ?, address = ?, postal_code = ?, location = ?, province = ?, country = ?, parent_company_id = ?, relationship_type = ?, date_update = NOW() WHERE id = ?',
             [type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, id]
         );
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
 
     /**
@@ -207,7 +204,7 @@ export default class ClientsRepository {
      */
     static async delete(id) {
         const [result] = await db.query('DELETE FROM clients WHERE id = ?', [id]);
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), deleted: true}] : [];
     }
 
     // ========================================
@@ -219,7 +216,7 @@ export default class ClientsRepository {
      */
     static async countBillsByClient(clientId) {
         const [rows] = await db.query('SELECT COUNT(*) as count FROM bills WHERE clients_id = ?', [clientId]);
-        return rows[0].count;
+        return rows;
     }
 
     /**
@@ -230,7 +227,7 @@ export default class ClientsRepository {
             'SELECT COUNT(*) as count FROM clients WHERE parent_company_id = ? AND relationship_type = ?',
             [companyId, 'administrator']
         );
-        return rows[0].count;
+        return rows;
     }
 }
 

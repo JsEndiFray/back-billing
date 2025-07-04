@@ -50,7 +50,7 @@ export default class BillsService {
      * Busca factura por número con validación
      */
     static async getBillByNumber(bill_number) {
-        if (!bill_number) return null;
+        if (!bill_number.length) return [];
         return await BillsRepository.findByBillNumber(bill_number);
     }
 
@@ -58,7 +58,7 @@ export default class BillsService {
      * Busca factura por ID con validación de tipo
      */
     static async getBillById(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
         return await BillsRepository.findById(id);
     }
 
@@ -66,7 +66,7 @@ export default class BillsService {
      * Facturas por propietario
      */
     static async getByOwnersId(ownersId) {
-        if (!ownersId || isNaN(ownersId)) return null;
+        if (!ownersId || isNaN(ownersId)) return [];
         return await BillsRepository.findByOwnersId(ownersId);
     }
 
@@ -74,7 +74,7 @@ export default class BillsService {
      * Facturas por cliente
      */
     static async getByClientsId(clientsId) {
-        if (!clientsId || isNaN(clientsId)) return null;
+        if (!clientsId || isNaN(clientsId)) return [];
         return await BillsRepository.findByClientId(clientsId);
     }
 
@@ -82,7 +82,7 @@ export default class BillsService {
      * Historial de facturas por NIF del cliente
      */
     static async getBillsByClientNif(nif) {
-        if (!nif || typeof nif !== 'string') return null;
+        if (!nif || typeof nif !== 'string') return [];
         return await BillsRepository.findByClientNif(sanitizeString(nif));
     }
 
@@ -98,7 +98,7 @@ export default class BillsService {
 
         // Validación de datos obligatorios
         if (!owners_id || !estates_id || !date) {
-            return null;
+            return [];
         }
 
         // REGLA DE NEGOCIO: Solo una factura por mes por owner+estate
@@ -120,8 +120,8 @@ export default class BillsService {
         // Generar número de factura secuencial
         const lastBillNumber = await BillsRepository.getLastBillNumber();
         let newBillNumber = 'FACT-0001';
-        if (lastBillNumber) {
-            const lastNumber = parseInt(lastBillNumber.replace(/\D/g, ''), 10);
+        if (lastBillNumber.length > 0) {
+            const lastNumber = parseInt(lastBillNumber[0].replace(/\D/g, ''), 10);
             const nextNumber = lastNumber + 1;
             newBillNumber = `FACT-${String(nextNumber).padStart(4, '0')}`;
         }
@@ -137,23 +137,23 @@ export default class BillsService {
         };
 
         const newBillId = await BillsRepository.create(billToCreate);
-        return {id: newBillId, ...billToCreate};
+        return newBillId.length > 0 ? newBillId : [];
     }
 
     /**
      * Actualiza factura con validaciones
      */
     static async updateBill(id, updateData) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         const existing = await BillsRepository.findById(id);
-        if (!existing) return null;
+        if (!existing.length > 0) return [];
 
         // Validar que el nuevo número no esté duplicado
         if (updateData.bill_number) {
             const billWithSameNumber = await BillsRepository.findByBillNumber(updateData.bill_number);
-            if (billWithSameNumber && billWithSameNumber.id !== Number(id)) {
-                return null;
+            if (billWithSameNumber.length > 0 && billWithSameNumber[0].id !== Number(id)) {
+                return [];
             }
         }
 
@@ -162,7 +162,7 @@ export default class BillsService {
 
         const billToUpdate = {
             id,
-            bill_number: updateData.bill_number || existing.bill_number,
+            bill_number: updateData.bill_number || existing[0].bill_number,
             owners_id: updateData.owners_id,
             clients_id: updateData.clients_id,
             date: updateData.date,
@@ -172,17 +172,17 @@ export default class BillsService {
             total,
             ownership_percent: updateData.ownership_percent !== null && updateData.ownership_percent !== undefined
                 ? updateData.ownership_percent
-                : existing.ownership_percent,
-            payment_status: updateData.payment_status || existing.payment_status,
-            payment_method: updateData.payment_method || existing.payment_method,
-            payment_date: updateData.payment_date || existing.payment_date,
-            payment_notes: updateData.payment_notes || existing.payment_notes
+                : existing[0].ownership_percent,
+            payment_status: updateData.payment_status || existing[0].payment_status,
+            payment_method: updateData.payment_method || existing[0].payment_method,
+            payment_date: updateData.payment_date || existing[0].payment_date,
+            payment_notes: updateData.payment_notes || existing[0].payment_notes
         };
         try {
             const updated = await BillsRepository.update(billToUpdate);
-            return updated ? billToUpdate : null;
+            return updated.length > 0 ? updated : [];
         } catch (error) {
-            return null;
+            return [];
         }
     }
 
@@ -190,9 +190,9 @@ export default class BillsService {
      * Elimina factura
      */
     static async deleteBill(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
         const result = await BillsRepository.delete(id);
-        return result > 0;
+        return result;
     }
 
     // ========================================
@@ -229,9 +229,9 @@ export default class BillsService {
      * Factura con detalles completos para impresión
      */
     static async getBillWithDetails(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
         const bill = await BillsRepository.findByIdWithDetails(id);
-        if (!bill) return null;
+        if (!bill.length) return [];
         return bill;
     }
 
@@ -239,9 +239,9 @@ export default class BillsService {
      * Abono con detalles completos para impresión
      */
     static async getRefundWithDetails(id) {
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
         const refund = await BillsRepository.findRefundByIdWithDetails(id);
-        if (!refund) return null;
+        if (!refund.length) return [];
         return refund;
     }
 
@@ -249,26 +249,27 @@ export default class BillsService {
      * Crea abono (factura negativa) basado en factura original
      */
     static async createRefund(originalBillId) {
+
         if (!originalBillId || isNaN(Number(originalBillId))) {
             return null;
         }
 
         // Obtener factura original
         const originalBill = await BillsRepository.findById(originalBillId);
-        if (!originalBill) {
-            return null;
+        if (!originalBill.length) {
+            return [];
         }
 
         // REGLA: No se puede hacer abono de un abono
-        if (originalBill.is_refund) {
-            return null;
+        if (originalBill[0].is_refund) {
+            return [];
         }
 
         // Generar número de abono secuencial
         const lastRefundNumber = await BillsRepository.getLastRefundNumber();
         let newRefundNumber = 'ABONO-0001';
-        if (lastRefundNumber) {
-            const lastNumber = parseInt(lastRefundNumber.replace(/\D/g, ''), 10);
+        if (lastRefundNumber.length > 0) {
+            const lastNumber = parseInt(lastRefundNumber[0].replace(/\D/g, ''), 10);
             const nextNumber = lastNumber + 1;
             newRefundNumber = `ABONO-${String(nextNumber).padStart(4, '0')}`;
         }
@@ -276,25 +277,26 @@ export default class BillsService {
         // Crear abono con valores negativos Y campos de pago
         const refundToCreate = {
             bill_number: newRefundNumber,
-            estates_id: originalBill.estates_id,
-            owners_id: originalBill.owners_id,
-            clients_id: originalBill.clients_id,
+            estates_id: originalBill[0].estates_id,
+            owners_id: originalBill[0].owners_id,
+            clients_id: originalBill[0].clients_id,
             date: new Date(),
-            tax_base: -Math.abs(originalBill.tax_base),
-            iva: originalBill.iva,
-            irpf: originalBill.irpf,
-            total: -Math.abs(originalBill.total),
-            ownership_percent: originalBill.ownership_percent,
-            original_bill_id: originalBill.id,
+            tax_base: -Math.abs(originalBill[0].tax_base),
+            iva: originalBill[0].iva,
+            irpf: originalBill[0].irpf,
+            total: -Math.abs(originalBill[0].total),
+            ownership_percent: originalBill[0].ownership_percent,
+            original_bill_id: originalBill[0].id,
             //AGREGAR campos de pago con valores por defecto
             payment_status: 'pending',
             payment_method: 'transfer',
             payment_date: null,
-            payment_notes: `Abono de factura ${originalBill.bill_number}`
+            payment_notes: `Abono de factura ${originalBill[0].bill_number}`
         };
 
         const newRefundId = await BillsRepository.createRefund(refundToCreate);
-        return {id: newRefundId, ...refundToCreate};
+        return newRefundId.length > 0 ? newRefundId : [];
+
     }
 
     /**
@@ -317,11 +319,11 @@ export default class BillsService {
      */
     static async updatePaymentStatus(id, paymentData) {
         // Validar ID
-        if (!id || isNaN(Number(id))) return null;
+        if (!id || isNaN(Number(id))) return [];
 
         // Validar que la factura existe
         const existing = await BillsRepository.findById(id);
-        if (!existing) return null;
+        if (!existing.length > 0) return [];
 
         // Validar estados permitidos
         const validStatuses = ['pending', 'paid'];
@@ -347,7 +349,7 @@ export default class BillsService {
 
         // Actualizar en base de datos
         const updated = await BillsRepository.updatePaymentStatus(Number(id), paymentData);
-        if (!updated) return null;
+        if (!updated.length) return [];
 
         // Devolver la factura actualizada
         const updatedBill = await BillsRepository.findById(id);

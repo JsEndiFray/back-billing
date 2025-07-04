@@ -61,7 +61,7 @@ export default class BillsRepository {
                    b.payment_notes
             FROM bills b
             WHERE b.id = ?`, [id]);
-        return rows[0] || null;
+        return rows;
     }
 
     /**
@@ -69,7 +69,7 @@ export default class BillsRepository {
      */
     static async findByBillNumber(bill_number) {
         const [rows] = await db.query('SELECT * FROM bills WHERE bill_number = ?', [bill_number]);
-        return rows[0] || null;
+        return rows;
     }
 
     /**
@@ -145,7 +145,7 @@ export default class BillsRepository {
              FROM bills
              ORDER BY id ASC LIMIT 1`
         );
-        return rows[0]?.bill_number || null;
+        return rows;
     }
 
     /**
@@ -182,7 +182,7 @@ export default class BillsRepository {
                 payment_status, payment_method, payment_date, payment_notes
             ]
         );
-        return result.insertId;
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -232,7 +232,7 @@ export default class BillsRepository {
                 id
             ]
         );
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(bill.id), updated: true}] : [];
     }
 
     /**
@@ -240,7 +240,7 @@ export default class BillsRepository {
      */
     static async delete(id) {
         const [result] = await db.query('DELETE FROM bills WHERE id = ?', [id]);
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), deleted: true}] : [];
     }
 
     // ========================================
@@ -289,7 +289,7 @@ export default class BillsRepository {
                 WHERE b.id = ?
             `, [id]);
 
-            return rows[0];
+            return rows;
         } catch (error) {
             throw error;
         }
@@ -336,7 +336,7 @@ export default class BillsRepository {
                 payment_status, payment_method, payment_date, payment_notes
             ]
         );
-        return result.insertId;
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
     /**
@@ -349,7 +349,7 @@ export default class BillsRepository {
              WHERE is_refund = TRUE
              ORDER BY id DESC LIMIT 1`
         );
-        return rows[0]?.bill_number || null;
+        return rows;
     }
 
     /**
@@ -435,7 +435,7 @@ export default class BillsRepository {
                   AND b.is_refund = TRUE
             `, [id]);
 
-            return rows[0];
+            return rows;
         } catch (error) {
             throw error;
         }
@@ -483,7 +483,7 @@ export default class BillsRepository {
              WHERE id = ?`,
             [payment_status, payment_method, payment_date, payment_notes, id]
         );
-        return result.affectedRows;
+        return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
 
 

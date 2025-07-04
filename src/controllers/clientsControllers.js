@@ -187,10 +187,10 @@ export default class ClientsControllers {
     static async createClient(req, res) {
         try {
             const created = await ClientsServices.createClient(req.body);
-            if (!created) {
-                return res.status(409).json("Cliente duplicado"); // Conflict
+            if (!created || created.length === 0) {
+                return res.status(409).json("Cliente duplicado");
             }
-            return res.status(201).json(created); // Created
+            return res.status(201).json(created);
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }
@@ -204,13 +204,14 @@ export default class ClientsControllers {
             }
 
             const existing = await ClientsServices.getById(id);
-            if (!existing) {
+            if (!existing || existing.length === 0) {
                 return res.status(404).json("Cliente no encontrado");
             }
 
             const updated = await ClientsServices.updateClient(id, req.body);
-            if (!updated) {
-                return res.status(409).json("Cliente duplicado"); // Conflict
+            if (!updated || updated.length === 0) {
+                console.log(updated)
+                return res.status(409).json("Cliente duplicado");
             }
             return res.status(200).json(updated);
         } catch (error) {
@@ -232,26 +233,20 @@ export default class ClientsControllers {
             const result = await ClientsServices.deleteClient(id);
 
             // Mapeo de respuestas del servicio a códigos HTTP
-            if (result === null) {
+            if (!result || result.length === 0) {
                 return res.status(404).json("Cliente no encontrado");
             }
 
             // Errores de integridad referencial
-            if (result === 'CLIENT_HAS_BILLS') {
+            if (Array.isArray(result) && result[0] === 'CLIENT_HAS_BILLS') {
                 return res.status(409).json("El cliente tiene facturas asociadas");
             }
-            if (result === 'CLIENT_HAS_ADMINISTRATORS') {
+            if (Array.isArray(result) && result[0] === 'CLIENT_HAS_ADMINISTRATORS') {
                 return res.status(409).json("La empresa tiene administradores asociados");
             }
-            if (result === 'CLIENT_IS_ADMINISTRATOR') {
+            if (Array.isArray(result) && result[0] === 'CLIENT_IS_ADMINISTRATOR') {
                 return res.status(409).json("El cliente es administrador de una empresa");
             }
-
-            // Error técnico en eliminación
-            if (result === false) {
-                return res.status(500).json("Error al eliminar cliente");
-            }
-
             // Éxito - Sin contenido
             return res.status(204).send();
         } catch (error) {
@@ -259,7 +254,6 @@ export default class ClientsControllers {
         }
     }
 }
-
 /**
  * CÓDIGOS HTTP UTILIZADOS:
  * - 200: OK (consultas exitosas)

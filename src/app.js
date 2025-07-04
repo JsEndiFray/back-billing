@@ -30,6 +30,7 @@ import ownersRoutes from './routes/ownersRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import authRoutes from "./routes/authRoutes.js";
 import estatesOwnersRoutes from "./routes/estatesOwnersRoutes.js";
+import employeeRoutes from "./routes/employeeRoutes.js"
 import {generalLimiter, authLimiter} from "./middlewares/rate-limit.js";
 
 /**
@@ -215,6 +216,15 @@ app.use('/api/auth', authLimiter, authRoutes)
  * @route {Object} /api/estate-owners - Gestión de asociaciones
  */
 app.use('/api/estate-owners', estatesOwnersRoutes)
+
+/**
+ * Rutas para relaciones empleados
+ *
+ * Maneja las cuenta de empleados a los sistemas,
+ *
+ * @route {Object} /api/employee - Gestión de empleados
+ */
+app.use('/api/employee', employeeRoutes)
 
 // ==========================================
 // DOCUMENTACIÓN API
