@@ -1,4 +1,4 @@
-import { validationResult } from "express-validator";
+import {validationResult} from "express-validator";
 
 /**
  * 🚨 MIDDLEWARE DE MANEJO DE ERRORES DE VALIDACIÓN
@@ -57,8 +57,10 @@ const ParamErrorMessages = {
     // 🏢 VALIDACIONES DE CLIENTE
     'clientName': 'Nombre de cliente requerido', // Campo obligatorio faltante
 
+
     // 🏠 VALIDACIONES DE PROPIEDAD
-    'referenceCadastral': 'Referencia catastral requerida'  // Campo específico inmobiliario
+    'referenceCadastral': 'Referencia catastral requerida',  // Campo específico inmobiliario
+    'cadastral_reference': 'La referencia catastral no es válida según el algoritmo oficial español',
 };
 
 /**
@@ -82,6 +84,7 @@ const ParamHttpCodes = {
     'nif': 400,                      // NIF con formato incorrecto
     'clientName': 400,               // Campo requerido faltante
     'referenceCadastral': 400,       // Campo requerido faltante
+    'cadastral_reference': 400,     // Campo requerido faltante
 
     // 🔄 ERRORES DE CONFLICTO (409 - Conflict)
     'username': 409                  // Username ya existe (conflicto con BD)
@@ -170,14 +173,10 @@ const errorHandler = (req, res, next) => {
             }
         }
 
-        // ==========================================
-        // 🎭 FALLBACK PARA ERRORES NO MAPEADOS
-        // ==========================================
-
-        // 🔧 ERROR GENÉRICO SI NO HAY MAPEO ESPECÍFICO
-        // Esto maneja campos nuevos que aún no tienen mensaje personalizado
-        // O errores de validaciones que no son críticos
-        return res.status(400).json("Error de validación");
+        // ✅ USAR MENSAJE ORIGINAL DEL VALIDATOR
+        // Si no hay mapeo específico, usar el mensaje que creó express-validator
+        const firstError = errorList[0];
+        return res.status(400).json(firstError.msg);
     }
 
     // ==========================================

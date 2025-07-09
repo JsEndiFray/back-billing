@@ -200,6 +200,120 @@ const router = express.Router()
      */
     .get('/refunds/:id/pdf', auth, role(['admin', 'employee']), BillsControllers.downloadRefundPdf)
 
+    /**
+     * @swagger
+     * /bills/validate-proportional-dates:
+     *   post:
+     *     summary: Valida un rango de fechas para facturación proporcional
+     *     tags: [Facturas]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - start_date
+     *               - end_date
+     *             properties:
+     *               start_date:
+     *                 type: string
+     *                 format: date
+     *                 description: Fecha de inicio del periodo
+     *               end_date:
+     *                 type: string
+     *                 format: date
+     *                 description: Fecha de fin del periodo
+     *           example:
+     *             start_date: "2025-07-17"
+     *             end_date: "2025-07-31"
+     *     responses:
+     *       200:
+     *         description: Validación exitosa
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isValid:
+     *                   type: boolean
+     *                 message:
+     *                   type: string
+     *                 daysBilled:
+     *                   type: number
+     *                 periodDescription:
+     *                   type: string
+     *       400:
+     *         description: Rango de fechas inválido
+     */
+    .post('/validate-proportional-dates', auth, role(['admin', 'employee']), BillsControllers.validateProportionalDateRange)
+
+    /**
+     * @swagger
+     * /bills/simulate-proportional:
+     *   post:
+     *     summary: Simula el cálculo de una factura proporcional sin guardarla
+     *     tags: [Facturas]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - tax_base
+     *               - start_date
+     *               - end_date
+     *             properties:
+     *               tax_base:
+     *                 type: number
+     *                 description: Base imponible del mes completo
+     *               iva:
+     *                 type: number
+     *                 description: Porcentaje de IVA
+     *               irpf:
+     *                 type: number
+     *                 description: Porcentaje de IRPF
+     *               start_date:
+     *                 type: string
+     *                 format: date
+     *                 description: Fecha de inicio del periodo
+     *               end_date:
+     *                 type: string
+     *                 format: date
+     *                 description: Fecha de fin del periodo
+     *           example:
+     *             tax_base: 1000
+     *             iva: 21
+     *             irpf: 15
+     *             start_date: "2025-07-17"
+     *             end_date: "2025-07-31"
+     *     responses:
+     *       200:
+     *         description: Simulación exitosa
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 total:
+     *                   type: number
+     *                 calculation_type:
+     *                   type: string
+     *                 details:
+     *                   type: object
+     *                 periodDescription:
+     *                   type: string
+     *                 simulation:
+     *                   type: boolean
+     *       400:
+     *         description: Datos inválidos
+     */
+    .post('/simulate-proportional', auth, role(['admin', 'employee']), BillsControllers.simulateProportionalBilling)
 
     //RUTAS PARA BÚSQUEDAS (FACTURAS NORMALES)
     /**
@@ -359,6 +473,49 @@ const router = express.Router()
      *         description: Factura no encontrada
      */
     .get('/:id/pdf', auth, role(['admin', 'employee']), BillsControllers.downloadPdf)
+
+    /**
+     * @swagger
+     * /bills/{id}/proportional-details:
+     *   get:
+     *     summary: Obtiene detalles del cálculo proporcional de una factura
+     *     tags: [Facturas]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         schema:
+     *           type: string
+     *         required: true
+     *         description: ID de la factura
+     *     responses:
+     *       200:
+     *         description: Detalles del cálculo proporcional
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 type:
+     *                   type: string
+     *                   enum: [normal, proportional]
+     *                 days_billed:
+     *                   type: number
+     *                 days_in_month:
+     *                   type: number
+     *                 proportion_percentage:
+     *                   type: number
+     *                 original_base:
+     *                   type: number
+     *                 proportional_base:
+     *                   type: number
+     *                 total:
+     *                   type: number
+     *       404:
+     *         description: Factura no encontrada
+     */
+    .get('/:id/proportional-details', auth, role(['admin', 'employee']), BillsControllers.getProportionalCalculationDetails)
 
     /**
      * @swagger
@@ -529,8 +686,6 @@ const router = express.Router()
      *         description: Factura no encontrada
      */
     .delete('/:id', auth, role(['admin']), BillsControllers.deleteBill)
-
-
 
 
 export default router;

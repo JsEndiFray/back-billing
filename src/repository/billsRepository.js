@@ -3,11 +3,13 @@ import db from '../db/dbConnect.js';
 /**
  * Repositorio para manejar facturas y abonos
  * Gestiona la tabla bills con relaciones a estates, owners y clients
+ * ACTUALIZADO: Incluye campos para facturación proporcional
  */
 export default class BillsRepository {
 
     /**
      * Obtiene todas las facturas con información de pagos incluida
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async getAll() {
         const [rows] = await db.query(`
@@ -24,10 +26,14 @@ export default class BillsRepository {
                    b.total,
                    b.is_refund,
                    b.original_bill_id,
-                   b.payment_status, -- NUEVO CAMPO
-                   b.payment_method, -- NUEVO CAMPO  
-                   b.payment_date,   -- NUEVO CAMPO
-                   b.payment_notes,  -- NUEVO CAMPO
+                   b.payment_status,      -- NUEVO CAMPO
+                   b.payment_method,      -- NUEVO CAMPO  
+                   b.payment_date,        -- NUEVO CAMPO
+                   b.payment_notes,       -- NUEVO CAMPO
+                   b.start_date,          -- NUEVO CAMPO
+                   b.end_date,            -- NUEVO CAMPO
+                   b.corresponding_month, -- NUEVO CAMPO
+                   b.is_proportional,     -- NUEVO CAMPO
                    b.date_create,
                    b.date_update,
                    e.address      AS estate_name,
@@ -51,6 +57,7 @@ export default class BillsRepository {
 
     /**
      * Busca factura por ID único y campos de pagos
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async findById(id) {
         const [rows] = await db.query(`
@@ -58,7 +65,11 @@ export default class BillsRepository {
                    b.payment_status,
                    b.payment_method,
                    b.payment_date,
-                   b.payment_notes
+                   b.payment_notes,
+                   b.start_date,
+                   b.end_date,
+                   b.corresponding_month,
+                   b.is_proportional
             FROM bills b
             WHERE b.id = ?`, [id]);
         return rows;
@@ -74,6 +85,7 @@ export default class BillsRepository {
 
     /**
      * Busca todas las facturas de un propietario y actualizado con campos de pagos
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async findByOwnersId(ownersId) {
         const [rows] = await db.query(`
@@ -81,7 +93,11 @@ export default class BillsRepository {
                    b.payment_status,
                    b.payment_method,
                    b.payment_date,
-                   b.payment_notes
+                   b.payment_notes,
+                   b.start_date,
+                   b.end_date,
+                   b.corresponding_month,
+                   b.is_proportional
             FROM bills b
             WHERE b.owners_id = ?`, [ownersId]);
         return rows;
@@ -89,6 +105,7 @@ export default class BillsRepository {
 
     /**
      * Busca todas las facturas de un cliente
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async findByClientId(clientId) {
         const [rows] = await db.query(`
@@ -96,7 +113,11 @@ export default class BillsRepository {
                    b.payment_status,
                    b.payment_method,
                    b.payment_date,
-                   b.payment_notes
+                   b.payment_notes,
+                   b.start_date,
+                   b.end_date,
+                   b.corresponding_month,
+                   b.is_proportional
             FROM bills b
             WHERE b.clients_id = ?`, [clientId]);
         return rows;
@@ -104,6 +125,7 @@ export default class BillsRepository {
 
     /**
      * Busca facturas por NIF del cliente (historial por identificación)
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async findByClientNif(nif) {
         const [rows] = await db.query(`
@@ -111,7 +133,11 @@ export default class BillsRepository {
                    bills.payment_status,
                    bills.payment_method,
                    bills.payment_date,
-                   bills.payment_notes
+                   bills.payment_notes,
+                   bills.start_date,
+                   bills.end_date,
+                   bills.corresponding_month,
+                   bills.is_proportional
             FROM bills
                      JOIN clients ON bills.clients_id = clients.id
             WHERE clients.identification = ?`, [nif]);
@@ -143,13 +169,16 @@ export default class BillsRepository {
         const [rows] = await db.query(
             `SELECT bill_number
              FROM bills
-             ORDER BY id ASC LIMIT 1`
+             WHERE is_refund = FALSE
+               AND bill_number LIKE 'FACT-%'
+             ORDER BY id DESC LIMIT 1`
         );
         return rows;
     }
 
     /**
      * Crea una nueva factura
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * @param {Object} bill - Datos de la factura
      * @returns {number} ID de la factura creada
      */
@@ -168,18 +197,25 @@ export default class BillsRepository {
             payment_status,
             payment_method,
             payment_date,
-            payment_notes
+            payment_notes,
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            start_date,
+            end_date,
+            corresponding_month,
+            is_proportional
         } = bill;
         // Campos por defecto: is_refund = FALSE, original_bill_id = NULL
         const [result] = await db.query(
             `INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date, tax_base, iva, irpf, total,
                                 ownership_percent, is_refund, original_bill_id, payment_status, payment_method,
-                                payment_date, payment_notes, date_create,
-                                date_update) ` + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, NULL, ?, ?, ?, ?, NOW(), NOW())`,
+                                payment_date, payment_notes, start_date, end_date, corresponding_month, is_proportional,
+                                date_create,
+                                date_update) ` + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
             [
                 bill_number, estates_id, owners_id, clients_id, date,
                 tax_base, iva, irpf, total, ownership_percent,
-                payment_status, payment_method, payment_date, payment_notes
+                payment_status, payment_method, payment_date, payment_notes,
+                start_date, end_date, corresponding_month, is_proportional || 0
             ]
         );
         return result.insertId ? [{id: result.insertId, created: true}] : [];
@@ -187,6 +223,7 @@ export default class BillsRepository {
 
     /**
      * Actualiza una factura existente
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * Nota: No permite cambiar estate_id (la propiedad asociada)
      */
     static async update(bill) {
@@ -205,30 +242,40 @@ export default class BillsRepository {
             payment_status,
             payment_method,
             payment_date,
-            payment_notes
+            payment_notes,
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            start_date,
+            end_date,
+            corresponding_month,
+            is_proportional
         } = bill;
 
         const [result] = await db.query(
             `UPDATE bills
-             SET bill_number       = ?,
-                 owners_id         = ?,
-                 clients_id        = ?,
-                 date              = ?,
-                 tax_base          = ?,
-                 iva               = ?,
-                 irpf              = ?,
-                 total             = ?,
-                 ownership_percent = ?,
-                 payment_status    = ?,
-                 payment_method    = ?,
-                 payment_date      = ?,
-                 payment_notes     = ?,
-                 date_update       = NOW()
+             SET bill_number         = ?,
+                 owners_id           = ?,
+                 clients_id          = ?,
+                 date                = ?,
+                 tax_base            = ?,
+                 iva                 = ?,
+                 irpf                = ?,
+                 total               = ?,
+                 ownership_percent   = ?,
+                 payment_status      = ?,
+                 payment_method      = ?,
+                 payment_date        = ?,
+                 payment_notes       = ?,
+                 start_date          = ?,
+                 end_date            = ?,
+                 corresponding_month = ?,
+                 is_proportional     = ?,
+                 date_update         = NOW()
              WHERE id = ?`,
             [
                 bill_number, owners_id, clients_id, date,
                 tax_base, iva, irpf, total, ownership_percent,
                 payment_status, payment_method, payment_date, payment_notes,
+                start_date, end_date, corresponding_month, is_proportional || 0,
                 id
             ]
         );
@@ -249,12 +296,17 @@ export default class BillsRepository {
 
     /**
      * Obtiene factura con TODOS los detalles para impresión/PDF
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * Incluye información completa de cliente, propiedad y propietario
      */
     static async findByIdWithDetails(id) {
         try {
             const [rows] = await db.query(`
                 SELECT b.*,
+                       b.start_date,
+                       b.end_date,
+                       b.corresponding_month,
+                       b.is_proportional,
                        -- Datos del cliente
                        c.name                as client_name,
                        c.lastname            as client_lastname,
@@ -301,6 +353,7 @@ export default class BillsRepository {
 
     /**
      * Crea un abono con campos de pagos (factura de reembolso)
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * @param {Object} bill - Datos del abono, incluye original_bill_id
      */
     static async createRefund(bill) {
@@ -320,20 +373,27 @@ export default class BillsRepository {
             payment_status = 'pending',
             payment_method = 'transfer',
             payment_date = null,
-            payment_notes = ''
+            payment_notes = '',
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES (heredados de factura original)
+            start_date = null,
+            end_date = null,
+            corresponding_month = null,
+            is_proportional = 0
         } = bill;
 
         const [result] = await db.query(`
-            INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date,
-                               tax_base, iva, irpf, total, ownership_percent,
-                               is_refund, original_bill_id,
-                               payment_status, payment_method, payment_date, payment_notes,
-                               date_create,
-                               date_update)` + ` VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                    INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date,
+                                       tax_base, iva, irpf, total, ownership_percent,
+                                       is_refund, original_bill_id,
+                                       payment_status, payment_method, payment_date, payment_notes,
+                                       start_date, end_date, corresponding_month, is_proportional,
+                                       date_create, date_update)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
             [
                 bill_number, estates_id, owners_id, clients_id, date,
                 tax_base, iva, irpf, total, ownership_percent, original_bill_id,
-                payment_status, payment_method, payment_date, payment_notes
+                payment_status, payment_method, payment_date, payment_notes,
+                start_date, end_date, corresponding_month, is_proportional || 0
             ]
         );
         return result.insertId ? [{id: result.insertId, created: true}] : [];
@@ -354,6 +414,7 @@ export default class BillsRepository {
 
     /**
      * Obtiene todos los abonos con información de relaciones
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * Incluye el número de la factura original
      */
     static async getAllRefunds() {
@@ -373,6 +434,10 @@ export default class BillsRepository {
                    b.date_create,
                    b.date_update,
                    b.original_bill_id,
+                   b.start_date,
+                   b.end_date,
+                   b.corresponding_month,
+                   b.is_proportional,
                    e.address      AS estate_name,
                    o.name         AS owner_name,
                    c.name         AS client_name,
@@ -390,12 +455,17 @@ export default class BillsRepository {
 
     /**
      * Obtiene un abono con todos sus detalles para impresión
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      * Incluye información de la factura original
      */
     static async findRefundByIdWithDetails(id) {
         try {
             const [rows] = await db.query(`
                 SELECT b.*,
+                       b.start_date,
+                       b.end_date,
+                       b.corresponding_month,
+                       b.is_proportional,
                        -- Datos del cliente
                        c.name                as client_name,
                        c.lastname            as client_lastname,
@@ -442,7 +512,7 @@ export default class BillsRepository {
     }
 
     /**
-     * ESTRUCTURA DE LA TABLA BILLS:
+     * ESTRUCTURA DE LA TABLA BILLS ACTUALIZADA:
      * - id (PK)
      * - bill_number (número único de factura)
      * - estate_id (FK a estates)
@@ -456,6 +526,11 @@ export default class BillsRepository {
      * - ownership_percent (porcentaje de propiedad)
      * - is_refund (boolean: true si es abono, false si es factura normal)
      * - original_bill_id (FK a bills, solo para abonos)
+     * - payment_status, payment_method, payment_date, payment_notes
+     * - 🆕 start_date (fecha inicio del periodo facturado)
+     * - 🆕 end_date (fecha fin del periodo facturado)
+     * - 🆕 corresponding_month (mes al que corresponde YYYY-MM)
+     * - 🆕 is_proportional (boolean: facturación proporcional)
      * - date_create, date_update (timestamps)
      */
 
@@ -485,7 +560,4 @@ export default class BillsRepository {
         );
         return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
-
-
 }
-

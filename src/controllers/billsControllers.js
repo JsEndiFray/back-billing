@@ -19,6 +19,7 @@ import fs from 'fs';
 import {generateBillPdf} from '../utils/pdfGenerator.js';
 import BillsService from '../services/billsServices.js';
 import {validate} from '../helpers/nifHelpers.js';
+import {ProportionalBillingHelper} from '../helpers/ProportionalBillingHelper.js';
 
 /**
  * Controlador para la gestión de facturas y abonos
@@ -31,6 +32,7 @@ export default class BillsControllers {
 
     /**
      * Obtiene todas las facturas del sistema
+     * ACTUALIZADO: Incluye campos proporcionales en la respuesta
      *
      * @async
      * @function getAllBills
@@ -50,7 +52,6 @@ export default class BillsControllers {
             }
             return res.status(200).json(bills);
         } catch (error) {
-            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -204,6 +205,7 @@ export default class BillsControllers {
 
     /**
      * Crea una nueva factura en el sistema
+     * ACTUALIZADO: Maneja campos proporcionales con validación mejorada
      *
      * Genera automáticamente el número de factura y calcula
      * el total basado en base imponible, IVA e IRPF.
@@ -223,17 +225,22 @@ export default class BillsControllers {
         try {
             const data = req.body;
             const created = await BillsService.createBill(data);
-            if (!created || created.length === 0){
+            if (!created || created.length === 0) {
                 return res.status(400).json("Error al crear factura");
             }
             return res.status(201).json(created);
         } catch (error) {
+            // 🆕 Manejo específico de errores de validación proporcional
+            if (error.message.includes('proporcional')) {
+                return res.status(400).json(error.message);
+            }
             return res.status(500).json("Error interno del servidor");
         }
     }
 
     /**
      * Actualiza una factura existente
+     * ACTUALIZADO: Recalcula totales automáticamente para cambios proporcionales
      *
      * Recalcula automáticamente el total cuando se modifican
      * la base imponible, IVA o IRPF.
@@ -267,6 +274,10 @@ export default class BillsControllers {
             }
             return res.status(200).json(updated);
         } catch (error) {
+            // 🆕 Manejo específico de errores de validación proporcional
+            if (error.message.includes('proporcional')) {
+                return res.status(400).json(error.message);
+            }
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -302,6 +313,7 @@ export default class BillsControllers {
 
     /**
      * Obtiene todos los abonos (facturas rectificativas) del sistema
+     * ACTUALIZADO: Incluye campos proporcionales heredados
      *
      * @async
      * @function getAllRefunds
@@ -350,11 +362,9 @@ export default class BillsControllers {
             if (!bill || bill.length === 0) {
                 return res.status(404).json("Factura no encontrada");
             }
-
             // Crear directorio para PDFs si no existe
             const dir = path.resolve('./pdfs');
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-
             // Generar nombre de archivo seguro (reemplazar / por -)
             const fileName = `factura_${bill[0].bill_number.replace(/\//g, '-')}.pdf`;
             const filePath = path.join(dir, fileName);
@@ -395,10 +405,9 @@ export default class BillsControllers {
 
             // Obtener abono con todos los detalles necesarios
             const refund = await BillsService.getRefundWithDetails(refundId);
-            if (!refund || refund.length === 0)  {
+            if (!refund || refund.length === 0) {
                 return res.status(404).json("Abono no encontrado");
             }
-
             // Crear directorio para PDFs si no existe
             const dir = path.resolve('./pdfs');
             if (!fs.existsSync(dir)) fs.mkdirSync(dir);
@@ -424,6 +433,7 @@ export default class BillsControllers {
 
     /**
      * Crea un abono (factura rectificativa) a partir de una factura existente
+     * ACTUALIZADO: Hereda automáticamente campos proporcionales de la factura original
      *
      * Genera automáticamente un abono con valores negativos basado en
      * una factura original, útil para anulaciones o devoluciones.
@@ -452,6 +462,7 @@ export default class BillsControllers {
             }
             return res.status(201).json(refund);
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -508,6 +519,156 @@ export default class BillsControllers {
             return res.status(200).json({
                 message: "Estado de pago actualizado correctamente",
                 bill: updated
+            });
+
+        } catch (error) {
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+    // ========================================
+    // 🆕 NUEVOS ENDPOINTS ESPECÍFICOS PARA FACTURACIÓN PROPORCIONAL
+    // ========================================
+
+    /**
+     * 🆕 Obtiene detalles del cálculo proporcional de una factura
+     *
+     * @async
+     * @function getProportionalCalculationDetails
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // GET /api/bills/123/proportional-details
+     * // Response: {
+     * //   type: "proportional",
+     * //   days_billed: 15,
+     * //   days_in_month: 31,
+     * //   proportion_percentage: 48.39,
+     * //   original_base: 1000,
+     * //   proportional_base: 483.87,
+     * //   total: 512.90
+     * // }
+     */
+    static async getProportionalCalculationDetails(req, res) {
+        try {
+            const {id} = req.params;
+            if (!id || isNaN(Number(id))) {
+                return res.status(400).json("ID de factura inválido");
+            }
+
+            const details = await BillsService.getProportionalCalculationDetails(Number(id));
+            if (!details) {
+                return res.status(404).json("Factura no encontrada");
+            }
+
+            return res.status(200).json(details);
+        } catch (error) {
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+    /**
+     * 🆕 Valida un rango de fechas para facturación proporcional
+     *
+     * @async
+     * @function validateProportionalDateRange
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // POST /api/bills/validate-proportional-dates
+     * // Body: { start_date: "2025-07-17", end_date: "2025-07-31" }
+     * // Response: {
+     * //   isValid: true,
+     * //   message: "Rango de fechas válido",
+     * //   daysBilled: 15,
+     * //   periodDescription: "Del 17 al 31 de julio 2025"
+     * // }
+     */
+    static async validateProportionalDateRange(req, res) {
+        try {
+            const {start_date, end_date} = req.body;
+
+            if (!start_date || !end_date) {
+                return res.status(400).json({
+                    isValid: false,
+                    message: "Fechas de inicio y fin son requeridas"
+                });
+            }
+
+            const validation = ProportionalBillingHelper.validateDateRange(start_date, end_date);
+
+            if (validation.isValid) {
+                // Añadir descripción legible del periodo
+                const periodDescription = ProportionalBillingHelper.generatePeriodDescription(start_date, end_date);
+
+                return res.status(200).json({
+                    ...validation,
+                    periodDescription
+                });
+            } else {
+                return res.status(400).json(validation);
+            }
+
+        } catch (error) {
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+    /**
+     * 🆕 Calcula una simulación de factura proporcional sin guardarla
+     *
+     * @async
+     * @function simulateProportionalBilling
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // POST /api/bills/simulate-proportional
+     * // Body: {
+     * //   tax_base: 1000,
+     * //   iva: 21,
+     * //   irpf: 15,
+     * //   start_date: "2025-07-17",
+     * //   end_date: "2025-07-31"
+     * // }
+     * // Response: Detalles completos del cálculo proporcional
+     */
+    static async simulateProportionalBilling(req, res) {
+        try {
+            const {tax_base, iva, irpf, start_date, end_date} = req.body;
+
+            // Validaciones básicas
+            if (!tax_base || tax_base <= 0) {
+                return res.status(400).json("Base imponible debe ser mayor a 0");
+            }
+
+            if (!start_date || !end_date) {
+                return res.status(400).json("Fechas de inicio y fin son requeridas");
+            }
+
+            // Preparar datos para simulación
+            const billData = {
+                tax_base,
+                iva: iva || 0,
+                irpf: irpf || 0,
+                is_proportional: 1,
+                start_date,
+                end_date
+            };
+
+            // Calcular usando el helper
+            const calculation = ProportionalBillingHelper.calculateBillTotal(billData);
+            const periodDescription = ProportionalBillingHelper.generatePeriodDescription(start_date, end_date);
+
+            return res.status(200).json({
+                ...calculation,
+                periodDescription,
+                simulation: true
             });
 
         } catch (error) {

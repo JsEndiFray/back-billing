@@ -102,7 +102,7 @@ export const generateBillPdf = (bill, outputPath) => {
             // ==========================================
 
             /** @type {PDFDocument} Documento PDF principal */
-            const doc = new PDFDocument({ margin: 50, size: 'A4' });
+            const doc = new PDFDocument({margin: 50, size: 'A4'});
 
             /** @type {fs.WriteStream} Stream de escritura del archivo */
             const stream = fs.createWriteStream(outputPath);
@@ -154,36 +154,36 @@ export const generateBillPdf = (bill, outputPath) => {
             // ==========================================
 
             // Número de factura
-            doc.font('Helvetica-Bold').fontSize(10).text('Nº de factura', rightColumnX, startY, { width: 100 });
+            doc.font('Helvetica-Bold').fontSize(10).text('Nº de factura', rightColumnX, startY, {width: 100});
             doc.font('Helvetica').text(bill.bill_number || 'N/A', rightColumnX + 100, startY);
 
             // Nombre del arrendatario (empresa o persona física)
-            doc.font('Helvetica-Bold').text('Arrendatario', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Arrendatario', rightColumnX, doc.y + 5, {width: 100});
             const clientName = bill.client_company_name || `${bill.client_name || ''} ${bill.client_lastname || ''}`;
             doc.font('Helvetica').text(clientName, rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // NIF del cliente
-            doc.font('Helvetica-Bold').text('NIF', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('NIF', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_identification || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Teléfono del cliente
-            doc.font('Helvetica-Bold').text('Teléfono', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Teléfono', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_phone || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Dirección del cliente
-            doc.font('Helvetica-Bold').text('Dirección', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Dirección', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_address || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Código postal del cliente
-            doc.font('Helvetica-Bold').text('Código Postal', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Código Postal', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_postal_code || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Localidad del cliente
-            doc.font('Helvetica-Bold').text('Localidad', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Localidad', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_location || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Provincia del cliente
-            doc.font('Helvetica-Bold').text('Provincia', rightColumnX, doc.y + 5, { width: 100 });
+            doc.font('Helvetica-Bold').text('Provincia', rightColumnX, doc.y + 5, {width: 100});
             doc.font('Helvetica').text(bill.client_province || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // ==========================================
@@ -211,13 +211,48 @@ export const generateBillPdf = (bill, outputPath) => {
             doc.moveDown(2);
 
             // ==========================================
+            // DETECCIÓN DE TIPO DE FACTURACIÓN
+            // ==========================================
+
+            /** @type {boolean} Si es factura proporcional */
+            const isProportional = bill.is_proportional === 1;
+
+            /** @type {string} Descripción del período facturado */
+            let periodDescription = 'Mes completo';
+            let periodDetails = '';
+
+            if (isProportional && bill.start_date && bill.end_date) {
+                const startDate = new Date(bill.start_date);
+                const endDate = new Date(bill.end_date);
+
+                // Formatear fechas
+                const startFormatted = startDate.toLocaleDateString('es-ES');
+                const endFormatted = endDate.toLocaleDateString('es-ES');
+
+                // Calcular días
+                const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                // Calcular días del mes
+                const year = startDate.getFullYear();
+                const month = startDate.getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                // Calcular porcentaje
+                const percentage = ((diffDays / daysInMonth) * 100).toFixed(2);
+
+                periodDescription = `Del ${startFormatted} al ${endFormatted}`;
+                periodDetails = `${diffDays} días de ${daysInMonth} días del mes (${percentage}%)`;
+            }
+
+            // ==========================================
             // TABLA DE CONCEPTOS
             // ==========================================
 
             // Encabezado de la tabla con fondo azul
             const tableHeaderY = doc.y;
             doc.fillColor(primaryColor).rect(50, tableHeaderY, 500, 25).fill();
-            doc.fillColor('white').font('Helvetica-Bold').fontSize(12).text('Fecha', 70, tableHeaderY + 7);
+            doc.fillColor('white').font('Helvetica-Bold').fontSize(12).text('Período', 70, tableHeaderY + 7);
             doc.text('Descripción', 240, tableHeaderY + 7);
             doc.text('Importe', 490, tableHeaderY + 7, { align: 'right' });
 
@@ -238,7 +273,7 @@ export const generateBillPdf = (bill, outputPath) => {
             const priceWidth = 80;
 
             /** @type {number} Alto de cada fila */
-            const rowHeight = 30;
+            const rowHeight = 40;
 
             // Dibujar fila de datos
             const rowY = doc.y;
@@ -252,17 +287,38 @@ export const generateBillPdf = (bill, outputPath) => {
             // Contenido de las celdas
             doc.fillColor('black').font('Helvetica').fontSize(10);
 
-            // Fecha de la factura
+            // Período facturado
             doc.text(
-                bill.date ? new Date(bill.date).toLocaleDateString() : 'N/A',
+                periodDescription,
                 tableLeft + 10,
-                rowY + 10,
+                rowY + 5,
                 { width: dateWidth - 20 }
             );
 
-            // Descripción (dirección del inmueble)
+            // Detalles adicionales para proporcionales
+            if (isProportional && periodDetails) {
+                doc.font('Helvetica').fontSize(8).fillColor('#666666');
+                doc.text(
+                    periodDetails,
+                    tableLeft + 10,
+                    rowY + 18,
+                    { width: dateWidth - 20 }
+                );
+                doc.font('Helvetica').fontSize(10).fillColor('black');
+            }
+
+            // Descripción (dirección del inmueble + mes correspondencia)
+            let description = bill.estate_address || 'N/A';
+            if (bill.corresponding_month) {
+                const [year, month] = bill.corresponding_month.split('-');
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                const monthName = monthNames[parseInt(month, 10) - 1];
+                description += `(Corresponde a ${monthName} ${year})`;
+            }
+            // conceptos de la descripcion
             doc.text(
-                bill.estate_address || 'N/A',
+                description,
                 tableLeft + dateWidth + 10,
                 rowY + 10,
                 { width: descWidth - 20 }
@@ -273,7 +329,7 @@ export const generateBillPdf = (bill, outputPath) => {
                 `${formatNumber(taxBase)} €`,
                 tableLeft + dateWidth + descWidth + 10,
                 rowY + 10,
-                { width: priceWidth - 20, align: 'right' }
+                {width: priceWidth - 20, align: 'right'}
             );
 
             // Actualizar posición Y
@@ -293,22 +349,34 @@ export const generateBillPdf = (bill, outputPath) => {
 
             // Base imponible
             doc.font('Helvetica-Bold').fontSize(11).fillColor('black').text('Base Imponible', summaryX, summaryY);
-            doc.font('Helvetica').text(`${formatNumber(taxBase)} €`, summaryX + 430, summaryY, { width: 70, align: 'right' });
+            doc.font('Helvetica').text(`${formatNumber(taxBase)} €`, summaryX + 430, summaryY, {
+                width: 70,
+                align: 'right'
+            });
 
             // IVA
             doc.font('Helvetica-Bold').text(`I.V.A. ${iva}%`, summaryX, summaryY + 20);
-            doc.font('Helvetica').text(`${formatNumber(ivaAmount)} €`, summaryX + 430, summaryY + 20, { width: 70, align: 'right' });
+            doc.font('Helvetica').text(`${formatNumber(ivaAmount)} €`, summaryX + 430, summaryY + 20, {
+                width: 70,
+                align: 'right'
+            });
 
             // IRPF (retención)
             doc.font('Helvetica-Bold').text(`I.R.P.F. ${irpf}%`, summaryX, summaryY + 40);
-            doc.font('Helvetica').text(`-${formatNumber(irpfAmount)} €`, summaryX + 430, summaryY + 40, { width: 70, align: 'right' });
+            doc.font('Helvetica').text(`-${formatNumber(irpfAmount)} €`, summaryX + 430, summaryY + 40, {
+                width: 70,
+                align: 'right'
+            });
 
             // Línea separadora
             doc.strokeColor('#cccccc').lineWidth(1).moveTo(summaryX, summaryY + 60).lineTo(summaryX + 500, summaryY + 60).stroke();
 
             // Total final
             doc.font('Helvetica-Bold').text('Total de la factura', summaryX, summaryY + 70);
-            doc.font('Helvetica-Bold').text(`${formatNumber(total)} €`, summaryX + 430, summaryY + 70, { width: 70, align: 'right' });
+            doc.font('Helvetica-Bold').text(`${formatNumber(total)} €`, summaryX + 430, summaryY + 70, {
+                width: 70,
+                align: 'right'
+            });
 
             // ==========================================
             // INFORMACIÓN DE PAGO
@@ -356,7 +424,7 @@ export const generateBillPdf = (bill, outputPath) => {
             // Nota final
             doc.moveDown(2);
             doc.font('Helvetica-Oblique').fontSize(9)
-                .text('Por favor, incluya el número de factura en el concepto de la transferencia.', 50, doc.y, { align: 'center' });
+                .text('Por favor, incluya el número de factura en el concepto de la transferencia.', 50, doc.y, {align: 'center'});
 
             // ==========================================
             // FINALIZACIÓN DEL DOCUMENTO

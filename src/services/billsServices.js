@@ -3,15 +3,19 @@ import {sanitizeString} from "../helpers/stringHelpers.js";
 import EstatesOwnersRepository from "../repository/estatesOwnersRepository.js";
 import {format} from "morgan";
 import {calculateTotal} from "../helpers/calculateTotal.js";
+import {calculateProportionalTotal, calculateDaysBetween} from "../helpers/calculateTotal.js";
+import {ProportionalBillingHelper} from "../helpers/ProportionalBillingHelper.js";
 
 /**
  * Servicio de facturas - capa de lógica de negocio
+ * ACTUALIZADO: Incluye lógica para facturación proporcional
  * Orquesta operaciones complejas usando repositorios
  */
 export default class BillsService {
 
     /**
      * Obtiene todas las facturas con formato estandarizado y con metodos de pagos
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async getAllBills() {
         const bills = await BillsRepository.getAll();
@@ -32,11 +36,15 @@ export default class BillsService {
             is_refund: bill.is_refund,
             original_bill_id: bill.original_bill_id,
             original_bill_number: bill.original_bill_number,
-            //NUEVOS CAMPOS DE PAGO
             payment_status: bill.payment_status || 'pending',
             payment_method: bill.payment_method || 'transfer',
             payment_date: bill.payment_date,
             payment_notes: bill.payment_notes,
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            start_date: bill.start_date,
+            end_date: bill.end_date,
+            corresponding_month: bill.corresponding_month,
+            is_proportional: bill.is_proportional,
             date_create: bill.date_create,
             date_update: bill.date_update
         }));
@@ -92,6 +100,7 @@ export default class BillsService {
 
     /**
      * Crea factura con validaciones y cálculos automáticos
+     * ACTUALIZADO: Incluye lógica proporcional
      */
     static async createBill(data) {
         const {owners_id, estates_id, date, tax_base, iva, irpf} = data;
@@ -99,6 +108,12 @@ export default class BillsService {
         // Validación de datos obligatorios
         if (!owners_id || !estates_id || !date) {
             return [];
+        }
+
+        // 🆕 VALIDAR CAMPOS PROPORCIONALES
+        const proportionalValidation = ProportionalBillingHelper.validateProportionalFields(data);
+        if (!proportionalValidation.isValid) {
+            throw new Error(proportionalValidation.message);
         }
 
         // REGLA DE NEGOCIO: Solo una factura por mes por owner+estate
@@ -115,25 +130,36 @@ export default class BillsService {
         }
 
         // Obtener porcentaje de propiedad automáticamente
-        const ownershipPercent = await EstatesOwnersRepository.getOwnershipPercent(estates_id, owners_id);
+        const ownershipResult = await EstatesOwnersRepository.getOwnershipPercent(estates_id, owners_id);
+        const ownershipPercent = ownershipResult && ownershipResult.length > 0
+            ? ownershipResult[0].ownership_percent || 0
+            : 0;
 
         // Generar número de factura secuencial
         const lastBillNumber = await BillsRepository.getLastBillNumber();
         let newBillNumber = 'FACT-0001';
         if (lastBillNumber.length > 0) {
-            const lastNumber = parseInt(lastBillNumber[0].replace(/\D/g, ''), 10);
+            const lastNumber = parseInt(lastBillNumber[0].bill_number.replace(/\D/g, ''), 10);
             const nextNumber = lastNumber + 1;
             newBillNumber = `FACT-${String(nextNumber).padStart(4, '0')}`;
         }
 
-        // Calcular total automáticamente
-        const total = calculateTotal(tax_base, iva, irpf);
+        // 🆕 CALCULAR TOTAL (normal o proporcional)
+        const calculationResult = ProportionalBillingHelper.calculateBillTotal(data);
+
+        // 🆕 GENERAR MES DE CORRESPONDENCIA
+        const correspondingMonth = ProportionalBillingHelper.generateCorrespondingMonth(date, data.corresponding_month);
 
         const billToCreate = {
             ...data,
             bill_number: newBillNumber,
             ownership_percent: ownershipPercent,
-            total
+            total: calculationResult.total,
+            // 🆕 CAMPOS PROPORCIONALES CON VALORES POR DEFECTO
+            start_date: data.start_date || null,
+            end_date: data.end_date || null,
+            corresponding_month: correspondingMonth,
+            is_proportional: data.is_proportional || 0
         };
 
         const newBillId = await BillsRepository.create(billToCreate);
@@ -142,12 +168,19 @@ export default class BillsService {
 
     /**
      * Actualiza factura con validaciones
+     * ACTUALIZADO: Incluye lógica proporcional
      */
     static async updateBill(id, updateData) {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await BillsRepository.findById(id);
         if (!existing.length > 0) return [];
+
+        // 🆕 VALIDAR CAMPOS PROPORCIONALES
+        const proportionalValidation = ProportionalBillingHelper.validateProportionalFields(updateData);
+        if (!proportionalValidation.isValid) {
+            throw new Error(proportionalValidation.message);
+        }
 
         // Validar que el nuevo número no esté duplicado
         if (updateData.bill_number) {
@@ -157,8 +190,23 @@ export default class BillsService {
             }
         }
 
-        // Recalcular total automáticamente
-        const total = calculateTotal(updateData.tax_base, updateData.iva, updateData.irpf);
+        // 🆕 RECALCULAR TOTAL (normal o proporcional)
+        const dataForCalculation = {
+            tax_base: updateData.tax_base || existing[0].tax_base,
+            iva: updateData.iva || existing[0].iva,
+            irpf: updateData.irpf || existing[0].irpf,
+            is_proportional: updateData.is_proportional !== undefined ? updateData.is_proportional : existing[0].is_proportional,
+            start_date: updateData.start_date || existing[0].start_date,
+            end_date: updateData.end_date || existing[0].end_date
+        };
+
+        const calculationResult = ProportionalBillingHelper.calculateBillTotal(dataForCalculation);
+
+        // 🆕 GENERAR MES DE CORRESPONDENCIA ACTUALIZADO
+        const correspondingMonth = ProportionalBillingHelper.generateCorrespondingMonth(
+            updateData.date || existing[0].date,
+            updateData.corresponding_month
+        );
 
         const billToUpdate = {
             id,
@@ -169,15 +217,21 @@ export default class BillsService {
             tax_base: updateData.tax_base,
             iva: updateData.iva,
             irpf: updateData.irpf,
-            total,
+            total: calculationResult.total, // 🆕 TOTAL RECALCULADO
             ownership_percent: updateData.ownership_percent !== null && updateData.ownership_percent !== undefined
                 ? updateData.ownership_percent
                 : existing[0].ownership_percent,
             payment_status: updateData.payment_status || existing[0].payment_status,
             payment_method: updateData.payment_method || existing[0].payment_method,
             payment_date: updateData.payment_date || existing[0].payment_date,
-            payment_notes: updateData.payment_notes || existing[0].payment_notes
+            payment_notes: updateData.payment_notes || existing[0].payment_notes,
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            start_date: updateData.start_date !== undefined ? updateData.start_date : existing[0].start_date,
+            end_date: updateData.end_date !== undefined ? updateData.end_date : existing[0].end_date,
+            corresponding_month: correspondingMonth,
+            is_proportional: updateData.is_proportional !== undefined ? updateData.is_proportional : existing[0].is_proportional
         };
+
         try {
             const updated = await BillsRepository.update(billToUpdate);
             return updated.length > 0 ? updated : [];
@@ -201,6 +255,7 @@ export default class BillsService {
 
     /**
      * Obtiene todos los abonos con formato estandarizado
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
      */
     static async getAllRefunds() {
         const refunds = await BillsRepository.getAllRefunds();
@@ -219,7 +274,12 @@ export default class BillsService {
             total: refund.total,
             is_refund: refund.is_refund,
             original_bill_id: refund.original_bill_id,
-            original_bill_number: refund.original_bill_number,  // Referencia a factura original
+            original_bill_number: refund.original_bill_number,
+            // 🆕 CAMPOS PROPORCIONALES EN ABONOS
+            start_date: refund.start_date,
+            end_date: refund.end_date,
+            corresponding_month: refund.corresponding_month,
+            is_proportional: refund.is_proportional,
             date_create: refund.date_create,
             date_update: refund.date_update
         }));
@@ -247,6 +307,7 @@ export default class BillsService {
 
     /**
      * Crea abono (factura negativa) basado en factura original
+     * ACTUALIZADO: Hereda campos proporcionales de la factura original
      */
     static async createRefund(originalBillId) {
 
@@ -269,12 +330,12 @@ export default class BillsService {
         const lastRefundNumber = await BillsRepository.getLastRefundNumber();
         let newRefundNumber = 'ABONO-0001';
         if (lastRefundNumber.length > 0) {
-            const lastNumber = parseInt(lastRefundNumber[0].replace(/\D/g, ''), 10);
+            const lastNumber = parseInt(lastRefundNumber[0].bill_number.replace(/\D/g, ''), 10);
             const nextNumber = lastNumber + 1;
             newRefundNumber = `ABONO-${String(nextNumber).padStart(4, '0')}`;
         }
 
-        // Crear abono con valores negativos Y campos de pago
+        // Crear abono con valores negativos Y campos proporcionales heredados
         const refundToCreate = {
             bill_number: newRefundNumber,
             estates_id: originalBill[0].estates_id,
@@ -287,16 +348,19 @@ export default class BillsService {
             total: -Math.abs(originalBill[0].total),
             ownership_percent: originalBill[0].ownership_percent,
             original_bill_id: originalBill[0].id,
-            //AGREGAR campos de pago con valores por defecto
             payment_status: 'pending',
             payment_method: 'transfer',
             payment_date: null,
-            payment_notes: `Abono de factura ${originalBill[0].bill_number}`
+            payment_notes: `Abono de factura ${originalBill[0].bill_number}`,
+            // 🆕 HEREDAR CAMPOS PROPORCIONALES DE LA FACTURA ORIGINAL
+            start_date: originalBill[0].start_date,
+            end_date: originalBill[0].end_date,
+            corresponding_month: originalBill[0].corresponding_month,
+            is_proportional: originalBill[0].is_proportional
         };
 
         const newRefundId = await BillsRepository.createRefund(refundToCreate);
         return newRefundId.length > 0 ? newRefundId : [];
-
     }
 
     /**
@@ -354,6 +418,23 @@ export default class BillsService {
         // Devolver la factura actualizada
         const updatedBill = await BillsRepository.findById(id);
         return updatedBill;
+    }
+
+    // ========================================
+    // 🆕 MÉTODO PARA OBTENER DETALLES DE CÁLCULO PROPORCIONAL
+    // ========================================
+
+    /**
+     * 🆕 Obtiene detalles de cálculo de una factura proporcional
+     * @param {number} billId - ID de la factura
+     * @returns {Object} Detalles del cálculo proporcional
+     */
+    static async getProportionalCalculationDetails(billId) {
+        const bill = await BillsRepository.findById(billId);
+        if (!bill.length) return null;
+
+        const billData = bill[0];
+        return ProportionalBillingHelper.getCalculationDetails(billData);
     }
 
 }
