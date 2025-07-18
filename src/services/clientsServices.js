@@ -59,7 +59,7 @@ export default class ClientsServices {
         return await ClientsRepository.findByIdentification(sanitizeString(identification));
     }
 
-    static async getById(id) {
+    static async getClientById(id) {
         if (!id || isNaN(id)) return [];
         return await ClientsRepository.findById(id);
     }
@@ -70,7 +70,7 @@ export default class ClientsServices {
 
     static async createClient(data) {
         // Limpiar datos con transformaciones estándar
-        const clientstData = {
+        const clientsData = {
             type_client: data.type_client.trim(),
             name: data.name?.trim(),
             lastname: data.lastname?.trim(),
@@ -88,30 +88,30 @@ export default class ClientsServices {
         };
 
         // REGLA: Autónomos con empresa deben tener relationship_type
-        if (clientstData.type_client === 'autonomo' && clientstData.parent_company_id) {
-            if (!clientstData.relationship_type) {
-                clientstData.relationship_type = 'administrator'; // Por defecto
+        if (clientsData.type_client === 'autonomo' && clientsData.parent_company_id) {
+            if (!clientsData.relationship_type) {
+                clientsData.relationship_type = 'administrator'; // Por defecto
             }
 
             // Verificar que la empresa existe y es válida
-            const company = await ClientsRepository.findById(clientstData.parent_company_id);
+            const company = await ClientsRepository.findById(clientsData.parent_company_id);
             if (!company.length || company[0].type_client !== 'empresa') {
                 return [];
             }
         }
 
         // REGLA: Solo autónomos pueden tener empresa padre
-        if (clientstData.type_client !== 'autonomo') {
-            clientstData.parent_company_id = null;
-            clientstData.relationship_type = null;
+        if (clientsData.type_client !== 'autonomo') {
+            clientsData.parent_company_id = null;
+            clientsData.relationship_type = null;
         }
 
         // Verificar identificación única
-        const existing = await ClientsRepository.findByIdentification(clientstData.identification);
+        const existing = await ClientsRepository.findByIdentification(clientsData.identification);
         if (existing.length > 0) return [];
 
-        const new_client = await ClientsRepository.create(clientstData)
-        return new_client;
+        const created = await ClientsRepository.create(clientsData)
+        return [{...clientsData, id: created[0].id}];
     }
 
     // ========================================
@@ -146,7 +146,7 @@ export default class ClientsServices {
                 cleanClientsData.relationship_type = 'ADMINISTRATOR';
             }
             const company = await ClientsRepository.findById(cleanClientsData.parent_company_id);
-            if (!company.length || company[0].type_client !== 'empresa') {
+            if (!company.length > 0 || company[0].type_client !== 'empresa') {
                 return [];
             }
         }
@@ -159,7 +159,7 @@ export default class ClientsServices {
 
         // Verificar que existe
         const existing = await ClientsRepository.findById(cleanClientsData.id);
-        if (!existing.length) return [];
+        if (!existing.length > 0) return [];
 
         // Verificar identificación única (excepto este mismo cliente)
         if (cleanClientsData.identification) {
@@ -170,7 +170,7 @@ export default class ClientsServices {
         }
 
         const updated = await ClientsRepository.update(cleanClientsData);
-        return updated.length > 0 ? updated : [];
+        return updated.length > 0 ? [cleanClientsData] : [];
     }
 
     // ========================================
@@ -181,7 +181,7 @@ export default class ClientsServices {
         if (!id || isNaN(Number(id))) return [];
 
         const client = await ClientsRepository.findById(id);
-        if (!client.length) return [];
+        if (!client.length > 0) return [];
 
         // REGLA 1: No eliminar si tiene facturas
         const billsCount = await ClientsRepository.countBillsByClient(id);
@@ -203,7 +203,7 @@ export default class ClientsServices {
         }
 
         const result = await ClientsRepository.delete(id);
-        return result;
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
     }
 }
 

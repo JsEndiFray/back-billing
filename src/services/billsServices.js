@@ -2,20 +2,34 @@ import BillsRepository from "../repository/billsRepository.js";
 import {sanitizeString} from "../helpers/stringHelpers.js";
 import EstatesOwnersRepository from "../repository/estatesOwnersRepository.js";
 import {format} from "morgan";
-import {calculateTotal} from "../helpers/calculateTotal.js";
-import {calculateProportionalTotal, calculateDaysBetween} from "../helpers/calculateTotal.js";
-import {ProportionalBillingHelper} from "../helpers/ProportionalBillingHelper.js";
+import CalculateHelper from "../helpers/calculateTotal.js";
 
 /**
- * Servicio de facturas - capa de lógica de negocio
- * ACTUALIZADO: Incluye lógica para facturación proporcional
- * Orquesta operaciones complejas usando repositorios
+ * 📋 SERVICIO DE FACTURAS
+ *
+ * ¿Qué hace este archivo?
+ * - Maneja toda la lógica de negocio relacionada con facturas
+ * - Actúa como intermediario entre los controladores y la base de datos
+ * - Valida datos antes de guardarlos
+ * - Calcula totales y aplica reglas de negocio
+ *
+ * 💡 Patrón usado: Repository + Service
+ * Repository = acceso a datos
+ * Service = lógica de negocio + validaciones
  */
 export default class BillsService {
 
+    // ===========================================
+    // 📖 OBTENER FACTURAS (CONSULTAS)
+    // ===========================================
+
     /**
-     * Obtiene todas las facturas con formato estandarizado y con metodos de pagos
-     * ACTUALIZADO: Incluye nuevos campos proporcionales
+     * 🔍 Obtiene TODAS las facturas del sistema
+     *
+     * ¿Qué devuelve?
+     * - Array con todas las facturas formateadas
+     * - Incluye información de propietarios, clientes y propiedades
+     * - Datos listos para mostrar en el frontend
      */
     static async getAllBills() {
         const bills = await BillsRepository.getAll();
@@ -40,7 +54,7 @@ export default class BillsService {
             payment_method: bill.payment_method || 'transfer',
             payment_date: bill.payment_date,
             payment_notes: bill.payment_notes,
-            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            //NUEVOS CAMPOS PROPORCIONALES
             start_date: bill.start_date,
             end_date: bill.end_date,
             corresponding_month: bill.corresponding_month,
@@ -50,12 +64,13 @@ export default class BillsService {
         }));
     }
 
-    // ========================================
-    // MÉTODOS DE BÚSQUEDA CON VALIDACIÓN
-    // ========================================
+    // ===========================================
+    // 🔍 BÚSQUEDAS ESPECÍFICAS CON VALIDACIÓN
+    // ===========================================
 
     /**
-     * Busca factura por número con validación
+     * 🔎 Busca una factura por su número
+     * Ejemplo: "FACT-0001"
      */
     static async getBillByNumber(bill_number) {
         if (!bill_number.length) return [];
@@ -63,7 +78,8 @@ export default class BillsService {
     }
 
     /**
-     * Busca factura por ID con validación de tipo
+     * 🔎 Busca una factura por su ID
+     * Valida que sea un número válido
      */
     static async getBillById(id) {
         if (!id || isNaN(Number(id))) return [];
@@ -71,7 +87,7 @@ export default class BillsService {
     }
 
     /**
-     * Facturas por propietario
+     * Obtiene Facturas por propietario
      */
     static async getByOwnersId(ownersId) {
         if (!ownersId || isNaN(ownersId)) return [];
@@ -79,7 +95,7 @@ export default class BillsService {
     }
 
     /**
-     * Facturas por cliente
+     * Obtiene Facturas por cliente
      */
     static async getByClientsId(clientsId) {
         if (!clientsId || isNaN(clientsId)) return [];
@@ -94,13 +110,20 @@ export default class BillsService {
         return await BillsRepository.findByClientNif(sanitizeString(nif));
     }
 
-    // ========================================
-    // LÓGICA DE NEGOCIO COMPLEJA
-    // ========================================
+    // ===========================================
+    // ➕ CREAR NUEVA FACTURA
+    // ===========================================
 
     /**
-     * Crea factura con validaciones y cálculos automáticos
-     * ACTUALIZADO: Incluye lógica proporcional
+     * 🆕 Crea una nueva factura
+     *
+     * Proceso paso a paso:
+     * 1. Valida datos obligatorios
+     * 2. Verifica que no haya duplicados del mismo mes
+     * 3. Obtiene automáticamente el porcentaje de propiedad
+     * 4. Genera número de factura secuencial
+     * 5. Calcula el total
+     * 6. Guarda en base de datos
      */
     static async createBill(data) {
         const {owners_id, estates_id, date, tax_base, iva, irpf} = data;
@@ -110,8 +133,8 @@ export default class BillsService {
             return [];
         }
 
-        // 🆕 VALIDAR CAMPOS PROPORCIONALES
-        const proportionalValidation = ProportionalBillingHelper.validateProportionalFields(data);
+        //VALIDAR CAMPOS PROPORCIONALES
+        const proportionalValidation = CalculateHelper.validateProportionalFields(data);
         if (!proportionalValidation.isValid) {
             throw new Error(proportionalValidation.message);
         }
@@ -144,42 +167,53 @@ export default class BillsService {
             newBillNumber = `FACT-${String(nextNumber).padStart(4, '0')}`;
         }
 
-        // 🆕 CALCULAR TOTAL (normal o proporcional)
-        const calculationResult = ProportionalBillingHelper.calculateBillTotal(data);
+        // CALCULAR TOTAL (normal o proporcional)
+        const calculationResult = CalculateHelper.calculateBillTotal(data);
 
-        // 🆕 GENERAR MES DE CORRESPONDENCIA
-        const correspondingMonth = ProportionalBillingHelper.generateCorrespondingMonth(date, data.corresponding_month);
+        // GENERAR MES DE CORRESPONDENCIA
+        const correspondingMonth = CalculateHelper.generateCorrespondingMonth(date, data.corresponding_month);
 
-        const billToCreate = {
+        const billData = {
             ...data,
             bill_number: newBillNumber,
             ownership_percent: ownershipPercent,
             total: calculationResult.total,
-            // 🆕 CAMPOS PROPORCIONALES CON VALORES POR DEFECTO
+            // CAMPOS PROPORCIONALES CON VALORES POR DEFECTO
             start_date: data.start_date || null,
             end_date: data.end_date || null,
             corresponding_month: correspondingMonth,
             is_proportional: data.is_proportional || 0
         };
 
-        const newBillId = await BillsRepository.create(billToCreate);
-        return newBillId.length > 0 ? newBillId : [];
+        const created = await BillsRepository.create(billData);
+        if (!created.length > 0) return [];
+
+        return [{...billData, id: created[0].id}];
     }
 
+    // ===========================================
+    // ✏️ ACTUALIZAR FACTURA EXISTENTE
+    // ===========================================
+
     /**
-     * Actualiza factura con validaciones
-     * ACTUALIZADO: Incluye lógica proporcional
+     * ✏️ Actualiza una factura existente
+     *
+     * Proceso:
+     * 1. Valida que la factura exista
+     * 2. Valida nuevos datos
+     * 3. Recalcula totales si es necesario
+     * 4. Actualiza en base de datos
      */
     static async updateBill(id, updateData) {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await BillsRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (!existing || existing.length === 0) return [];
 
-        // 🆕 VALIDAR CAMPOS PROPORCIONALES
-        const proportionalValidation = ProportionalBillingHelper.validateProportionalFields(updateData);
+        // VALIDAR CAMPOS PROPORCIONALES
+        const proportionalValidation = CalculateHelper.validateProportionalFields(updateData);
         if (!proportionalValidation.isValid) {
-            throw new Error(proportionalValidation.message);
+            return [];
         }
 
         // Validar que el nuevo número no esté duplicado
@@ -190,7 +224,7 @@ export default class BillsService {
             }
         }
 
-        // 🆕 RECALCULAR TOTAL (normal o proporcional)
+        //RECALCULAR TOTAL (normal o proporcional)
         const dataForCalculation = {
             tax_base: updateData.tax_base || existing[0].tax_base,
             iva: updateData.iva || existing[0].iva,
@@ -200,15 +234,15 @@ export default class BillsService {
             end_date: updateData.end_date || existing[0].end_date
         };
 
-        const calculationResult = ProportionalBillingHelper.calculateBillTotal(dataForCalculation);
+        const calculationResult = CalculateHelper.calculateBillTotal(dataForCalculation);
 
-        // 🆕 GENERAR MES DE CORRESPONDENCIA ACTUALIZADO
-        const correspondingMonth = ProportionalBillingHelper.generateCorrespondingMonth(
+        // GENERAR MES DE CORRESPONDENCIA ACTUALIZADO
+        const correspondingMonth = CalculateHelper.generateCorrespondingMonth(
             updateData.date || existing[0].date,
             updateData.corresponding_month
         );
 
-        const billToUpdate = {
+        const cleanBillData = {
             id,
             bill_number: updateData.bill_number || existing[0].bill_number,
             owners_id: updateData.owners_id,
@@ -225,7 +259,7 @@ export default class BillsService {
             payment_method: updateData.payment_method || existing[0].payment_method,
             payment_date: updateData.payment_date || existing[0].payment_date,
             payment_notes: updateData.payment_notes || existing[0].payment_notes,
-            // 🆕 NUEVOS CAMPOS PROPORCIONALES
+            // NUEVOS CAMPOS PROPORCIONALES
             start_date: updateData.start_date !== undefined ? updateData.start_date : existing[0].start_date,
             end_date: updateData.end_date !== undefined ? updateData.end_date : existing[0].end_date,
             corresponding_month: correspondingMonth,
@@ -233,8 +267,8 @@ export default class BillsService {
         };
 
         try {
-            const updated = await BillsRepository.update(billToUpdate);
-            return updated.length > 0 ? updated : [];
+            const updated = await BillsRepository.update(cleanBillData);
+            return updated;
         } catch (error) {
             return [];
         }
@@ -245,8 +279,12 @@ export default class BillsService {
      */
     static async deleteBill(id) {
         if (!id || isNaN(Number(id))) return [];
+
+        const existing = await BillsRepository.findById(id);
+        if (!existing.length > 0) return [];
+
         const result = await BillsRepository.delete(id);
-        return result;
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
     }
 
     // ========================================
@@ -363,23 +401,22 @@ export default class BillsService {
         return newRefundId.length > 0 ? newRefundId : [];
     }
 
-    /**
-     * PATRÓN DE ARQUITECTURA:
-     * Repository -> Acceso a datos
-     * Service -> Lógica de negocio + validaciones + orquestación
-     * Controller -> Manejo HTTP + respuestas
-     */
-
-
-    // ========================================
-    // GESTIÓN DE PAGOS
-    // ========================================
+    // ===========================================
+    // 💳 GESTIÓN DE PAGOS
+    // ===========================================
 
     /**
-     * Actualiza el estado de pago de una factura con validaciones
-     * @param {number} id - ID de la factura
-     * @param {Object} paymentData - Datos del pago
-     * @returns {Object|null} Factura actualizada o null si hay error
+     * 💳 Actualiza el estado de pago de una factura
+     *
+     * Estados posibles:
+     * - 'pending' = pendiente de pago
+     * - 'paid' = pagada
+     *
+     * Métodos de pago:
+     * - 'direct_debit' = domiciliación bancaria
+     * - 'cash' = efectivo
+     * - 'card' = tarjeta
+     * - 'transfer' = transferencia
      */
     static async updatePaymentStatus(id, paymentData) {
         // Validar ID
@@ -420,22 +457,40 @@ export default class BillsService {
         return updatedBill;
     }
 
-    // ========================================
-    // 🆕 MÉTODO PARA OBTENER DETALLES DE CÁLCULO PROPORCIONAL
-    // ========================================
+    // ===========================================
+    // DETALLES DE CÁLCULO PROPORCIONAL
+    // ===========================================
 
     /**
-     * 🆕 Obtiene detalles de cálculo de una factura proporcional
-     * @param {number} billId - ID de la factura
-     * @returns {Object} Detalles del cálculo proporcional
+     * Obtiene detalles de cálculo de una factura proporcional
+     *
+     * ¿Qué es una factura proporcional?
+     * - Es una factura que se calcula por días, no por mes completo
+     * - Útil cuando un inquilino se va a mitad de mes
+     * - Calcula proporcionalmente según las fechas
      */
     static async getProportionalCalculationDetails(billId) {
         const bill = await BillsRepository.findById(billId);
         if (!bill.length) return null;
 
         const billData = bill[0];
-        return ProportionalBillingHelper.getCalculationDetails(billData);
+        return CalculateHelper.getCalculationDetails(billData);
     }
+
+    /**
+     * 🏗️ PATRÓN DE ARQUITECTURA USADO:
+     *
+     * Repository Pattern:
+     * - Repository -> Se encarga SOLO de acceder a la base de datos
+     * - Service -> Se encarga de la lógica de negocio + validaciones + orquestación
+     * - Controller -> Se encarga del manejo HTTP + respuestas
+     *
+     * ¿Por qué este patrón?
+     * - Separa responsabilidades
+     * - Más fácil de testear
+     * - Más fácil de mantener
+     * - Más fácil de entender
+     */
 
 }
 

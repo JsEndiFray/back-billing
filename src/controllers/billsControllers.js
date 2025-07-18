@@ -16,10 +16,10 @@
 
 import path from 'path';
 import fs from 'fs';
-import {generateBillPdf} from '../utils/pdfGenerator.js';
+import {generateBillPdf} from '../utils/Pdf-Bills/pdfGenerator.js';
 import BillsService from '../services/billsServices.js';
 import {validate} from '../helpers/nifHelpers.js';
-import {ProportionalBillingHelper} from '../helpers/ProportionalBillingHelper.js';
+import CalculateHelper from "../helpers/calculateTotal.js";
 
 /**
  * Controlador para la gestión de facturas y abonos
@@ -226,7 +226,7 @@ export default class BillsControllers {
             const data = req.body;
             const created = await BillsService.createBill(data);
             if (!created || created.length === 0) {
-                return res.status(400).json("Error al crear factura");
+                return res.status(400).json("Error al crear factura o exite factura duplicada");
             }
             return res.status(201).json(created);
         } catch (error) {
@@ -260,24 +260,45 @@ export default class BillsControllers {
         try {
             const {id} = req.params;
             const updateData = req.body;
+
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
+
             // Verificar que la factura existe antes de actualizar
             const existing = await BillsService.getBillById(id);
             if (!existing || existing.length === 0) {
                 return res.status(404).json("Factura no encontrada");
             }
+
+            // Validar campos proporcionales antes de actualizar
+            if (updateData.is_proportional || existing[0].is_proportional) {
+                const validation = CalculateHelper.validateProportionalFields({
+                    ...existing[0],
+                    ...updateData
+                });
+                if (!validation.isValid) {
+                    return res.status(400).json(validation.message);
+                }
+            }
+
+            // Validar número de factura duplicado
+            if (updateData.bill_number) {
+                const billWithSameNumber = await BillsService.getBillByNumber(updateData.bill_number);
+                if (billWithSameNumber.length > 0 && billWithSameNumber[0].id !== Number(id)) {
+                    return res.status(409).json("El número de factura ya existe");
+                }
+            }
+
             const updated = await BillsService.updateBill(Number(id), updateData);
             if (!updated || updated.length === 0) {
                 return res.status(400).json("Error al actualizar factura");
             }
+
             return res.status(200).json(updated);
+
         } catch (error) {
-            // 🆕 Manejo específico de errores de validación proporcional
-            if (error.message.includes('proporcional')) {
-                return res.status(400).json(error.message);
-            }
+            console.error('Error en updateBill:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -417,7 +438,7 @@ export default class BillsControllers {
             const filePath = path.join(dir, fileName);
 
             // Importar generador de PDFs de abono dinámicamente
-            const {generateRefundPdf} = await import('../utils/refundPdfGenerator.js');
+            const {generateRefundPdf} = await import('../utils/Pdf-Bills/refundPdfGenerator.js');
             await generateRefundPdf(refund[0], filePath);
 
             // Enviar archivo para descarga
@@ -599,11 +620,11 @@ export default class BillsControllers {
                 });
             }
 
-            const validation = ProportionalBillingHelper.validateDateRange(start_date, end_date);
+            const validation = CalculateHelper.validateDateRange(start_date, end_date);
 
             if (validation.isValid) {
                 // Añadir descripción legible del periodo
-                const periodDescription = ProportionalBillingHelper.generatePeriodDescription(start_date, end_date);
+                const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
 
                 return res.status(200).json({
                     ...validation,
@@ -662,8 +683,8 @@ export default class BillsControllers {
             };
 
             // Calcular usando el helper
-            const calculation = ProportionalBillingHelper.calculateBillTotal(billData);
-            const periodDescription = ProportionalBillingHelper.generatePeriodDescription(start_date, end_date);
+            const calculation = CalculateHelper.calculateBillTotal(billData);
+            const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
 
             return res.status(200).json({
                 ...calculation,
@@ -672,6 +693,7 @@ export default class BillsControllers {
             });
 
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }

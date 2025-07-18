@@ -31,7 +31,7 @@ export default class EstateOwnersController {
             if (!id || isNaN(Number(id)) || Number(id) <= 0) {
                 return res.status(400).json("ID inválido");
             }
-            const result = await EstateOwnersService.getEstateOwnersById(Number(id));
+            const result = await EstateOwnersService.getEstateOwnerById(Number(id));
             if (!result.length) {
                 return res.status(404).json("Inmueble y propietario no encontrado");
             }
@@ -67,11 +67,21 @@ export default class EstateOwnersController {
             const {id} = req.params;
             const {ownership_percentage} = req.body;
 
+            // Validar ID
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
 
-            const result = await EstateOwnersService.updateEstateOwners(id, req.body);
+            // Validar ownership_percentage
+            if (ownership_percentage === undefined || ownership_percentage === null) {
+                return res.status(400).json("Porcentaje de propiedad es requerido");
+            }
+            if (typeof ownership_percentage !== 'number' || ownership_percentage < 0 || ownership_percentage > 100) {
+                return res.status(400).json("Porcentaje de propiedad inválido (debe ser entre 0 y 100)");
+            }
+
+            const result = await EstateOwnersService.updateEstateOwner(Number(id), ownership_percentage);
+
             if (!result.length) {
                 return res.status(400).json("Error al actualizar relación inmueble-propietario");
             }

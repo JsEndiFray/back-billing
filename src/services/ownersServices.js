@@ -35,26 +35,28 @@ export default class OwnersServices {
     static async getOwner(name, lastname, identification) {
         if (!name && !lastname && !identification) return [];
 
-        // Prioridad 1: Nombre
-        if (name) {
-            const owner = await OwnersRepository.findByName(sanitizeString(name));
-            if (owner.length) return owner;
-        }
-
-        // Prioridad 2: Apellido (solo si no encontró por nombre)
-        if (lastname) {
-            const owner = await OwnersRepository.findByLastname(sanitizeString(lastname));
-            if (owner.length) return owner;
-        }
-
-        // Prioridad 3: Identificación (solo si no encontró por nombre/apellido)
+        // Prioridad 1: Identificación (solo si no encontró por nombre/apellido)
         if (identification) {
             return await OwnersRepository.findByIdentification(sanitizeString(identification));
         }
         return [];
+
+        // Prioridad 2: Nombre
+        if (name) {
+            const owner = await OwnersRepository.findByName(sanitizeString(name));
+            if (owner.length > 0) return owner;
+        }
+
+        // Prioridad 3: Apellido (solo si no encontró por nombre)
+        if (lastname) {
+            const owner = await OwnersRepository.findByLastname(sanitizeString(lastname));
+            if (owner.length > 0) return owner;
+        }
+
+
     }
 
-    static async getOwnerId(id) {
+    static async getOwnerById(id) {
         if (!id || isNaN(Number(id))) return [];
         return await OwnersRepository.findById(id);
     }
@@ -85,7 +87,7 @@ export default class OwnersServices {
         if (existing.length > 0) return [];
 
         const created = await OwnersRepository.create(ownersData);
-        if (!created.length) return [];
+        if (!created.length > 0) return [];
 
         return [{...ownersData, id: created[0].id}];
     }
@@ -96,7 +98,7 @@ export default class OwnersServices {
     static async updateOwner(id, data) {
         if (!id || isNaN(Number(id))) return [];
 
-        const cleanOwnerData = {
+        const cleanOwnersData = {
             id: Number(id),
             name: data.name?.toUpperCase().trim(),
             lastname: data.lastname?.toUpperCase().trim(),
@@ -108,29 +110,29 @@ export default class OwnersServices {
             location: data.location?.toUpperCase().trim(),
             province: data.province?.toUpperCase().trim(),
             country: data.country?.toUpperCase().trim(),
-        }
+        };
 
         // Verificar que existe
-        const existing = await OwnersRepository.findById(cleanOwnerData.id);
-        if (!existing.length) return [];
+        const existing = await OwnersRepository.findById(cleanOwnersData.id);
+        if (!existing.length > 0) return [];
 
         // Validar identificación única (excepto este mismo propietario)
-        if (cleanOwnerData.identification) {
-            const ownerWithSameIdentification = await OwnersRepository.findByIdentification(cleanOwnerData.identification);
+        if (cleanOwnersData.identification) {
+            const ownerWithSameIdentification = await OwnersRepository.findByIdentification(cleanOwnersData.identification);
             if (ownerWithSameIdentification.length > 0 && ownerWithSameIdentification[0].id !== Number(id)) {
                 return [];
             }
         }
 
-        const updated = await OwnersRepository.update(cleanOwnerData);
-        return updated.length > 0 ? [cleanOwnerData] : [];
+        const updated = await OwnersRepository.update(cleanOwnersData);
+        return updated.length > 0 ? [cleanOwnersData] : [];
     }
 
     static async deleteOwner(id) {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await OwnersRepository.findById(id);
-        if (!existing.length) return [];
+        if (!existing.length > 0) return [];
 
         const result = await OwnersRepository.delete(id);
         return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];

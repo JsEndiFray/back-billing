@@ -25,7 +25,7 @@ export default class UserController {
     static async getUsername(req, res) {
         try {
             const {username} = req.params;
-            const user = await UserService.getUsername(username);
+            const user = await UserService.getUserByUsername(username);
             if (!user.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
@@ -38,7 +38,7 @@ export default class UserController {
     static async getEmail(req, res) {
         try {
             const {email} = req.params;
-            const userEmail = await UserService.getUserEmail(email);
+            const userEmail = await UserService.getUserByEmail(email);
             if (!userEmail.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
@@ -51,7 +51,7 @@ export default class UserController {
     static async getPhone(req, res) {
         try {
             const {phone} = req.params;
-            const userPhone = await UserService.getUserPhone(phone);
+            const userPhone = await UserService.getUserByPhone(phone);
             if (!userPhone.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
@@ -67,7 +67,7 @@ export default class UserController {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const userId = await UserService.getUserId(id);
+            const userId = await UserService.getUserById(id);
             if (!userId.length) {
                 return res.status(404).json("Usuario no encontrado");
             }
@@ -117,6 +117,7 @@ export default class UserController {
             }
             return res.status(200).json(updated);
         } catch (error) {
+            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -131,7 +132,7 @@ export default class UserController {
             if (!deleted.length) {
                 return res.status(400).json("Error al eliminar usuario");
             }
-            return res.status(204).send(); // No content - eliminación exitosa
+            return res.status(204).json('Eliminado correctamente.');
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }

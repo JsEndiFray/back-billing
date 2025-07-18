@@ -20,7 +20,7 @@ export default class UserService {
      */
     static async login(username, password) {
         const users = await UsersRepository.findByUsername(username);
-        if (!users.length) return null;
+        if (!users.length > 0) return null;
 
         const user = users[0];
         if (!user) return null;
@@ -56,7 +56,7 @@ export default class UserService {
         if (!decoded) return null;
 
         const users = await UsersRepository.findById(decoded.id);
-        if (!users.length) return null;
+        if (!users.length > 0) return null;
 
         const user = users[0];
         if (!user) return null;
@@ -78,25 +78,25 @@ export default class UserService {
         return await UsersRepository.getAll();
     }
 
-    static async getUsername(username) {
+    static async getUserByUsername(username) {
         if (!username) return [];
         return await UsersRepository.findByUsername(username);
 
     }
 
-    static async getUserEmail(email) {
+    static async getUserByEmail(email) {
         if (!email) return [];
         return await UsersRepository.findByEmail(email);
 
     }
 
-    static async getUserPhone(phone) {
+    static async getUserByPhone(phone) {
         if (!phone) return [];
         return await UsersRepository.findByPhone(phone);
 
     }
 
-    static async getUserId(id) {
+    static async getUserById(id) {
         if (!id || isNaN(Number(id))) return [];
         return await UsersRepository.findById(id);
 
@@ -121,19 +121,19 @@ export default class UserService {
 
         // Validar campos únicos - ahora retorna null para consistencia
         const existsUsername = await UsersRepository.findByUsername(userData.username);
-        if (existsUsername.length) return [];
+        if (existsUsername.length > 0) return [];
 
         const existsEmail = await UsersRepository.findByEmail(userData.email);
-        if (existsEmail.length) return [];
+        if (existsEmail.length > 0) return [];
 
         const existsPhone = await UsersRepository.findByPhone(userData.phone);
-        if (existsPhone.length) return [];
+        if (existsPhone.length > 0) return [];
 
         // Hash contraseña antes de guardar
         userData.password = await bcrypt.hash(userData.password, 10);
 
         const created = await UsersRepository.create(userData);
-        if (!created.length) return [];
+        if (!created.length > 0) return [];
 
         return [{...userData, id: created[0].id}];
     }
@@ -147,7 +147,7 @@ export default class UserService {
 
         const cleanUserData = {
             id: id,
-           username: data.username.toLowerCase().trim(),
+            username: data.username.toLowerCase().trim(),
             password: data.password.trim(),
             email: data.email.toLowerCase().trim(),
             phone: data.phone.trim(),
@@ -155,7 +155,7 @@ export default class UserService {
         }
 
         const existing = await UsersRepository.findById(id);
-        if (!existing.length) return [];
+        if (!existing.length > 0) return [];
 
         const currentUser = existing[0];
         if (!currentUser) return [];
@@ -189,7 +189,7 @@ export default class UserService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await UsersRepository.findById(id);
-        if (!existing.length) return [];
+        if (!existing.length > 0) return [];
 
         const user = existing[0];
         if (!user) return [];

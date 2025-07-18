@@ -7,7 +7,7 @@ import {sanitizeString} from "../helpers/stringHelpers.js";
  */
 export default class EstatesServices {
 
-    static async getAllEstate() {
+    static async getAllEstates() {
         return await EstatesRepository.getAll();
     }
 
@@ -31,7 +31,7 @@ export default class EstatesServices {
         return await EstatesRepository.findByCadastralReference(refNormalized);
     }
 
-    static async getById(id) {
+    static async getEstateById(id) {
         if (!id || isNaN(Number(id))) return [];
         return await EstatesRepository.findById(id);
     }
@@ -59,10 +59,10 @@ export default class EstatesServices {
 
         // Verificar referencia catastral única
         const existing = await EstatesRepository.findByCadastralReference(estatesData.cadastral_reference);
-        if (existing.length) return [];
+        if (existing.length > 0) return [];
 
         const created = await EstatesRepository.create(estatesData);
-        if (!created.length) return [];
+        if (!created.length > 0) return [];
 
         return [{...estatesData, id: created[0].id}];
     }
@@ -73,7 +73,7 @@ export default class EstatesServices {
     static async updateEstate(id, data) {
         if (!id || isNaN(id)) return [];
 
-        const cleanEstateData = {
+        const cleanEstatesData = {
             id: Number(id),
             cadastral_reference: data.cadastral_reference?.toUpperCase().trim(),
             price: data.price,
@@ -86,21 +86,20 @@ export default class EstatesServices {
         };
 
         // Verificar que existe
-        const existing = await EstatesRepository.findById(cleanEstateData.id);
-        if (!existing.length) return [];
+        const existing = await EstatesRepository.findById(cleanEstatesData.id);
+        if (!existing.length > 0) return [];
 
         // Verificar referencia catastral única (excepto esta misma propiedad)
         const {cadastral_reference} = data;
-        const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
-        if (duplicate && duplicate.length > 0) {
-            const duplicateId = duplicate[0].id;
-            if (Number(duplicateId) !== Number(cleanEstateData.id)) {
+        if (cadastral_reference) {
+            const duplicate = await EstatesRepository.findByCadastralReference(cadastral_reference);
+            if (duplicate.length > 0 && duplicate[0].id !== Number(id)) {
                 return [];
             }
         }
 
-        const updated = await EstatesRepository.update(cleanEstateData);
-        return updated.length > 0 ? [cleanEstateData] : [];
+        const updated = await EstatesRepository.update(cleanEstatesData);
+        return updated.length > 0 ? [cleanEstatesData] : [];
     }
 
     /**
@@ -112,7 +111,7 @@ export default class EstatesServices {
 
         // Verificar que existe
         const existing = await EstatesRepository.findById(id);
-        if (!existing.length) return [];
+        if (!existing.length > 0) return [];
 
         const result = await EstatesRepository.delete(id);
         return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];

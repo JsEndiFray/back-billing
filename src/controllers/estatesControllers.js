@@ -12,7 +12,7 @@ export default class EstateController {
 
     static async getAllEstate(req, res) {
         try {
-            const estate = await EstateService.getAllEstate();
+            const estate = await EstateService.getAllEstates();
             if (!estate.length) {
                 return res.status(404).json("No se encontraron inmuebles");
             }
@@ -68,7 +68,7 @@ export default class EstateController {
             if (!id || isNaN(id)) {
                 return res.status(400).json("ID inválido");
             }
-            const result = await EstateService.getById(id);
+            const result = await EstateService.getEstateById(id);
             if (!result.length) {
                 return res.status(404).json("Inmueble no encontrado");
             }
@@ -89,7 +89,7 @@ export default class EstateController {
     static async createEstate(req, res) {
         try {
             const created = await EstateService.createEstate(req.body);
-            if (!created.length) {
+            if (!created.length > 0) {
                 return res.status(400).json('Error al crear inmueble o referencia catastral duplicada');
             }
             return res.status(201).json(created);
@@ -106,7 +106,7 @@ export default class EstateController {
                 return res.status(400).json("ID inválido");
             }
 
-            const existing = await EstateService.getById(id);
+            const existing = await EstateService.getEstateById(id);
             if (!existing.length) {
                 return res.status(404).json("Inmueble no encontrado");
             }
@@ -132,8 +132,7 @@ export default class EstateController {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-
-            const existing = await EstateService.getById(id);
+            const existing = await EstateService.getEstateById(id);
             if (!existing.length) {
                 return res.status(404).json("Inmueble no encontrado");
             }

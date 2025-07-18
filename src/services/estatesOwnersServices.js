@@ -17,7 +17,7 @@ export default class EstateOwnersService {
     /**
      * Busca relación por ID único
      */
-    static async getEstateOwnersById(id) {
+    static async getEstateOwnerById(id) {
         if (!id || isNaN(Number(id))) return [];
         return await EstateOwnersRepository.findById(id);
     };
@@ -43,14 +43,22 @@ export default class EstateOwnersService {
     /**
      * Actualiza porcentaje de propiedad por ID único
      */
-    static async updateEstateOwners(id, ownership_percentage) {
-        if (!id || ownership_percentage === undefined) return [];
+    static async updateEstateOwner(id, ownership_percentage) {
+        // Validaciones de entrada
+        if (!id || ownership_percentage === undefined || ownership_percentage === null) return [];
+
+        // Validar que el porcentaje esté en rango válido
+        if (typeof ownership_percentage !== 'number' || ownership_percentage < 0 || ownership_percentage > 100) {
+            return [];
+        }
 
         // Verificar que existe
         const existing = await EstateOwnersRepository.findById(id);
         if (!existing.length) return [];
 
+        // Actualizar en la base de datos
         const updated = await EstateOwnersRepository.updateById(id, ownership_percentage);
+
         return updated.length > 0 ? [{id: Number(id), ownership_percentage, updated: true}] : [];
     }
 
@@ -58,7 +66,10 @@ export default class EstateOwnersService {
      * Elimina relación por ID único
      */
     static async deleteEstateOwners(id) {
-        if (!id) return [];
+        // Validar ID
+        if (!id || isNaN(Number(id))) return [];
+
+        // Verificar que existe la relación
         const existing = await EstateOwnersRepository.findById(id);
         if (!existing.length) return [];
 

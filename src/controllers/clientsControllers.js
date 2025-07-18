@@ -170,7 +170,7 @@ export default class ClientsControllers {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const result = await ClientsServices.getById(id);
+            const result = await ClientsServices.getClientById(id);
             if (!result) {
                 return res.status(404).json("Cliente no encontrado");
             }
@@ -203,7 +203,7 @@ export default class ClientsControllers {
                 return res.status(400).json("ID inválido");
             }
 
-            const existing = await ClientsServices.getById(id);
+            const existing = await ClientsServices.getClientById(id);
             if (!existing || existing.length === 0) {
                 return res.status(404).json("Cliente no encontrado");
             }

@@ -1,5 +1,5 @@
 import express from "express";
-import EstateOwnersController from "../controllers/estatesOwnersController.js";
+import EstateOwnersController from "../controllers/estatesOwnersControllers.js";
 import auth from "../middlewares/auth.js";
 import role from "../middlewares/role.js";
 

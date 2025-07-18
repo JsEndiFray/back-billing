@@ -66,8 +66,8 @@ export default class OwnersControllers {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const owner = await OwnersServices.getOwnerId(id);
-            if (!owner.length) {
+            const owner = await OwnersServices.getOwnerById(id);
+            if (!owner.length > 0) {
                 return res.status(404).json("Propietario no encontrado");
             }
             return res.status(200).json(owner);
@@ -103,13 +103,13 @@ export default class OwnersControllers {
                 return res.status(400).json("ID inválido");
             }
 
-            const existing = await OwnersServices.getOwnerId(id);
-            if (!existing.length) {
+            /*const existing = await OwnersServices.getOwnerById(req.params);
+            if (!existing.length > 0) {
                 return res.status(404).json("Propietario no encontrado");
-            }
+            }*/
 
             const updated = await OwnersServices.updateOwner(id, req.body);
-            if (!updated.length) {
+            if (!updated.length > 0) {
                 return res.status(409).json("Propietario duplicado");
             }
             return res.status(200).json(updated);

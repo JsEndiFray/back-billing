@@ -31,6 +31,7 @@ import usersRoutes from './routes/usersRoutes.js';
 import authRoutes from "./routes/authRoutes.js";
 import estatesOwnersRoutes from "./routes/estatesOwnersRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js"
+import rentalExpensesRoutes from "./routes/rentalExpensesRoutes.js";
 import {generalLimiter, authLimiter} from "./middlewares/rate-limit.js";
 
 /**
@@ -225,6 +226,15 @@ app.use('/api/estate-owners', estatesOwnersRoutes)
  * @route {Object} /api/employee - Gestión de empleados
  */
 app.use('/api/employee', employeeRoutes)
+
+/**
+ * Rutas para gastos
+ *
+ * Maneja los gastos de los inmubles,
+ *
+ * @route {Object} /api/expenses - Gestión de gastos
+ */
+app.use('/api/expenses', rentalExpensesRoutes)
 
 // ==========================================
 // DOCUMENTACIÓN API

@@ -352,54 +352,6 @@ export default class BillsRepository {
     // ========================================
 
     /**
-     * Crea un abono con campos de pagos (factura de reembolso)
-     * ACTUALIZADO: Incluye nuevos campos proporcionales
-     * @param {Object} bill - Datos del abono, incluye original_bill_id
-     */
-    static async createRefund(bill) {
-        const {
-            bill_number,
-            estates_id,
-            owners_id,
-            clients_id,
-            date,
-            tax_base,
-            iva,
-            irpf,
-            total,
-            ownership_percent,
-            original_bill_id,
-            //AGREGAR campos de pago con valores por defecto
-            payment_status = 'pending',
-            payment_method = 'transfer',
-            payment_date = null,
-            payment_notes = '',
-            // 🆕 NUEVOS CAMPOS PROPORCIONALES (heredados de factura original)
-            start_date = null,
-            end_date = null,
-            corresponding_month = null,
-            is_proportional = 0
-        } = bill;
-
-        const [result] = await db.query(`
-                    INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date,
-                                       tax_base, iva, irpf, total, ownership_percent,
-                                       is_refund, original_bill_id,
-                                       payment_status, payment_method, payment_date, payment_notes,
-                                       start_date, end_date, corresponding_month, is_proportional,
-                                       date_create, date_update)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            [
-                bill_number, estates_id, owners_id, clients_id, date,
-                tax_base, iva, irpf, total, ownership_percent, original_bill_id,
-                payment_status, payment_method, payment_date, payment_notes,
-                start_date, end_date, corresponding_month, is_proportional || 0
-            ]
-        );
-        return result.insertId ? [{id: result.insertId, created: true}] : [];
-    }
-
-    /**
      * Obtiene el último número de abono para generar el siguiente
      */
     static async getLastRefundNumber() {
@@ -411,6 +363,7 @@ export default class BillsRepository {
         );
         return rows;
     }
+
 
     /**
      * Obtiene todos los abonos con información de relaciones
@@ -510,6 +463,55 @@ export default class BillsRepository {
             throw error;
         }
     }
+
+    /**
+     * Crea un abono con campos de pagos (factura de reembolso)
+     * ACTUALIZADO: Incluye nuevos campos proporcionales
+     * @param {Object} bill - Datos del abono, incluye original_bill_id
+     */
+    static async createRefund(bill) {
+        const {
+            bill_number,
+            estates_id,
+            owners_id,
+            clients_id,
+            date,
+            tax_base,
+            iva,
+            irpf,
+            total,
+            ownership_percent,
+            original_bill_id,
+            //AGREGAR campos de pago con valores por defecto
+            payment_status = 'pending',
+            payment_method = 'transfer',
+            payment_date = null,
+            payment_notes = '',
+            // 🆕 NUEVOS CAMPOS PROPORCIONALES (heredados de factura original)
+            start_date = null,
+            end_date = null,
+            corresponding_month = null,
+            is_proportional = 0
+        } = bill;
+
+        const [result] = await db.query(`
+                    INSERT INTO bills (bill_number, estates_id, owners_id, clients_id, date,
+                                       tax_base, iva, irpf, total, ownership_percent,
+                                       is_refund, original_bill_id,
+                                       payment_status, payment_method, payment_date, payment_notes,
+                                       start_date, end_date, corresponding_month, is_proportional,
+                                       date_create, date_update)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [
+                bill_number, estates_id, owners_id, clients_id, date,
+                tax_base, iva, irpf, total, ownership_percent, original_bill_id,
+                payment_status, payment_method, payment_date, payment_notes,
+                start_date, end_date, corresponding_month, is_proportional || 0
+            ]
+        );
+        return result.insertId ? [{id: result.insertId, created: true}] : [];
+    }
+
 
     /**
      * ESTRUCTURA DE LA TABLA BILLS ACTUALIZADA:

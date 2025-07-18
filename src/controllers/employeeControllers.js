@@ -4,7 +4,7 @@ export default class EmployeeControllers {
 
     static async getAllEmployee(req, res) {
         try {
-            const employee = await EmployeeServices.getAllEmployee();
+            const employee = await EmployeeServices.getAllEmployees();
             if (!employee.length) {
                 return res.status(404).json("No existe ningún empleado registrado.")
             }
@@ -61,14 +61,13 @@ export default class EmployeeControllers {
 
     static async updateEmployee(req, res) {
         try {
-            const updated = await EmployeeServices.updateEmployee(req.body, req.params.id);
-            if (!updated.length) {
+            const updated = await EmployeeServices.updateEmployee(req.params.id, req.body,);
+            if (!updated.length > 0) {
                 return res.status(404).json("Empleado no encontrado o no se pudo actualizar")
             }
             return res.status(200).json(updated);
 
         } catch (error) {
-            console.log(error)
             return res.status(500).json("Error interno del servidor.");
         }
     };
