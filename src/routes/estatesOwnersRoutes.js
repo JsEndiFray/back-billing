@@ -12,6 +12,8 @@ import role from "../middlewares/role.js";
  */
 const router = express.Router()
 
+    // --- Rutas de Consulta (GET) ---
+
     /**
      * @swagger
      * /estates-owners:

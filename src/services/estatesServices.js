@@ -1,5 +1,5 @@
 import EstatesRepository from "../repository/estatesRepository.js";
-import {sanitizeString} from "../helpers/stringHelpers.js";
+import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 
 /**
  * Servicio de propiedades inmobiliarias

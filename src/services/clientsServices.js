@@ -1,5 +1,5 @@
 import ClientsRepository from "../repository/clientsRepository.js";
-import {sanitizeString} from "../helpers/stringHelpers.js";
+import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 
 /**
  * Servicio de clientes con lógica de negocio compleja

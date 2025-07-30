@@ -1,5 +1,5 @@
 import EmployeeRepository from "../repository/employeeRepository.js";
-import {sanitizeString} from "../helpers/stringHelpers.js";
+import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 
 /**
  * Servicio de empleado

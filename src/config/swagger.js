@@ -68,7 +68,7 @@ export default swaggerSpec;
  * EJEMPLO DE ANOTACIÓN EN RUTA:
  * /**
  *  * @swagger
- *  * /bills:
+ *  * /invoices:
  *  *   get:
  *  *     summary: Obtener todas las facturas
  *  *     tags: [Bills]

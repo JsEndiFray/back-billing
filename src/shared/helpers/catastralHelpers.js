@@ -1,15 +1,11 @@
 /**
- * VALIDADOR DE REFERENCIA CATASTRAL ESPAÑOLA - ALGORITMO OFICIAL
- *
- * Basado en el algoritmo oficial de la Dirección General del Catastro
- * Fuente: Documentación oficial del Ministerio de Hacienda
+ * @fileoverview Utilidades para validar y procesar Referencias Catastrales españolas.
+ * Basado en el algoritmo oficial de la Dirección General del Catastro.
  */
 
-/**
- * Valida una referencia catastral española usando el algoritmo oficial
- * @param {string} referenciaCatastral - Referencia catastral de 20 caracteres
- * @returns {number} - 1: válida, 0: dígitos control incorrectos, -1: formato incorrecto
- */
+// --- Algoritmo de Validación (Uso Interno) ---
+
+// Implementa la validación oficial para una referencia catastral.
 const validarReferenciaCatastralOficial = (referenciaCatastral) => {
     // Pesos oficiales para cada posición
     const pesoPosicion = [13, 15, 12, 5, 4, 17, 9, 21, 3, 7, 1];

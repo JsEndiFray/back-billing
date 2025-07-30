@@ -215,7 +215,7 @@ export default class ClientsRepository {
      * Cuenta facturas asociadas a un cliente
      */
     static async countBillsByClient(clientId) {
-        const [rows] = await db.query('SELECT COUNT(*) as count FROM bills WHERE clients_id = ?', [clientId]);
+        const [rows] = await db.query('SELECT COUNT(*) as count FROM invoices WHERE clients_id = ?', [clientId]);
         return rows;
     }
 

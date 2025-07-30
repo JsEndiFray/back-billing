@@ -27,53 +27,53 @@ import path from 'path';
  * - Información de pago y transferencia bancaria
  *
  * @async
- * @function generateBillPdf
- * @param {Object} bill - Objeto con todos los datos de la factura
- * @param {string} bill.bill_number - Número de la factura
- * @param {string} bill.owner_name - Nombre del propietario
- * @param {string} bill.owner_lastname - Apellidos del propietario
- * @param {string} bill.owner_identification - NIF/CIF del propietario
- * @param {string} bill.owner_phone - Teléfono del propietario
- * @param {string} bill.owner_address - Dirección del propietario
- * @param {string} bill.client_name - Nombre del cliente
- * @param {string} bill.client_lastname - Apellidos del cliente
- * @param {string} bill.client_identification - NIF/CIF del cliente
- * @param {string} bill.client_phone - Teléfono del cliente
- * @param {string} bill.client_company_name - Nombre de empresa del cliente
- * @param {number} bill.tax_base - Base imponible
- * @param {number} bill.iva - Porcentaje de IVA
- * @param {number} bill.irpf - Porcentaje de IRPF
- * @param {number} bill.total - Total calculado
+ * @function generateInvoicePdf
+ * @param {Object} invoice - Objeto con todos los datos de la factura
+ * @param {string} invoice.invoice_number - Número de la factura
+ * @param {string} invoice.owner_name - Nombre del propietario
+ * @param {string} invoice.owner_lastname - Apellidos del propietario
+ * @param {string} invoice.owner_identification - NIF/CIF del propietario
+ * @param {string} invoice.owner_phone - Teléfono del propietario
+ * @param {string} invoice.owner_address - Dirección del propietario
+ * @param {string} invoice.client_name - Nombre del cliente
+ * @param {string} invoice.client_lastname - Apellidos del cliente
+ * @param {string} invoice.client_identification - NIF/CIF del cliente
+ * @param {string} invoice.client_phone - Teléfono del cliente
+ * @param {string} invoice.client_company_name - Nombre de empresa del cliente
+ * @param {number} invoice.tax_base - Base imponible
+ * @param {number} invoice.iva - Porcentaje de IVA
+ * @param {number} invoice.irpf - Porcentaje de IRPF
+ * @param {number} invoice.total - Total calculado
  * @param {string} outputPath - Ruta donde guardar el archivo PDF
  * @returns {Promise<string>} Promesa que resuelve con la ruta del archivo generado
  *
  * @example
- * const bill = {
- *   bill_number: "FACT-0001",
- *   owner_name: "Juan",
- *   owner_lastname: "Pérez",
- *   owner_identification: "12345678Z",
- *   owner_phone: "666777000",
- *   client_name: "María",
- *   client_lastname: "García",
- *   client_identification: "87654321Y",
- *   client_phone: "666777234",
- *   tax_base: 1000,
- *   iva: 21,
- *   irpf: 15,
- *   total: 1060
+ * const invoices = {
+ * invoice_number: "FACT-0001",
+ * owner_name: "Juan",
+ * owner_lastname: "Pérez",
+ * owner_identification: "12345678Z",
+ * owner_phone: "666777000",
+ * client_name: "María",
+ * client_lastname: "García",
+ * client_identification: "87654321Y",
+ * client_phone: "666777234",
+ * tax_base: 1000,
+ * iva: 21,
+ * irpf: 15,
+ * total: 1060
  * };
  *
  * try {
- *   const pdfPath = await generateBillPdf(bill, './factura.pdf');
- *   console.log('PDF generado:', pdfPath);
+ * const pdfPath = await generateInvoicePdf(invoices, './factura.pdf');
+ * console.log('PDF generado:', pdfPath);
  * } catch (error) {
- *   console.error('Error generando PDF:', error);
+ * console.error('Error generando PDF:', error);
  * }
  *
  * @throws {Error} Si hay problemas escribiendo el archivo o datos inválidos
  */
-export const generateBillPdf = (bill, outputPath) => {
+export const generateInvoicePdf = (invoice, outputPath) => { // CAMBIO: Nombre de función y parámetro
     return new Promise((resolve, reject) => {
         try {
             /**
@@ -138,15 +138,15 @@ export const generateBillPdf = (bill, outputPath) => {
             doc.font('Helvetica').fillColor('black').fontSize(10).moveDown(0.3);
 
             // Datos del propietario/arrendador
-            doc.text(`${bill.owner_name || ''} ${bill.owner_lastname || ''}`, leftColumnX, doc.y);
-            doc.text(`NIF: ${bill.owner_identification || 'N/A'}`, leftColumnX, doc.y + 5);
-            doc.text(`Teléfono: ${bill.owner_phone || 'N/A'}`, leftColumnX, doc.y + 5);
-            doc.text(`${bill.owner_address || 'N/A'}`, leftColumnX, doc.y + 5);
+            doc.text(`${invoice.owner_name || ''} ${invoice.owner_lastname || ''}`, leftColumnX, doc.y);
+            doc.text(`NIF: ${invoice.owner_identification || 'N/A'}`, leftColumnX, doc.y + 5);
+            doc.text(`Teléfono: ${invoice.owner_phone || 'N/A'}`, leftColumnX, doc.y + 5);
+            doc.text(`${invoice.owner_address || 'N/A'}`, leftColumnX, doc.y + 5);
 
             // Formato de ubicación (código postal + localidad)
             let locationText = '';
-            if (bill.owner_postal_code) locationText += bill.owner_postal_code + '- ';
-            if (bill.owner_location) locationText += bill.owner_location;
+            if (invoice.owner_postal_code) locationText += invoice.owner_postal_code + '- ';
+            if (invoice.owner_location) locationText += invoice.owner_location;
             if (locationText.trim()) doc.text(locationText, leftColumnX, doc.y + 5);
 
             // ==========================================
@@ -155,49 +155,49 @@ export const generateBillPdf = (bill, outputPath) => {
 
             // Número de factura
             doc.font('Helvetica-Bold').fontSize(10).text('Nº de factura', rightColumnX, startY, {width: 100});
-            doc.font('Helvetica').text(bill.bill_number || 'N/A', rightColumnX + 100, startY);
+            doc.font('Helvetica').text(invoice.invoice_number || 'N/A', rightColumnX + 100, startY);
 
             // Nombre del arrendatario (empresa o persona física)
             doc.font('Helvetica-Bold').text('Arrendatario', rightColumnX, doc.y + 5, {width: 100});
-            const clientName = bill.client_company_name || `${bill.client_name || ''} ${bill.client_lastname || ''}`;
+            const clientName = invoice.client_company_name || `${invoice.client_name || ''} ${invoice.client_lastname || ''}`;
             doc.font('Helvetica').text(clientName, rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // NIF del cliente
             doc.font('Helvetica-Bold').text('NIF', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_identification || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_identification || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Teléfono del cliente
             doc.font('Helvetica-Bold').text('Teléfono', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_phone || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_phone || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Dirección del cliente
             doc.font('Helvetica-Bold').text('Dirección', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_address || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_address || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Código postal del cliente
             doc.font('Helvetica-Bold').text('Código Postal', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_postal_code || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_postal_code || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Localidad del cliente
             doc.font('Helvetica-Bold').text('Localidad', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_location || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_location || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // Provincia del cliente
             doc.font('Helvetica-Bold').text('Provincia', rightColumnX, doc.y + 5, {width: 100});
-            doc.font('Helvetica').text(bill.client_province || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
+            doc.font('Helvetica').text(invoice.client_province || 'N/A', rightColumnX + 100, doc.y - doc.currentLineHeight());
 
             // ==========================================
             // CÁLCULOS FISCALES
             // ==========================================
 
             /** @type {number} Base imponible de la factura */
-            const taxBase = safeNumber(bill.tax_base);
+            const taxBase = safeNumber(invoice.tax_base);
 
             /** @type {number} Porcentaje de IVA */
-            const iva = safeNumber(bill.iva);
+            const iva = safeNumber(invoice.iva);
 
             /** @type {number} Porcentaje de IRPF */
-            const irpf = safeNumber(bill.irpf);
+            const irpf = safeNumber(invoice.irpf);
 
             /** @type {number} Importe del IVA calculado */
             const ivaAmount = taxBase * iva / 100;
@@ -206,7 +206,7 @@ export const generateBillPdf = (bill, outputPath) => {
             const irpfAmount = taxBase * irpf / 100;
 
             /** @type {number} Total final de la factura */
-            const total = safeNumber(bill.total);
+            const total = safeNumber(invoice.total);
 
             doc.moveDown(2);
 
@@ -215,15 +215,15 @@ export const generateBillPdf = (bill, outputPath) => {
             // ==========================================
 
             /** @type {boolean} Si es factura proporcional */
-            const isProportional = bill.is_proportional === 1;
+            const isProportional = invoice.is_proportional === 1;
 
             /** @type {string} Descripción del período facturado */
             let periodDescription = 'Mes completo';
             let periodDetails = '';
 
-            if (isProportional && bill.start_date && bill.end_date) {
-                const startDate = new Date(bill.start_date);
-                const endDate = new Date(bill.end_date);
+            if (isProportional && invoice.start_date && invoice.end_date) {
+                const startDate = new Date(invoice.start_date);
+                const endDate = new Date(invoice.end_date);
 
                 // Formatear fechas
                 const startFormatted = startDate.toLocaleDateString('es-ES');
@@ -308,9 +308,9 @@ export const generateBillPdf = (bill, outputPath) => {
             }
 
             // Descripción (dirección del inmueble + mes correspondencia)
-            let description = bill.estate_address || 'N/A';
-            if (bill.corresponding_month) {
-                const [year, month] = bill.corresponding_month.split('-');
+            let description = invoice.estate_address || 'N/A';
+            if (invoice.corresponding_month) {
+                const [year, month] = invoice.corresponding_month.split('-');
                 const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
                     'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
                 const monthName = monthNames[parseInt(month, 10) - 1];
@@ -407,19 +407,19 @@ export const generateBillPdf = (bill, outputPath) => {
 
             doc.font('Helvetica-Bold').text('Entidad bancaria:', 50, doc.y);
             doc.font('Helvetica').text('BBVA', 150, doc.y);
-            if (bill.bank_name) doc.font('Helvetica').text(bill.bank_name, 150, doc.y);
+            if (invoice.bank_name) doc.font('Helvetica').text(invoice.bank_name, 150, doc.y);
             doc.moveDown(1);
 
             doc.font('Helvetica-Bold').text('Titular de la cuenta:', 50, doc.y);
-            doc.font('Helvetica').text(bill.account_holder || `${bill.owner_name} ${bill.owner_lastname}` || 'N/A', 150, doc.y);
+            doc.font('Helvetica').text(invoice.account_holder || `${invoice.owner_name} ${invoice.owner_lastname}` || 'N/A', 150, doc.y);
             doc.moveDown(1);
 
             doc.font('Helvetica-Bold').text('Número de cuenta (IBAN):', 50, doc.y);
-            doc.font('Helvetica').text(bill.iban || 'ES12 3456 7890 1234 5678 9012', 150, doc.y);
+            doc.font('Helvetica').text(invoice.iban || 'ES12 3456 7890 1234 5678 9012', 150, doc.y);
             doc.moveDown(1);
 
             doc.font('Helvetica-Bold').text('Concepto:', 50, doc.y);
-            doc.font('Helvetica').text(`Factura ${bill.bill_number || 'N/A'}`, 150, doc.y);
+            doc.font('Helvetica').text(`Factura ${invoice.invoice_number || 'N/A'}`, 150, doc.y);
 
             // Nota final
             doc.moveDown(2);

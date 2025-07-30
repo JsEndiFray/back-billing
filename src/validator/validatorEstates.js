@@ -2,7 +2,7 @@ import { body } from 'express-validator';
 import {
     validateCatastralReference,
     normalizeCatastralReference
-} from '../helpers/catastralHelpers.js';
+} from '../shared/helpers/catastralHelpers.js';
 
 /**
  * Validador para propiedades inmobiliarias

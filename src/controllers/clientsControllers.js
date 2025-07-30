@@ -1,5 +1,5 @@
 import ClientsServices from "../services/clientsServices.js";
-import {sanitizeString} from "../helpers/stringHelpers.js";
+import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 
 /**
  * Controlador de clientes - Capa HTTP que maneja requests/responses

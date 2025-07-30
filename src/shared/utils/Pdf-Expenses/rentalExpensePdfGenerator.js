@@ -289,7 +289,7 @@ export const generateExpensePdf = (expense, filePath) => {
             // ==========================================
             doc.end();
 
-            // Manejo de eventos del stream (IGUAL QUE EN pdfGenerator.js)
+            // Manejo de eventos del stream (IGUAL QUE EN invoicePdfGenerator.js)
             stream.on('finish', () => {
                 console.log('✅ Stream finalizado correctamente');
                 resolve(filePath);
