@@ -802,8 +802,8 @@ export default class InvoicesIssuedRepository {
             ]
         );
         return result.insertId ? [{id: result.insertId, created: true}] : [];
-
     }
+
 }
 
 

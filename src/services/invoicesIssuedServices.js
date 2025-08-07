@@ -1,4 +1,4 @@
-import InvoicesIssuedRepository from "../repository/invoicesIssuedRepository.js";
+ import InvoicesIssuedRepository from "../repository/invoicesIssuedRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import EstateOwnersRepository from "../repository/estatesOwnersRepository.js";
 import CalculateHelper from "../shared/helpers/calculateTotal.js";
@@ -37,7 +37,7 @@ export default class InvoicesIssuedService {
             irpf: parseFloat(invoice.irpf),
             total: parseFloat(invoice.total),
             ownership_percent: parseFloat(invoice.ownership_percent),
-            is_refund: Boolean(invoice.is_refund),
+            is_refund: Number(invoice.is_refund),
             original_invoice_id: invoice.original_invoice_id,
             original_invoice_number: invoice.original_invoice_number,
             collection_status: invoice.collection_status || 'pending',
