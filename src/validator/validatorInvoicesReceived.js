@@ -123,9 +123,10 @@ export const validateCreateInvoiceReceived = [
         .notEmpty()
         .withMessage('La categoría es obligatoria.')
         .isIn([
-            'electricidad', 'gas', 'agua', 'comunidad', 'seguro',
+            'electricidad', 'gas', 'agua', 'comunidad', 'seguros',
             'residuos', 'mantenimiento', 'reparaciones', 'mobiliario',
-            'servicios_profesionales', 'suministros', 'otros'
+            'servicios_profesionales', 'suministros', 'telefono', 'internet', 'seguridad',
+            'impuestos', 'otros', 'limpieza'
         ])
         .withMessage('La categoría debe ser una de las opciones válidas.'),
 
@@ -298,12 +299,12 @@ export const validateCreateInvoiceReceived = [
     body()
         .custom((value, { req }) => {
             // Si el estado es 'paid', debe tener fecha de pago
-            if (req.body.payment_status === 'paid' && !req.body.payment_date) {
+            if (req.body.collection_status === 'paid' && !req.body.collection_date) {
                 throw new Error('Las facturas marcadas como pagadas deben tener fecha de pago.');
             }
 
             // Si tiene fecha de pago, el estado no puede ser 'pending'
-            if (req.body.payment_date && req.body.payment_status === 'pending') {
+            if (req.body.collection_date && req.body.collection_status === 'pending') {
                 throw new Error('Las facturas con fecha de pago no pueden estar pendientes.');
             }
 

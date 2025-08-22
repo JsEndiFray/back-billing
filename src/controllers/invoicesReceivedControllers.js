@@ -1,4 +1,6 @@
 import InvoicesReceivedService from '../services/invoicesReceivedServices.js';
+import {generateReceivedInvoicePdf} from "../shared/utils/Pdf-Received/invoicePdfGenerator.js";
+import {localFileService} from "../middlewares/fileUpload.js";
 import path from 'path';
 import fs from 'fs';
 
@@ -52,7 +54,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoiceById(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
@@ -86,7 +88,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoiceByNumber(req, res) {
         try {
-            const { invoice_number } = req.params;
+            const {invoice_number} = req.params;
 
             if (!invoice_number || invoice_number.trim().length === 0) {
                 return res.status(400).json("Número de factura requerido");
@@ -120,7 +122,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoicesBySupplierId(req, res) {
         try {
-            const { supplier_id } = req.params;
+            const {supplier_id} = req.params;
 
             if (!supplier_id || isNaN(Number(supplier_id))) {
                 return res.status(400).json("ID de proveedor inválido");
@@ -154,7 +156,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoicesByCategory(req, res) {
         try {
-            const { category } = req.params;
+            const {category} = req.params;
 
             if (!category || category.trim().length === 0) {
                 return res.status(400).json("Categoría requerida");
@@ -189,7 +191,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoicesByDateRange(req, res) {
         try {
-            const { startDate, endDate } = req.body;
+            const {startDate, endDate} = req.body;
 
             if (!startDate || !endDate) {
                 return res.status(400).json("Fechas de inicio y fin son requeridas");
@@ -223,7 +225,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoicesByPaymentStatus(req, res) {
         try {
-            const { status } = req.params;
+            const {status} = req.params;
 
             if (!status || status.trim().length === 0) {
                 return res.status(400).json("Estado de pago requerido");
@@ -285,7 +287,7 @@ export default class InvoicesReceivedController {
      */
     static async getInvoicesDueSoon(req, res) {
         try {
-            const { days } = req.query;
+            const {days} = req.query;
             const daysNumber = days ? Number(days) : 7;
 
             const invoices = await InvoicesReceivedService.getInvoicesDueSoon(daysNumber);
@@ -325,6 +327,23 @@ export default class InvoicesReceivedController {
     static async createInvoiceReceived(req, res) {
         try {
             const data = req.body;
+            // Manejar archivo adjunto si existe
+            let fileUploadResult = null;
+            if (req.file) {
+                try {
+                    const fileUploadResult = await localFileService.uploadInvoiceFile(
+                        req.file.buffer,
+                        req.file.originalname,
+                        data.invoice_number
+                    );
+                    data.has_attachments = true;
+                    data.pdf_path = fileUploadResult.fileId;
+                } catch (fileError) {
+                    console.error('Error subiendo archivo:', fileError);
+                    return res.status(500).json("Error al subir el archivo adjunto");
+                }
+            }
+
             const created = await InvoicesReceivedService.createInvoiceReceived(data);
 
             if (created === null) {
@@ -364,8 +383,42 @@ export default class InvoicesReceivedController {
      */
     static async updateInvoiceReceived(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             const updateData = req.body;
+
+            //Manejar archivo adjunto si existe
+            if (req.file) {
+                try {
+                    const fileUploadResult = await localFileService.uploadInvoiceFile(
+                        req.file.buffer,
+                        req.file.originalname,
+                        updateData.invoice_number || `invoice-${id}`
+                    );
+                    updateData.has_attachments = true;
+                    updateData.pdf_path = fileUploadResult.fileId;
+                } catch (fileError) {
+                    console.error('Error subiendo archivo:', fileError);
+                    return res.status(500).json("Error al subir el archivo adjunto");
+                }
+            }
+            ;
+            //formateo de las fechas
+            const dateFields = [
+                'invoice_date',
+                'due_date',
+                'received_date',
+                'collection_date',
+                'start_date',
+                'end_date'
+            ];
+
+            dateFields.forEach(field => {
+                if (updateData[field]) {
+                    updateData[field] = new Date(updateData[field])
+                        .toISOString()
+                        .split('T')[0];
+                }
+            });
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
@@ -415,7 +468,7 @@ export default class InvoicesReceivedController {
      */
     static async deleteInvoiceReceived(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
@@ -438,7 +491,7 @@ export default class InvoicesReceivedController {
      * Actualiza el estado de pago de una factura
      *
      * @async
-     * @function updatePaymentStatus
+     * @function updateCollectionStatus
      * @param {express.Request} req - Objeto de solicitud
      * @param {express.Response} res - Objeto de respuesta
      * @returns {Promise<void>}
@@ -454,33 +507,35 @@ export default class InvoicesReceivedController {
      */
     static async updatePaymentStatus(req, res) {
         try {
-            const { id } = req.params;
-            const { payment_status, payment_method, payment_date, payment_reference, payment_notes } = req.body;
+            const {id} = req.params;
+            const {
+                collection_status,
+                collection_method,
+                collection_date,
+                collection_reference,
+                collection_notes
+            } = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
             }
 
-            if (!payment_status || !payment_method) {
+            if (!collection_status || !collection_method) {
                 return res.status(400).json("Estado y método de pago son requeridos");
             }
 
             const paymentData = {
-                payment_status,
-                payment_method,
-                payment_date: payment_date || null,
-                payment_reference: payment_reference || null,
-                payment_notes: payment_notes || null
+                collection_status,
+                collection_method,
+                collection_date: collection_date || null,
+                collection_reference: collection_reference || null,
+                collection_notes: collection_notes || null
             };
 
             const updated = await InvoicesReceivedService.updatePaymentStatus(Number(id), paymentData);
 
-            if (updated === null) {
-                return res.status(400).json("Estado o método de pago inválido");
-            }
-
             if (!updated || updated.length === 0) {
-                return res.status(400).json("Error al actualizar el estado de pago");
+                return res.status(404).json("Factura no encontrada o datos inválidos");
             }
 
             return res.status(200).json({
@@ -537,7 +592,7 @@ export default class InvoicesReceivedController {
      */
     static async createRefund(req, res) {
         try {
-            const { originalInvoiceId, refundReason } = req.body;
+            const {originalInvoiceId, refundReason} = req.body;
 
             if (!originalInvoiceId) {
                 return res.status(400).json("ID de factura original requerido");
@@ -641,8 +696,8 @@ export default class InvoicesReceivedController {
      */
     static async getVATBookData(req, res) {
         try {
-            const { year } = req.params;
-            const { month } = req.query;
+            const {year} = req.params;
+            const {month} = req.query;
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json("Año requerido y debe ser válido");
@@ -694,8 +749,8 @@ export default class InvoicesReceivedController {
             const fileName = `factura_recibida_${invoice[0].invoice_number.replace(/\//g, '-')}.pdf`;
             const filePath = path.join(dir, fileName);
 
-            // Importar generador de PDFs dinámicamente
-            const { generateReceivedInvoicePdf } = await import('../shared/utils/Pdf-Received/invoicePdfGenerator.js');
+            // Importar generador de PDFs dinámicamente (el mismo para facturas y abonos)
+            const {generateReceivedInvoicePdf} = await import('../shared/utils/Pdf-Received/invoicePdfGenerator.js');
             await generateReceivedInvoicePdf(invoice[0], filePath);
 
             // Enviar archivo para descarga
@@ -747,9 +802,9 @@ export default class InvoicesReceivedController {
             const fileName = `abono_recibido_${refund[0].invoice_number.replace(/\//g, '-')}.pdf`;
             const filePath = path.join(dir, fileName);
 
-            // Importar generador de PDFs de abono dinámicamente
-            const { generateReceivedRefundPdf } = await import('../shared/utils/Pdf-Received/refundInvoicePdfGenerator.js');
-            await generateReceivedRefundPdf(refund[0], filePath);
+            // Importar generador de PDFs dinámicamente (el mismo para facturas y abonos)
+            const {generateReceivedInvoicePdf} = await import('../shared/utils/Pdf-Received/invoicePdfGenerator.js');
+            await generateReceivedInvoicePdf(refund[0], filePath);
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
@@ -780,7 +835,7 @@ export default class InvoicesReceivedController {
      */
     static async validateProportionalDateRange(req, res) {
         try {
-            const { start_date, end_date } = req.body;
+            const {start_date, end_date} = req.body;
 
             if (!start_date || !end_date) {
                 return res.status(400).json({
@@ -825,7 +880,7 @@ export default class InvoicesReceivedController {
      */
     static async simulateProportionalInvoice(req, res) {
         try {
-            const { tax_base, iva_percentage, irpf_percentage, start_date, end_date } = req.body;
+            const {tax_base, iva_percentage, irpf_percentage, start_date, end_date} = req.body;
 
             // Validaciones básicas
             if (!tax_base || tax_base <= 0) {
@@ -877,7 +932,7 @@ export default class InvoicesReceivedController {
      */
     static async getProportionalCalculationDetails(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
@@ -917,8 +972,8 @@ export default class InvoicesReceivedController {
      */
     static async getExpenseStatement(req, res) {
         try {
-            const { year } = req.params;
-            const { month } = req.query;
+            const {year} = req.params;
+            const {month} = req.query;
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json("Año requerido y debe ser válido");
@@ -957,7 +1012,7 @@ export default class InvoicesReceivedController {
      */
     static async getMonthlySummary(req, res) {
         try {
-            const { year } = req.params;
+            const {year} = req.params;
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json("Año requerido y debe ser válido");
@@ -1006,4 +1061,50 @@ export default class InvoicesReceivedController {
             return res.status(500).json("Error interno del servidor");
         }
     }
+
+    /**
+     * Descarga un archivo adjunto de factura
+     *
+     * @async
+     * @function downloadAttachment
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // GET /api/invoices-received/files/FAC-001_2024-08-12.pdf
+     * // Response: Archivo PDF para descarga
+     */
+    static async downloadAttachment(req, res) {
+        try {
+            const {fileName} = req.params;
+
+            // Validar nombre de archivo
+            if (!fileName || !fileName.endsWith('.pdf')) {
+                return res.status(400).json("Nombre de archivo inválido");
+            }
+
+            // Construir ruta del archivo
+            const filePath = `/app/uploads/${fileName}`;
+
+            // Verificar que el archivo existe
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json("Archivo no encontrado");
+            }
+
+            // Enviar archivo para descarga
+            res.download(filePath, fileName, (err) => {
+                if (err) {
+                    console.error('Error al descargar archivo:', err);
+                    return res.status(500).json("Error al descargar archivo");
+                }
+            });
+
+        } catch (error) {
+            console.error('Error en downloadAttachment:', error);
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+
 }

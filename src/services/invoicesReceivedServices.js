@@ -41,11 +41,11 @@ export default class InvoicesReceivedService {
             subcategory: invoice.subcategory,
             description: invoice.description,
             notes: invoice.notes,
-            payment_status: invoice.payment_status,
-            payment_method: invoice.payment_method,
-            payment_date: invoice.payment_date,
-            payment_reference: invoice.payment_reference,
-            payment_notes: invoice.payment_notes,
+            collection_status: invoice.collection_status,
+            collection_method: invoice.collection_method,
+            collection_date: invoice.collection_date,
+            collection_reference: invoice.collection_reference,
+            collection_notes: invoice.collection_notes,
             start_date: invoice.start_date,
             end_date: invoice.end_date,
             corresponding_month: invoice.corresponding_month,
@@ -222,8 +222,8 @@ export default class InvoicesReceivedService {
             subcategory: data.subcategory ? sanitizeString(data.subcategory) : null,
             description: sanitizeString(data.description),
             notes: data.notes ? sanitizeString(data.notes) : null,
-            payment_status: data.payment_status || 'pending',
-            payment_method: data.payment_method || 'transfer',
+            collection_status: data.collection_status || 'pending',
+            collection_method: data.collection_method || 'transfer',
             start_date: data.start_date || null,
             end_date: data.end_date || null,
             corresponding_month: correspondingMonth,
@@ -320,14 +320,14 @@ export default class InvoicesReceivedService {
                 sanitizeString(updateData.description) : existing[0].description,
             notes: updateData.notes !== undefined ?
                 (updateData.notes ? sanitizeString(updateData.notes) : null) : existing[0].notes,
-            payment_status: updateData.payment_status || existing[0].payment_status,
-            payment_method: updateData.payment_method || existing[0].payment_method,
-            payment_date: updateData.payment_date !== undefined ?
-                updateData.payment_date : existing[0].payment_date,
-            payment_reference: updateData.payment_reference !== undefined ?
-                updateData.payment_reference : existing[0].payment_reference,
-            payment_notes: updateData.payment_notes !== undefined ?
-                updateData.payment_notes : existing[0].payment_notes,
+            collection_status: updateData.collection_status || existing[0].collection_status,
+            collection_method: updateData.collection_method || existing[0].collection_method,
+            collection_date: updateData.collection_date !== undefined ?
+                updateData.collection_date : existing[0].collection_date,
+            collection_reference: updateData.collection_reference !== undefined ?
+                updateData.collection_reference : existing[0].collection_reference,
+            collection_notes: updateData.collection_notes !== undefined ?
+                updateData.collection_notes : existing[0].collection_notes,
             start_date: updateData.start_date !== undefined ?
                 updateData.start_date : existing[0].start_date,
             end_date: updateData.end_date !== undefined ?
@@ -372,32 +372,30 @@ export default class InvoicesReceivedService {
      * Actualiza el estado de pago de una factura
      */
     static async updatePaymentStatus(id, paymentData) {
-        if (!id || isNaN(Number(id))) return [];
-
         const existing = await InvoicesReceivedRepository.findById(id);
         if (!existing.length > 0) return [];
 
         // Validar estados permitidos
         const validStatuses = CalculateHelper.getValidInvoicesReceivedStatuses();
-        if (!validStatuses.includes(paymentData.payment_status)) {
-            return null;
+        if (!validStatuses.includes(paymentData.collection_status)) {
+            return [] ;
         }
 
         // Validar métodos permitidos
         const validMethods = CalculateHelper.getValidPaymentMethods();
-        if (paymentData.payment_method && !validMethods.includes(paymentData.payment_method)) {
-            return null;
+        if (!validMethods.includes(paymentData.collection_method)) {
+            return [];
         }
 
         // REGLA DE NEGOCIO: Si se marca como pagado, debe tener fecha
-        if (paymentData.payment_status === 'paid' && !paymentData.payment_date) {
-            paymentData.payment_date = new Date().toISOString().split('T')[0];
+        if (paymentData.collection_status === 'paid' && !paymentData.collection_date) {
+            paymentData.collection_date = new Date().toISOString().split('T')[0];
         }
 
         // REGLA DE NEGOCIO: Si se marca como pendiente, limpiar fecha de pago
-        if (paymentData.payment_status === 'pending') {
-            paymentData.payment_date = null;
-            paymentData.payment_reference = null;
+        if (paymentData.collection_status === 'pending') {
+            paymentData.collection_date = null;
+            paymentData.collection_reference = null;
         }
 
         const updated = await InvoicesReceivedRepository.updatePaymentStatus(Number(id), paymentData);
@@ -436,28 +434,24 @@ export default class InvoicesReceivedService {
     static async createRefund(originalInvoiceId, refundReason = '') {
         if (!originalInvoiceId || isNaN(Number(originalInvoiceId))) return [];
 
-        // Obtener factura original
         const original = await InvoicesReceivedRepository.findById(originalInvoiceId);
         if (!original.length) return [];
 
-        // No se puede hacer abono de un abono
         if (original[0].is_refund) return [];
 
-        // Generar número de abono
         const refundNumber = `ABONO-${original[0].invoice_number}`;
 
-        // Crear abono con valores negativos
         const refundData = {
             invoice_number: refundNumber,
             supplier_id: original[0].supplier_id,
             property_id: original[0].property_id,
             invoice_date: new Date().toISOString().split('T')[0],
-            tax_base: -Math.abs(original[0].tax_base),
+            tax_base: Math.abs(original[0].tax_base),
             iva_percentage: original[0].iva_percentage,
-            iva_amount: -Math.abs(original[0].iva_amount),
+            iva_amount: Math.abs(original[0].iva_amount),
             irpf_percentage: original[0].irpf_percentage,
-            irpf_amount: -Math.abs(original[0].irpf_amount),
-            total_amount: -Math.abs(original[0].total_amount),
+            irpf_amount: Math.abs(original[0].irpf_amount),
+            total_amount: Math.abs(original[0].total_amount),
             category: original[0].category,
             subcategory: original[0].subcategory,
             description: `ABONO - ${refundReason || 'Rectificación'} - Original: ${original[0].invoice_number}`,

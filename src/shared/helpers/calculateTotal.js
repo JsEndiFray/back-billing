@@ -23,7 +23,7 @@ export default class CalculateHelper {
     }
 
     static getValidInvoicesReceivedStatuses() {
-        return ['pending', 'collected', 'overdue', 'disputed'];
+        return ['pending', 'paid', 'overdue', 'disputed'];
     }
 
     static getValidPaymentMethods() {
@@ -61,9 +61,10 @@ export default class CalculateHelper {
     //Categorías válidas para facturas recibidas
     static getValidInvoiceReceivedCategories() {
         return [
-            'electricidad', 'gas', 'agua', 'comunidad', 'seguro',
+            'electricidad', 'gas', 'agua', 'comunidad', 'seguros',
             'residuos', 'mantenimiento', 'reparaciones', 'mobiliario',
-            'servicios_profesionales', 'suministros', 'otros'
+            'servicios_profesionales', 'suministros', 'telefono', 'internet', 'seguridad',
+            'impuestos', 'otros'
         ];
     }
 

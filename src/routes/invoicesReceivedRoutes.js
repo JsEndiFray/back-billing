@@ -1,5 +1,6 @@
 import express from 'express';
 import InvoicesReceivedController from '../controllers/invoicesReceivedControllers.js';
+import {handleUploadErrors, uploadInvoiceFile} from "../middlewares/fileUpload.js";
 import errorHandler from "../middlewares/errorHandler.js";
 import {validateCreateInvoiceReceived} from "../validator/validatorInvoicesReceived.js";
 import auth from "../middlewares/auth.js";
@@ -651,6 +652,36 @@ const router = express.Router()
      */
     .get('/:id', auth, role(['admin', 'employee']), InvoicesReceivedController.getInvoiceById)
 
+    //=================================================
+    //RUTA PARA VISUALIZAR EL PDF Y DESCARGAR EN VISUAL
+    //=================================================
+
+    /**
+     * @swagger
+     * /invoices-received/files/{fileName}:
+     *   get:
+     *     summary: Descarga un archivo adjunto de factura
+     *     tags: [Facturas Recibidas]
+     *     parameters:
+     *       - in: path
+     *         name: fileName
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Nombre del archivo
+     *     responses:
+     *       200:
+     *         description: Archivo PDF
+     *         content:
+     *           application/pdf:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       404:
+     *         description: Archivo no encontrado
+     */
+    .get('/files/:fileName', auth, role(['admin', 'employee']), InvoicesReceivedController.downloadAttachment)
+
     // ==========================================
     // RUTAS DE MODIFICACIÓN (POST, PUT, DELETE)
     // ==========================================
@@ -690,7 +721,7 @@ const router = express.Router()
      *       400:
      *         description: Error en los datos proporcionados, proveedor no existe o factura duplicada
      */
-    .post('/', auth, role(['admin', 'employee']), validateCreateInvoiceReceived, errorHandler, InvoicesReceivedController.createInvoiceReceived)
+    .post('/', auth, role(['admin', 'employee']), uploadInvoiceFile, handleUploadErrors, validateCreateInvoiceReceived, errorHandler, InvoicesReceivedController.createInvoiceReceived)
 
     /**
      * @swagger
@@ -778,6 +809,62 @@ const router = express.Router()
 
     /**
      * @swagger
+     * /invoices-received/refunds/{id}/pdf:
+     *   get:
+     *     summary: Descarga el PDF de un abono específico
+     *     tags: [Facturas Recibidas]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID del abono
+     *     responses:
+     *       200:
+     *         description: PDF del abono generado correctamente
+     *         content:
+     *           application/pdf:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       404:
+     *         description: Abono no encontrado
+     *       400:
+     *         description: La factura especificada no es un abono
+     *       500:
+     *         description: Error al generar PDF
+     */
+    .get('/refunds/:id/pdf', auth, role(['admin', 'employee']), InvoicesReceivedController.downloadRefundPdf)
+
+    /**
+     * @swagger
+     * /invoices-received/{id}/pdf:
+     *   get:
+     *     summary: Descarga el PDF de una factura recibida específica
+     *     tags: [Facturas Recibidas]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID de la factura
+     *     responses:
+     *       200:
+     *         description: PDF generado correctamente
+     *         content:
+     *           application/pdf:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       404:
+     *         description: Factura no encontrada
+     */
+    .get('/:id/pdf', auth, role(['admin', 'employee']), InvoicesReceivedController.downloadPdf)
+
+    /**
+     * @swagger
      * /invoices-received/{id}:
      *   put:
      *     summary: Actualiza una factura recibida existente
@@ -816,7 +903,7 @@ const router = express.Router()
      *       404:
      *         description: Factura no encontrada
      */
-    .put('/:id', auth, role(['admin', 'employee']), InvoicesReceivedController.updateInvoiceReceived)
+    .put('/:id', auth, role(['admin', 'employee']), uploadInvoiceFile, handleUploadErrors, InvoicesReceivedController.updateInvoiceReceived)
 
     /**
      * @swagger

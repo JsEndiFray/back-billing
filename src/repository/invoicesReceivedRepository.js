@@ -29,11 +29,11 @@ export default class InvoicesReceivedRepository {
                    ir.subcategory,
                    ir.description,
                    ir.notes,
-                   ir.payment_status,
-                   ir.payment_method,
-                   ir.payment_date,
-                   ir.payment_reference,
-                   ir.payment_notes,
+                   ir.collection_status,
+                   ir.collection_method,
+                   ir.collection_date,
+                   ir.collection_reference,
+                   ir.collection_notes,
                    ir.start_date,
                    ir.end_date,
                    ir.corresponding_month,
@@ -52,10 +52,8 @@ export default class InvoicesReceivedRepository {
                    orig.invoice_number AS original_invoice_number
             FROM invoices_received ir
             INNER JOIN suppliers s ON ir.supplier_id = s.id
-            LEFT JOIN estates e ON ir.property_id = e.id                 -- Unir con la tabla estates
-            LEFT JOIN estates_owners eo ON e.id = eo.estate_id           -- Unir con estates_owners
             LEFT JOIN invoices_received orig ON ir.original_invoice_id = orig.id
-            ORDER BY ir.invoice_date DESC, ir.id DESC
+            ORDER BY ir.id ASC
         `);
         return rows;
     }
@@ -150,7 +148,7 @@ export default class InvoicesReceivedRepository {
                    s.company_name AS supplier_company
             FROM invoices_received ir
             INNER JOIN suppliers s ON ir.supplier_id = s.id
-            WHERE ir.payment_status = ?
+            WHERE ir.collection_status = ?
             ORDER BY ir.due_date ASC, ir.invoice_date DESC
         `, [status]);
         return rows;
@@ -167,7 +165,7 @@ export default class InvoicesReceivedRepository {
                    DATEDIFF(CURRENT_DATE, ir.due_date) AS days_overdue
             FROM invoices_received ir
             INNER JOIN suppliers s ON ir.supplier_id = s.id
-            WHERE ir.payment_status = 'pending' 
+            WHERE ir.collection_status = 'pending' 
               AND ir.due_date < CURRENT_DATE
             ORDER BY ir.due_date ASC
         `);
@@ -185,7 +183,7 @@ export default class InvoicesReceivedRepository {
                    DATEDIFF(ir.due_date, CURRENT_DATE) AS days_until_due
             FROM invoices_received ir
             INNER JOIN suppliers s ON ir.supplier_id = s.id
-            WHERE ir.payment_status = 'pending' 
+            WHERE ir.collection_status = 'pending' 
               AND ir.due_date BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, INTERVAL ? DAY)
             ORDER BY ir.due_date ASC
         `, [days]);
@@ -214,11 +212,11 @@ export default class InvoicesReceivedRepository {
             subcategory = null,
             description,
             notes = null,
-            payment_status = 'pending',
-            payment_method = 'transfer',
-            payment_date = null,
-            payment_reference = null,
-            payment_notes = null,
+            collection_status = 'pending',
+            collection_method = 'transfer',
+            collection_date = null,
+            collection_reference = null,
+            collection_notes = null,
             start_date = null,
             end_date = null,
             corresponding_month = null,
@@ -233,7 +231,7 @@ export default class InvoicesReceivedRepository {
             (invoice_number, our_reference, supplier_id, property_id, invoice_date, due_date, received_date,
              tax_base, iva_percentage, iva_amount, irpf_percentage, irpf_amount, total_amount,
              category, subcategory, description, notes,
-             payment_status, payment_method, payment_date, payment_reference, payment_notes,
+             collection_status, collection_method, collection_date, collection_reference, collection_notes,
              start_date, end_date, corresponding_month, is_proportional,
              is_refund, original_invoice_id, pdf_path, has_attachments, created_by,
              created_at, updated_at)
@@ -243,7 +241,7 @@ export default class InvoicesReceivedRepository {
             invoice_number, our_reference, supplier_id, property_id, invoice_date, due_date, received_date,
             tax_base, iva_percentage, iva_amount, irpf_percentage, irpf_amount, total_amount,
             category, subcategory, description, notes,
-            payment_status, payment_method, payment_date, payment_reference, payment_notes,
+            collection_status, collection_method, collection_date,collection_reference, collection_notes,
             start_date, end_date, corresponding_month, is_proportional,
             pdf_path, has_attachments, created_by
         ]);
@@ -273,11 +271,11 @@ export default class InvoicesReceivedRepository {
             subcategory,
             description,
             notes,
-            payment_status,
-            payment_method,
-            payment_date,
-            payment_reference,
-            payment_notes,
+            collection_status,
+            collection_method,
+            collection_date,
+            collection_reference,
+            collection_notes,
             start_date,
             end_date,
             corresponding_month,
@@ -305,11 +303,11 @@ export default class InvoicesReceivedRepository {
                 subcategory = ?,
                 description = ?,
                 notes = ?,
-                payment_status = ?,
-                payment_method = ?,
-                payment_date = ?,
-                payment_reference = ?,
-                payment_notes = ?,
+                collection_status = ?,
+                collection_method = ?,
+                collection_date = ?,
+                collection_reference = ?,
+                collection_notes = ?,
                 start_date = ?,
                 end_date = ?,
                 corresponding_month = ?,
@@ -322,7 +320,7 @@ export default class InvoicesReceivedRepository {
             invoice_number, our_reference, supplier_id, property_id, invoice_date, due_date, received_date,
             tax_base, iva_percentage, iva_amount, irpf_percentage, irpf_amount, total_amount,
             category, subcategory, description, notes,
-            payment_status, payment_method, payment_date, payment_reference, payment_notes,
+            collection_status, collection_method, collection_date, collection_reference, collection_notes,
             start_date, end_date, corresponding_month, is_proportional,
             pdf_path, has_attachments,
             id
@@ -346,18 +344,18 @@ export default class InvoicesReceivedRepository {
      * Actualiza solo el estado de pago
      */
     static async updatePaymentStatus(id, paymentData) {
-        const { payment_status, payment_method, payment_date, payment_reference, payment_notes } = paymentData;
+        const { collection_status, collection_method, collection_date, collection_reference,collection_notes } = paymentData;
 
         const [result] = await db.query(`
             UPDATE invoices_received
-            SET payment_status = ?,
-                payment_method = ?,
-                payment_date = ?,
-                payment_reference = ?,
-                payment_notes = ?,
+            SET collection_status = ?,
+                collection_method = ?,
+                collection_date = ?,
+                collection_reference = ?,
+                collection_notes = ?,
                 updated_at = NOW()
             WHERE id = ?
-        `, [payment_status, payment_method, payment_date, payment_reference, payment_notes, id]);
+        `, [collection_status, collection_method, collection_date, collection_reference, collection_notes, id]);
 
         return result.affectedRows > 0 ? [{id: Number(id), updated: true}] : [];
     }
@@ -414,7 +412,7 @@ export default class InvoicesReceivedRepository {
              category, subcategory, description, notes,
              is_refund, original_invoice_id,
              start_date, end_date, corresponding_month, is_proportional,
-             payment_status, created_by, created_at, updated_at)
+             collection_status, created_by, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, 'pending', ?, NOW(), NOW())
         `, [
             invoice_number, supplier_id, property_id, invoice_date,
@@ -448,12 +446,12 @@ export default class InvoicesReceivedRepository {
         const [rows] = await db.query(`
             SELECT 
                 COUNT(*) as total_invoices,
-                SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_invoices,
-                SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_invoices,
-                SUM(CASE WHEN payment_status = 'overdue' THEN 1 ELSE 0 END) as overdue_invoices,
+                SUM(CASE WHEN collection_status = 'pending' THEN 1 ELSE 0 END) as pending_invoices,
+                SUM(CASE WHEN collection_status = 'paid' THEN 1 ELSE 0 END) as paid_invoices,
+                SUM(CASE WHEN collection_status = 'overdue' THEN 1 ELSE 0 END) as overdue_invoices,
                 SUM(CASE WHEN is_refund = FALSE THEN total_amount ELSE 0 END) as total_amount,
                 SUM(CASE WHEN is_refund = FALSE THEN iva_amount ELSE 0 END) as total_iva,
-                SUM(CASE WHEN payment_status = 'pending' AND is_refund = FALSE THEN total_amount ELSE 0 END) as pending_amount
+                SUM(CASE WHEN collection_status = 'pending' AND is_refund = FALSE THEN total_amount ELSE 0 END) as pending_amount
             FROM invoices_received
         `);
         return rows[0] || {};

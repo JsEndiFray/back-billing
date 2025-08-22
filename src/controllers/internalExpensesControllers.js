@@ -883,7 +883,7 @@ export default class InternalExpensesController {
      */
     static async getAvailableCategories(req, res) {
         try {
-            const categories = CalculateHelper.getAvailableCategories();
+            const categories = CalculateHelper.getValidInvoiceReceivedCategories();
             return res.status(200).json(categories);
         } catch (error) {
             console.error('Error en getAvailableCategories:', error);

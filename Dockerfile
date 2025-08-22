@@ -16,6 +16,9 @@ RUN npm ci
 # Copiar todo el código fuente PRIMERO
 COPY . .
 
+# Copiar archivo de credenciales específicamente (si existe)
+COPY google-credentials.json* ./
+
 # Exponer puerto 3600 (tu puerto específico)
 EXPOSE 3600
 

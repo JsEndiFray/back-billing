@@ -4,3 +4,4 @@ node_modules
 .DS_Store
 endi-has.js
 pdfs
+google-credentials.json

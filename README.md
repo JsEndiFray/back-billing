@@ -24,7 +24,7 @@ La API cuenta con un amplio abanico de funcionalidades diseñadas para automatiz
 * **Clientes**: Gestión completa de clientes, diferenciando entre `particular`, `autonomo` y `empresa`, con lógica para manejar relaciones jerárquicas (empresa-administrador).
 * **Propietarios**: CRUD para los propietarios de los inmuebles.
 * **Inmuebles (Estates)**: Gestión de propiedades, utilizando la **referencia catastral** como identificador único y validándola contra el algoritmo oficial español.
-* **Proveedores (Suppliers)**: CRUD para proveedores, con soporte para borrado lógico (activación/desactivación) y validación de NIF/CIF.
+* **Proveedores (SuppliersInterface)**: CRUD para proveedores, con soporte para borrado lógico (activación/desactivación) y validación de NIF/CIF.
 * **Empleados**: Gestión de los empleados de la empresa.
 * **Relación Inmueble-Propietario**: Permite asignar múltiples propietarios a un inmueble, especificando el **porcentaje de propiedad (%)** de cada uno, clave para el reparto de costes e ingresos.
 
