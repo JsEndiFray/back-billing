@@ -17,6 +17,7 @@ import {generalLimiter, authLimiter} from "./middlewares/rate-limit.js";
 import clientsRoutes from './routes/clientsRoutes.js'
 import estateRoutes from './routes/estatesRoutes.js';
 import ownersRoutes from './routes/ownersRoutes.js';
+import cadastralRoutes from './routes/cadastralRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import authRoutes from "./routes/authRoutes.js";
 import estatesOwnersRoutes from "./routes/estatesOwnersRoutes.js";
@@ -89,6 +90,7 @@ app.use('/api/owners', ownersRoutes);
 app.use('/api/clients', clientsRoutes);
 app.use('/api/suppliers', suppliersRoutes);
 app.use('/api/estates', estateRoutes);
+app.use('/api/cadastral', cadastralRoutes);
 app.use('/api/estate-owners', estatesOwnersRoutes);
 app.use('/api/invoices-received', invoicesReceivedRoutes);
 app.use('/api/invoices-issued', invoicesIssuedRoutes);
