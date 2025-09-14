@@ -19,7 +19,7 @@ export default class CalculateHelper {
     // ===========================================
 
     static getValidInvoicesIssuedStatuses() {
-        return ['pending', 'paid', 'overdue', 'disputed'];
+        return ['pending', 'collected', 'overdue', 'disputed'];
     }
 
     static getValidInvoicesReceivedStatuses() {
