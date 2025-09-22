@@ -18,7 +18,7 @@ import mysql2 from 'mysql2/promise';
  * Utiliza el método nativo de Node.js para cargar automáticamente
  * las variables de entorno necesarias para la configuración de la BD.
  */
-process.loadEnvFile();
+//process.loadEnvFile();
 
 /**
  * Pool de conexiones MySQL configurado con variables de entorno

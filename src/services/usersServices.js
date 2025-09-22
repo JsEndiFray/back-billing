@@ -2,7 +2,7 @@ import UsersRepository from "../repository/usersRepository.js";
 import bcrypt from 'bcrypt';
 import {generateAccessToken, generateRefreshToken, verifyToken} from "../middlewares/tokenManager.js";
 
-process.loadEnvFile();
+//process.loadEnvFile();
 
 /**
  * Servicio de usuarios con autenticación JWT

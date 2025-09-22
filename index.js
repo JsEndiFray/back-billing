@@ -12,7 +12,7 @@ import app from './src/app.js';
 //Carga de Variables de Entorno
 
 //Carga las variables desde el archivo .env a process.env
-process.loadEnvFile();
+//process.loadEnvFile();
 
 /// --- Configuración del Puerto ---
 
