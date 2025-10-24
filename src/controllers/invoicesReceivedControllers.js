@@ -329,12 +329,15 @@ export default class InvoicesReceivedController {
             const data = req.body;
             // Manejar archivo adjunto si existe
             let fileUploadResult = null;
+
             if (req.file) {
                 try {
                     const fileUploadResult = await localFileService.uploadInvoiceFile(
                         req.file.buffer,
                         req.file.originalname,
-                        data.invoice_number
+                        data.invoice_number,
+                        data.invoice_date,        // ⬅️ NUEVO: Fecha de la factura
+                        'invoices-received'       // ⬅️ NUEVO: Tipo de archivo
                     );
                     data.has_attachments = true;
                     data.pdf_path = fileUploadResult.fileId;
@@ -343,6 +346,7 @@ export default class InvoicesReceivedController {
                     return res.status(500).json("Error al subir el archivo adjunto");
                 }
             }
+
 
             const created = await InvoicesReceivedService.createInvoiceReceived(data);
 
@@ -392,7 +396,9 @@ export default class InvoicesReceivedController {
                     const fileUploadResult = await localFileService.uploadInvoiceFile(
                         req.file.buffer,
                         req.file.originalname,
-                        updateData.invoice_number || `invoice-${id}`
+                        updateData.invoice_number || `invoice-${id}`,
+                        updateData.invoice_date,      // ⬅️ NUEVO: Fecha de la factura
+                        'invoices-received'           // ⬅️ NUEVO: Tipo de archivo
                     );
                     updateData.has_attachments = true;
                     updateData.pdf_path = fileUploadResult.fileId;

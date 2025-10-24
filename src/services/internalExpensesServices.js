@@ -289,13 +289,13 @@ export default class InternalExpensesService {
         if (isNaN(amountNum) || amountNum <= 0) return [];
 
         // Validar fecha
-        const dateValidation = CalculateHelper.validateDateRange(expense_date, expense_date, {
-            maxRangeYears: 1,
-            allowFutureDates: false
+        const dateValidation = CalculateHelper.validateSingleDate(expense_date, {
+            allowFutureDates: false,
+            maxYearsInPast: 5
         });
         if (!dateValidation.isValid) return [];
 
-        //Usar CalculateHelper para cálculo de IVA
+        // Calcular IVA
         const ivaPercentage = data.iva_percentage !== undefined ? Number(data.iva_percentage) : 21.00;
         const ivaAmount = CalculateHelper.calculateIVA(amountNum, ivaPercentage);
         const totalAmount = amountNum + ivaAmount;
@@ -314,21 +314,23 @@ export default class InternalExpensesService {
             is_deductible: data.is_deductible !== undefined ? Boolean(data.is_deductible) : true,
             payment_method: data.payment_method || 'card',
             status: data.status || 'pending',
-            is_recurring: data.is_recurring !== undefined ? Boolean(data.is_recurring) : false
+            is_recurring: data.is_recurring !== undefined ? Boolean(data.is_recurring) : false,
+            has_attachments: data.has_attachments !== undefined ? Boolean(data.has_attachments) : false
         };
 
-        //Usar CalculateHelper para validar recurrencia
+        // Validar recurrencia
         const recurringValidation = CalculateHelper.validateRecurringFields(expenseData);
         if (!recurringValidation.isValid) return [];
 
-        if (expenseData.is_recurring) {
+        // Si es recurrente, calcular próxima ocurrencia
+        if (expenseData.is_recurring && data.recurrence_period) {
             expenseData.recurrence_period = data.recurrence_period;
-            //Usar CalculateHelper para calcular próxima ocurrencia
-            expenseData.next_occurrence_date = CalculateHelper.calculateNextOccurrence(expense_date, data.recurrence_period);
+            expenseData.next_occurrence_date = data.next_occurrence_date ||
+                CalculateHelper.calculateNextOccurrence(expense_date, data.recurrence_period);
         }
 
         const created = await InternalExpensesRepository.create(expenseData);
-        if (!created.length > 0) return [];
+        if (!created || created.length === 0) return [];
 
         return [{...expenseData, id: created[0].id}];
     }

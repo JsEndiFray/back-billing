@@ -27,6 +27,8 @@ export default class InternalExpensesRepository {
                    ie.payment_method,
                    ie.receipt_number,
                    ie.receipt_date,
+                   ie.pdf_path,
+                   ie.has_attachments,
                    ie.status,
                    ie.property_id,
                    ie.project_code,
@@ -46,12 +48,13 @@ export default class InternalExpensesRepository {
                    eo.owners_id,
                    eo.ownership_percentage
             FROM internal_expenses ie
-                     LEFT JOIN estates e ON ie.property_id = e.id -- Unir con la tabla estates
-                     LEFT JOIN estates_owners eo ON e.id = eo.estate_id -- Unir con estates_owners
+                     LEFT JOIN estates e ON ie.property_id = e.id -- Unir con la tabla estate
+                     LEFT JOIN estate_owners eo ON e.id = eo.estate_id -- Unir con estates_owners
             ORDER BY ie.expense_date DESC, ie.id DESC
         `);
         return rows;
     }
+
 
     // ========================================
     // MÉTODOS DE BÚSQUEDA
@@ -62,8 +65,13 @@ export default class InternalExpensesRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.*,
+                   e.address AS estate_address,
+                   eo.owners_id,
+                   eo.ownership_percentage
             FROM internal_expenses ie
+                     LEFT JOIN estates e ON ie.property_id = e.id
+                     LEFT JOIN estate_owners eo ON e.id = eo.estate_id
             WHERE ie.id = ?`, [id]);
         return rows;
     }

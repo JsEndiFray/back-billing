@@ -567,6 +567,70 @@ export default class CalculateHelper {
         return {isValid: true, message: 'Campos de recurrencia válidos.'};
     }
 
+    /**
+     * Valida que una fecha no sea futura
+     * @param {string} date - Fecha a validar (formato YYYY-MM-DD)
+     * @param {object} options - Opciones de validación
+     * @returns {object} - {isValid: boolean, message: string}
+     */
+    static validateSingleDate(date, options = {}) {
+        const {
+            allowFutureDates = false,
+            maxYearsInPast = 5
+        } = options;
+
+        // Validar que exista la fecha
+        if (!date) {
+            return {
+                isValid: false,
+                message: 'La fecha es requerida.'
+            };
+        }
+
+        const inputDate = new Date(date);
+
+        // Validar formato de fecha
+        if (isNaN(inputDate.getTime())) {
+            return {
+                isValid: false,
+                message: 'Formato de fecha inválido.'
+            };
+        }
+
+        // Validar fechas futuras (opcional)
+        if (!allowFutureDates) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            inputDate.setHours(0, 0, 0, 0);
+
+            if (inputDate > today) {
+                return {
+                    isValid: false,
+                    message: 'La fecha no puede ser futura.'
+                };
+            }
+        }
+
+        // Validar rango máximo en el pasado (opcional)
+        if (maxYearsInPast > 0) {
+            const minDate = new Date();
+            minDate.setFullYear(minDate.getFullYear() - maxYearsInPast);
+            minDate.setHours(0, 0, 0, 0);
+
+            if (inputDate < minDate) {
+                return {
+                    isValid: false,
+                    message: `La fecha no puede ser anterior a ${maxYearsInPast} años.`
+                };
+            }
+        }
+
+        return {
+            isValid: true,
+            message: 'Fecha válida.'
+        };
+    }
+
     static validateDateParams(year, quarter, month) {
         if (!year || year < 2020 || year > 2030) {
             return {isValid: false, message: 'Año debe estar entre 2020 y 2030'};

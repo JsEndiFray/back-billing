@@ -17,6 +17,7 @@ import path from 'path';
 import fs from 'fs';
 import InternalExpensesService from '../services/internalExpensesServices.js';
 import CalculateHelper from '../shared/helpers/calculateTotal.js';
+import {localFileService} from "../middlewares/fileUpload.js";
 
 /**
  * Controlador para la gestión de gastos internos de la empresa
@@ -74,7 +75,7 @@ export default class InternalExpensesController {
      */
     static async getExpenseById(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -112,7 +113,7 @@ export default class InternalExpensesController {
      */
     static async getExpensesByCategory(req, res) {
         try {
-            const { category } = req.params;
+            const {category} = req.params;
 
             if (!category || category.trim().length === 0) {
                 return res.status(400).json("Categoría requerida");
@@ -146,7 +147,7 @@ export default class InternalExpensesController {
      */
     static async getExpensesByStatus(req, res) {
         try {
-            const { status } = req.params;
+            const {status} = req.params;
 
             if (!status || status.trim().length === 0) {
                 return res.status(400).json("Estado requerido");
@@ -180,7 +181,7 @@ export default class InternalExpensesController {
      */
     static async getExpensesBySupplier(req, res) {
         try {
-            const { supplier_name } = req.params;
+            const {supplier_name} = req.params;
 
             if (!supplier_name || supplier_name.trim().length === 0) {
                 return res.status(400).json("Nombre de proveedor requerido");
@@ -215,7 +216,7 @@ export default class InternalExpensesController {
      */
     static async getExpensesByDateRange(req, res) {
         try {
-            const { startDate, endDate } = req.body;
+            const {startDate, endDate} = req.body;
 
             if (!startDate || !endDate) {
                 return res.status(400).json("Fechas de inicio y fin son requeridas");
@@ -342,9 +343,31 @@ export default class InternalExpensesController {
      * //   supplier_name: "Amazon Business"
      * // }
      */
-    static async createExpense(req, res) {
+
+    /*static async createExpense(req, res) {
         try {
             const data = req.body;
+            // MANEJAR ARCHIVO ADJUNTO SI EXISTE
+            if (req.file) {
+                try {
+
+
+                    console.log('🔍 Body recibido:', req.body);
+                    console.log('🔍 File recibido:', req.file?.filename);
+
+
+                    const fileUploadResult = await localFileService.uploadInvoiceFile(
+                        req.file.buffer,
+                        req.file.originalname,
+                        data.receipt_number || `expense-${Date.now()}`
+                    );
+                    data.has_attachments = true;
+                    data.pdf_path = fileUploadResult.fileId;
+                } catch (fileError) {
+                    console.error('Error subiendo archivo:', fileError);
+                    return res.status(500).json("Error al subir el archivo adjunto");
+                }
+            }
             const created = await InternalExpensesService.createExpense(data);
 
             if (!created || created.length === 0) {
@@ -360,6 +383,75 @@ export default class InternalExpensesController {
             if (error.message.includes('recurrente') || error.message.includes('IVA')) {
                 return res.status(400).json(error.message);
             }
+            return res.status(500).json("Error interno del servidor");
+        }
+    }*/
+    /**
+     * Crea un nuevo gasto interno
+     */
+    static async createExpense(req, res) {
+        try {
+            console.log('🔍 Body recibido:', req.body);
+            console.log('🔍 File recibido:', req.file?.filename);
+
+            const data = req.body;
+
+            // ✅ CONVERTIR TIPOS CORRECTAMENTE ANTES DE PASAR AL SERVICIO
+            const processedData = {
+                ...data,
+                // Números
+                amount: parseFloat(data.amount),
+                iva_percentage: data.iva_percentage ? parseFloat(data.iva_percentage) : 21,
+                iva_amount: data.iva_amount ? parseFloat(data.iva_amount) : undefined,
+                total_amount: data.total_amount ? parseFloat(data.total_amount) : undefined,
+
+                // ✅ Booleanos (convertir strings 'true'/'false' correctamente)
+                is_deductible: data.is_deductible === 'true' || data.is_deductible === true,
+                is_recurring: data.is_recurring === 'true' || data.is_recurring === true,
+                has_attachments: data.has_attachments === 'true' || data.has_attachments === true,
+
+                // Enteros
+                property_id: data.property_id ? parseInt(data.property_id) : null
+            };
+
+            // Manejar archivo adjunto si existe
+            if (req.file) {
+                try {
+                    const fileUploadResult = await localFileService.uploadInvoiceFile(
+                            req.file.buffer,
+                            req.file.originalname,
+                            processedData.receipt_number || `expense-${Date.now()}`,
+                            processedData.expense_date,  // ⬅️ NUEVO: Pasar la fecha
+                            'expenses'                    // ⬅️ NUEVO: Tipo de archivo
+                        )
+                    ;
+                    processedData.has_attachments = true;
+                    processedData.pdf_path = fileUploadResult.fileId;
+
+                    console.log('✅ Archivo guardado:', fileUploadResult.fileId);
+                } catch (fileError) {
+                    console.error('❌ Error subiendo archivo:', fileError);
+                    return res.status(500).json("Error al subir el archivo adjunto");
+                }
+            }
+
+            console.log('📤 Datos procesados para servicio:', processedData);
+
+            const created = await InternalExpensesService.createExpense(processedData);
+
+            if (created === null || !created || created.length === 0) {
+                console.log('❌ El servicio retornó null o vacío');
+                return res.status(400).json("Error en los datos proporcionados o faltantes");
+            }
+
+            console.log('✅ Gasto creado exitosamente:', created[0].id);
+
+            return res.status(201).json({
+                message: "Gasto creado correctamente",
+                expense: created[0]
+            });
+        } catch (error) {
+            console.error('❌ Error en createExpense:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -379,23 +471,63 @@ export default class InternalExpensesController {
      */
     static async updateExpense(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             const updateData = req.body;
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json("ID inválido");
             }
 
-            // Verificar que el gasto existe
+            //CONVERTIR TIPOS IGUAL QUE EN CREATE
+            const processedData = {
+                ...updateData,
+                amount: updateData.amount ? parseFloat(updateData.amount) : undefined,
+                iva_percentage: updateData.iva_percentage ? parseFloat(updateData.iva_percentage) : undefined,
+                iva_amount: updateData.iva_amount ? parseFloat(updateData.iva_amount) : undefined,
+                total_amount: updateData.total_amount ? parseFloat(updateData.total_amount) : undefined,
+
+                is_deductible: updateData.is_deductible === 'true' || updateData.is_deductible === true,
+                is_recurring: updateData.is_recurring === 'true' || updateData.is_recurring === true,
+
+                property_id: updateData.property_id ? parseInt(updateData.property_id) : undefined
+            };
+
+            // Manejar archivo adjunto si existe
+            if (req.file) {
+                try {
+                    const fileUploadResult = await localFileService.uploadInvoiceFile(
+                        req.file.buffer,
+                        req.file.originalname,
+                        processedData.receipt_number || `expense-${id}`,
+                        processedData.expense_date,  // ⬅️ NUEVO
+                        'expenses'                    // ⬅️ NUEVO
+                    );
+                    processedData.has_attachments = true;
+                    processedData.pdf_path = fileUploadResult.fileId;
+                } catch (fileError) {
+                    return res.status(500).json("Error al subir el archivo adjunto");
+                }
+            }
+
+            // Formateo de fechas
+            const dateFields = ['expense_date', 'due_date', 'payment_date'];
+            dateFields.forEach(field => {
+                if (processedData[field]) {
+                    processedData[field] = new Date(processedData[field])
+                        .toISOString()
+                        .split('T')[0];
+                }
+            });
+
             const existing = await InternalExpensesService.getExpenseById(id);
             if (!existing || existing.length === 0) {
                 return res.status(404).json("Gasto no encontrado");
             }
 
-            const updated = await InternalExpensesService.updateExpense(Number(id), updateData);
+            const updated = await InternalExpensesService.updateExpense(Number(id), processedData);
 
-            if (!updated || updated.length === 0) {
-                return res.status(400).json("Error al actualizar gasto");
+            if (updated === null || !updated || updated.length === 0) {
+                return res.status(400).json("Error en los datos proporcionados");
             }
 
             return res.status(200).json({
@@ -403,7 +535,6 @@ export default class InternalExpensesController {
                 expense: updated[0]
             });
         } catch (error) {
-            console.error('Error en updateExpense:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -423,7 +554,7 @@ export default class InternalExpensesController {
      */
     static async deleteExpense(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -437,7 +568,6 @@ export default class InternalExpensesController {
 
             return res.status(204).send();
         } catch (error) {
-            console.error('Error en deleteExpense:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -461,8 +591,8 @@ export default class InternalExpensesController {
      */
     static async approveExpense(req, res) {
         try {
-            const { id } = req.params;
-            const { approved_by } = req.body;
+            const {id} = req.params;
+            const {approved_by} = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -499,8 +629,8 @@ export default class InternalExpensesController {
      */
     static async rejectExpense(req, res) {
         try {
-            const { id } = req.params;
-            const { approved_by } = req.body;
+            const {id} = req.params;
+            const {approved_by} = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -537,7 +667,7 @@ export default class InternalExpensesController {
      */
     static async markExpenseAsPaid(req, res) {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -574,8 +704,8 @@ export default class InternalExpensesController {
      */
     static async updateExpenseStatus(req, res) {
         try {
-            const { id } = req.params;
-            const { status, approved_by } = req.body;
+            const {id} = req.params;
+            const {status, approved_by} = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de gasto inválido");
@@ -672,7 +802,7 @@ export default class InternalExpensesController {
      */
     static async getMonthlySummary(req, res) {
         try {
-            const { year } = req.params;
+            const {year} = req.params;
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json("Año requerido y debe ser válido");
@@ -706,8 +836,8 @@ export default class InternalExpensesController {
      */
     static async getVATBookData(req, res) {
         try {
-            const { year } = req.params;
-            const { month } = req.query;
+            const {year} = req.params;
+            const {month} = req.query;
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json("Año requerido y debe ser válido");
@@ -804,7 +934,7 @@ export default class InternalExpensesController {
      */
     static async validateDateRange(req, res) {
         try {
-            const { start_date, end_date } = req.body;
+            const {start_date, end_date} = req.body;
 
             if (!start_date || !end_date) {
                 return res.status(400).json({
@@ -840,7 +970,7 @@ export default class InternalExpensesController {
      */
     static async simulateExpenseCalculation(req, res) {
         try {
-            const { amount, iva_percentage } = req.body;
+            const {amount, iva_percentage} = req.body;
 
             if (!amount || amount <= 0) {
                 return res.status(400).json("Importe debe ser mayor a 0");
@@ -933,6 +1063,50 @@ export default class InternalExpensesController {
             return res.status(200).json(statuses);
         } catch (error) {
             console.error('Error en getAvailableStatuses:', error);
+            return res.status(500).json("Error interno del servidor");
+        }
+    }
+
+    /**
+     * Descarga un archivo adjunto de gasto
+     *
+     * @async
+     * @function downloadAttachment
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // GET /api/internal-expenses/files/EXPENSE-001_2024-08-12.pdf
+     * // Response: Archivo PDF para descarga
+     */
+    static async downloadAttachment(req, res) {
+        try {
+            const {fileName} = req.params;
+
+            // Validar nombre de archivo
+            if (!fileName || !fileName.endsWith('.pdf')) {
+                return res.status(400).json("Nombre de archivo inválido");
+            }
+
+            // Construir ruta del archivo
+            const filePath = `/app/uploads/${fileName}`;
+
+            // Verificar que el archivo existe
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json("Archivo no encontrado");
+            }
+
+            // Enviar archivo para descarga
+            res.download(filePath, fileName, (err) => {
+                if (err) {
+                    console.error('Error al descargar archivo:', err);
+                    return res.status(500).json("Error al descargar archivo");
+                }
+            });
+
+        } catch (error) {
+            console.error('Error en downloadAttachment:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }

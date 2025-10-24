@@ -2,6 +2,7 @@ import express from 'express';
 import InternalExpensesController from '../controllers/internalExpensesControllers.js';
 import auth from "../middlewares/auth.js";
 import role from "../middlewares/role.js";
+import {uploadInvoiceFile, handleUploadErrors} from "../middlewares/fileUpload.js";
 
 /**
  * @swagger
@@ -623,6 +624,40 @@ const router = express.Router()
      */
     .get('/vat-book/:year', auth, role(['admin', 'employee']), InternalExpensesController.getVATBookData)
 
+    /**
+     * @swagger
+     * /internal-expenses/files/{fileName}:
+     *   get:
+     *     summary: Descarga un archivo adjunto de gasto
+     *     tags: [Gastos Internos]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: fileName
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Nombre del archivo PDF
+     *         example: "EXPENSE-001_2024-08-12.pdf"
+     *     responses:
+     *       200:
+     *         description: Archivo PDF para descarga
+     *         content:
+     *           application/pdf:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       400:
+     *         description: Nombre de archivo inválido
+     *       404:
+     *         description: Archivo no encontrado
+     *       401:
+     *         description: No autorizado
+     */
+    .get('/files/:fileName', auth, role(['admin', 'employee']), InternalExpensesController.downloadAttachment)
+
+
     // RUTA GET GENÉRICA - DEBE IR AL FINAL DE LAS RUTAS GET CON PARÁMETROS
 
     /**
@@ -722,7 +757,7 @@ const router = express.Router()
      *       403:
      *         description: No tiene permiso
      */
-    .post('/', auth, role(['admin']), InternalExpensesController.createExpense)
+    .post('/', auth, role(['admin', 'employee']), uploadInvoiceFile, handleUploadErrors, InternalExpensesController.createExpense)
 
     /**
      * @swagger
@@ -990,7 +1025,7 @@ const router = express.Router()
      *       404:
      *         description: Gasto no encontrado
      */
-    .put('/:id', auth, role(['admin']), InternalExpensesController.updateExpense)
+    .put('/:id', auth, role(['admin']), uploadInvoiceFile, handleUploadErrors, InternalExpensesController.updateExpense)
 
     /**
      * @swagger

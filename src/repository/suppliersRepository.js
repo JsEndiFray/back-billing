@@ -31,7 +31,7 @@ export default class SuppliersRepository {
                    s.updated_at
             FROM suppliers s
             WHERE s.active = TRUE
-            ORDER BY s.name ASC
+            ORDER BY s.id ASC
         `);
         return rows;
     }
@@ -43,7 +43,7 @@ export default class SuppliersRepository {
         const [rows] = await db.query(`
             SELECT s.*
             FROM suppliers s
-            ORDER BY s.active DESC, s.name ASC
+            ORDER BY s.active DESC, s.id ASC
         `);
         return rows;
     }

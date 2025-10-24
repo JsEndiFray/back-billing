@@ -40,12 +40,15 @@ export default class VATBookController {
      */
     static async getVATSupportedBook(req, res) {
         try {
-            const {year} = req.params;
-            const {quarter, month} = req.query;
+            const {year, quarter, month} = req.params;
 
             // Validar año
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             // Convertir parámetros
@@ -67,7 +70,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getVATSupportedBook:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -95,12 +97,15 @@ export default class VATBookController {
      */
     static async getVATChargedBook(req, res) {
         try {
-            const {year} = req.params;
-            const {quarter, month} = req.query;
+            const {year, quarter, month} = req.params;
 
             // Validar año
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             // Convertir parámetros
@@ -122,7 +127,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getVATChargedBook:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -153,11 +157,19 @@ export default class VATBookController {
 
             // Validar parámetros
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             if (!quarter || isNaN(Number(quarter)) || Number(quarter) < 1 || Number(quarter) > 4) {
-                return res.status(400).json("Trimestre debe ser entre 1 y 4");
+                return res.status(400).json({  // ← OBJETO
+                    success: false,
+                    message: "Trimestre debe ser entre 1 y 4",
+                    errors: ["El trimestre debe estar entre 1 y 4"]
+                });
             }
 
             // Generar liquidación
@@ -173,7 +185,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getQuarterlyVATLiquidation:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -200,12 +211,14 @@ export default class VATBookController {
      */
     static async getCompleteVATBooks(req, res) {
         try {
-            const {year} = req.params;
-            const {quarter, month} = req.query;
-
+            const {year, quarter, month} = req.params;
             // Validar año
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             // Convertir parámetros
@@ -241,7 +254,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getCompleteVATBooks:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -266,50 +278,68 @@ export default class VATBookController {
      * @example
      * // POST /api/vat-book/export/excel
      * // Body: { bookType: "supported", year: 2024, quarter: 1, companyData: {...} }
+     **/
+
+    /*
+       /**
+     * Exporta libro de IVA a Excel (prepara datos)
      */
     static async exportVATBookToExcel(req, res) {
         try {
             const {bookType, year, quarter, month, companyData} = req.body;
 
-            // Validar datos obligatorios
-            if (!bookType || !year || !companyData) {
-                return res.status(400).json({
-                    success: false,
-                    message: "bookType, year y companyData son obligatorios"
-                });
-            }
-
-            // Validar tipo de libro
-            if (!['supported', 'charged'].includes(bookType)) {
+            if (!bookType || !['supported', 'charged'].includes(bookType)) {
                 return res.status(400).json({
                     success: false,
                     message: "bookType debe ser 'supported' o 'charged'"
                 });
             }
 
-            // Generar el libro correspondiente
-            let bookData;
-            if (bookType === 'supported') {
-                bookData = await VATBookService.generateVATSupportedBook(year, quarter, month);
-            } else {
-                bookData = await VATBookService.generateVATChargedBook(year, quarter, month);
+            if (!year || isNaN(Number(year))) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido"
+                });
             }
 
-            // Formatear para Excel AEAT
-            const excelData = CalculateHelper.formatForAEATExcel(bookData, companyData);
+            const validation = CompanyService.validateCompanyData(companyData);
+            if (!validation.isValid) {
+                return res.status(400).json({
+                    success: false,
+                    message: validation.message
+                });
+            }
+
+            let bookData;
+            if (bookType === 'supported') {
+                bookData = await VATBookService.generateVATSupportedBook(
+                    Number(year),
+                    quarter ? Number(quarter) : null,
+                    month ? Number(month) : null
+                );
+            } else {
+                bookData = await VATBookService.generateVATChargedBook(
+                    Number(year),
+                    quarter ? Number(quarter) : null,
+                    month ? Number(month) : null
+                );
+            }
+
+            const excelResult = await ExcelGenerator.generateVATBookExcel(bookData, companyData);
 
             return res.status(200).json({
                 success: true,
-                message: "Datos preparados para exportación a Excel",
-                data: excelData
+                message: "Datos preparados para exportación",
+                data: {
+                    fileName: excelResult.fileName,
+                    filePath: excelResult.filePath
+                }
             });
 
         } catch (error) {
-            console.error('Error en exportVATBookToExcel:', error);
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor",
-                error: error.message
+                message: error.message || "Error al generar archivo Excel"
             });
         }
     }
@@ -335,7 +365,11 @@ export default class VATBookController {
             const {year} = req.params;
 
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             const yearNum = Number(year);
@@ -387,7 +421,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getAnnualVATStats:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -413,7 +446,11 @@ export default class VATBookController {
             const {year} = req.params;
 
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
             }
 
             const yearNum = Number(year);
@@ -455,7 +492,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getQuarterlyComparison:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || "Error interno del servidor",
@@ -511,7 +547,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getVATBookConfig:', error);
             return res.status(500).json({
                 success: false,
                 message: "Error interno del servidor"
@@ -568,7 +603,6 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en validateCompanyData:', error);
             return res.status(500).json({
                 success: false,
                 message: "Error interno del servidor"
@@ -577,6 +611,7 @@ export default class VATBookController {
     }
 
     /*METODOS PARA EXCEL*/
+
     /**
      * Descarga el libro de IVA en formato Excel
      * Funciona tanto con GET (query params) como con POST (body)
@@ -603,18 +638,14 @@ export default class VATBookController {
 
                 // Usar datos de empresa por defecto
                 companyData = CompanyService.getCompanyData();
-
-                console.log('Parámetros GET recibidos:', { bookType, year, quarter, month });
             } else {
                 // Para peticiones POST desde frontend
-                ({ bookType, year, quarter, month, companyData } = req.body);
+                ({bookType, year, quarter, month, companyData} = req.body);
 
                 // Si no hay companyData, usar por defecto
                 if (!companyData) {
                     companyData = CompanyService.getCompanyData();
                 }
-
-                console.log('Parámetros POST recibidos:', { bookType, year, quarter, month });
             }
 
             // Validaciones básicas
@@ -641,8 +672,6 @@ export default class VATBookController {
                 });
             }
 
-            console.log(`Generando libro de IVA ${bookType} para el año ${year}`);
-
             // Generar el libro correspondiente
             let bookData;
             if (bookType === 'supported') {
@@ -659,17 +688,11 @@ export default class VATBookController {
                 );
             }
 
-            console.log(`Libro generado con ${bookData.entryCount} entradas`);
-
             // Generar Excel
             const excelResult = await ExcelGenerator.generateVATBookExcel(bookData, companyData);
-
-            console.log('Excel generado:', excelResult.fileName);
-
             // Enviar archivo para descarga
             res.download(excelResult.filePath, excelResult.fileName, (err) => {
                 if (err) {
-                    console.error('Error enviando archivo:', err);
                     if (!res.headersSent) {
                         return res.status(500).json({
                             success: false,
@@ -707,6 +730,251 @@ export default class VATBookController {
     }
 
 
+// ==========================================
+// DESCARGAR PDF DEL LIBRO DE IVA
+// ==========================================
+
+    /**
+     * Descarga el libro de IVA en formato PDF
+     *
+     * @async
+     * @function downloadVATBookPDF
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * POST /api/vat-book/download/pdf
+     * Body: { year: 2024, quarter: 1, bookType: "supported" }
+     */
+    static async downloadVATBookPDF(req, res) {
+        try {
+            const { year, quarter, month, bookType } = req.body;
+
+            // Validar parámetros
+            if (!year || isNaN(Number(year))) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido"
+                });
+            }
+
+            const yearNum = Number(year);
+            const quarterNum = quarter ? Number(quarter) : null;
+            const monthNum = month ? Number(month) : null;
+
+            // Importar PDFKit dinámicamente
+            const PDFDocument = (await import('pdfkit')).default;
+
+            // Obtener datos de la empresa
+            const companyData = await CompanyService.getCompanyData();
+
+            // Generar los datos según el tipo de libro
+            let bookData;
+            let title;
+
+            switch (bookType) {
+                case 'supported':
+                    bookData = await VATBookService.generateVATSupportedBook(yearNum, quarterNum, monthNum);
+                    title = 'Libro de IVA Soportado';
+                    break;
+                case 'charged':
+                    bookData = await VATBookService.generateVATChargedBook(yearNum, quarterNum, monthNum);
+                    title = 'Libro de IVA Repercutido';
+                    break;
+                case 'both':
+                    const [supported, charged] = await Promise.all([
+                        VATBookService.generateVATSupportedBook(yearNum, quarterNum, monthNum),
+                        VATBookService.generateVATChargedBook(yearNum, quarterNum, monthNum)
+                    ]);
+                    bookData = { supported, charged };
+                    title = 'Libro de IVA Completo';
+                    break;
+                default:
+                    return res.status(400).json({
+                        success: false,
+                        message: "Tipo de libro no válido. Use: 'supported', 'charged' o 'both'"
+                    });
+            }
+
+            // Crear documento PDF
+            const doc = new PDFDocument({
+                size: 'A4',
+                margins: { top: 50, bottom: 50, left: 50, right: 50 }
+            });
+
+            // Configurar headers para descarga
+            const period = CalculateHelper.generatePeriodDescription(yearNum, quarterNum, monthNum);
+            const filename = `Libro-IVA-${bookType}-${period.replace(/\s+/g, '-')}.pdf`;
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+            // Pipe del PDF a la respuesta
+            doc.pipe(res);
+
+            // ==========================================
+            // GENERAR CONTENIDO DEL PDF
+            // ==========================================
+
+            // Encabezado
+            doc.fontSize(20).text(title, { align: 'center' });
+            doc.fontSize(12).text(period, { align: 'center' });
+            doc.moveDown();
+
+            // Datos de la empresa
+            if (companyData) {
+                doc.fontSize(10)
+                    .text(`Empresa: ${companyData.nombre || 'N/A'}`)
+                    .text(`NIF: ${companyData.nif || 'N/A'}`)
+                    .text(`Dirección: ${companyData.direccion || 'N/A'}`)
+                    .moveDown();
+            }
+
+            // Función auxiliar para dibujar tabla
+            const drawTable = (data, columns, startY) => {
+                const tableTop = startY || doc.y;
+                const tableLeft = 50;
+                const columnWidth = (doc.page.width - 100) / columns.length;
+                let currentY = tableTop;
+
+                // Headers
+                doc.fontSize(8).font('Helvetica-Bold');
+                columns.forEach((col, i) => {
+                    doc.text(col.header,
+                        tableLeft + (i * columnWidth),
+                        currentY,
+                        { width: columnWidth, align: col.align || 'left' }
+                    );
+                });
+
+                currentY += 20;
+                doc.moveTo(tableLeft, currentY).lineTo(doc.page.width - 50, currentY).stroke();
+                currentY += 5;
+
+                // Datos
+                doc.font('Helvetica').fontSize(7);
+                data.forEach((row) => {
+                    // Verificar si necesita nueva página
+                    if (currentY > doc.page.height - 100) {
+                        doc.addPage();
+                        currentY = 50;
+
+                        // Redibujar headers
+                        doc.fontSize(8).font('Helvetica-Bold');
+                        columns.forEach((col, i) => {
+                            doc.text(col.header,
+                                tableLeft + (i * columnWidth),
+                                currentY,
+                                { width: columnWidth, align: col.align || 'left' }
+                            );
+                        });
+                        currentY += 20;
+                        doc.moveTo(tableLeft, currentY).lineTo(doc.page.width - 50, currentY).stroke();
+                        currentY += 5;
+                        doc.font('Helvetica').fontSize(7);
+                    }
+
+                    columns.forEach((col, i) => {
+                        const value = col.format ? col.format(row[col.field]) : (row[col.field] || '-');
+                        doc.text(value,
+                            tableLeft + (i * columnWidth),
+                            currentY,
+                            { width: columnWidth, align: col.align || 'left' }
+                        );
+                    });
+                    currentY += 15;
+                });
+
+                return currentY;
+            };
+
+            // Función para formatear montos
+            const formatAmount = (amount) => {
+                if (amount === null || amount === undefined) return '0,00 €';
+                return `${Number(amount).toFixed(2).replace('.', ',')} €`;
+            };
+
+            // Generar tablas según el tipo de libro
+            if (bookType === 'both') {
+                // IVA Soportado
+                doc.addPage();
+                doc.fontSize(14).text('IVA Soportado', { align: 'center' });
+                doc.moveDown();
+
+                const supportedColumns = [
+                    { field: 'numeroFactura', header: 'Nº Factura' },
+                    { field: 'fechaFactura', header: 'Fecha', format: (v) => v ? new Date(v).toLocaleDateString('es-ES') : '-' },
+                    { field: 'nombreProveedor', header: 'Proveedor' },
+                    { field: 'baseImponible', header: 'Base', align: 'right', format: formatAmount },
+                    { field: 'cuotaIVA', header: 'IVA', align: 'right', format: formatAmount }
+                ];
+
+                drawTable(bookData.supported.entries, supportedColumns, doc.y);
+
+                // IVA Repercutido
+                doc.addPage();
+                doc.fontSize(14).text('IVA Repercutido', { align: 'center' });
+                doc.moveDown();
+
+                const chargedColumns = [
+                    { field: 'numeroFactura', header: 'Nº Factura' },
+                    { field: 'fechaFactura', header: 'Fecha', format: (v) => v ? new Date(v).toLocaleDateString('es-ES') : '-' },
+                    { field: 'nombreCliente', header: 'Cliente' },
+                    { field: 'baseImponible', header: 'Base', align: 'right', format: formatAmount },
+                    { field: 'cuotaIVA', header: 'IVA', align: 'right', format: formatAmount }
+                ];
+
+                drawTable(bookData.charged.entries, chargedColumns, doc.y);
+
+            } else {
+                // Tabla única
+                const columns = bookType === 'supported' ? [
+                    { field: 'numeroFactura', header: 'Nº Factura' },
+                    { field: 'fechaFactura', header: 'Fecha', format: (v) => v ? new Date(v).toLocaleDateString('es-ES') : '-' },
+                    { field: 'nombreProveedor', header: 'Proveedor' },
+                    { field: 'nifProveedor', header: 'NIF' },
+                    { field: 'baseImponible', header: 'Base', align: 'right', format: formatAmount },
+                    { field: 'tipoIVA', header: '%IVA', align: 'right', format: (v) => `${v}%` },
+                    { field: 'cuotaIVA', header: 'Cuota IVA', align: 'right', format: formatAmount }
+                ] : [
+                    { field: 'numeroFactura', header: 'Nº Factura' },
+                    { field: 'fechaFactura', header: 'Fecha', format: (v) => v ? new Date(v).toLocaleDateString('es-ES') : '-' },
+                    { field: 'nombreCliente', header: 'Cliente' },
+                    { field: 'nifCliente', header: 'NIF' },
+                    { field: 'baseImponible', header: 'Base', align: 'right', format: formatAmount },
+                    { field: 'tipoIVA', header: '%IVA', align: 'right', format: (v) => `${v}%` },
+                    { field: 'cuotaIVA', header: 'Cuota IVA', align: 'right', format: formatAmount }
+                ];
+
+                drawTable(bookData.entries, columns, doc.y);
+
+                // Totales
+                doc.moveDown(2);
+                doc.fontSize(10).font('Helvetica-Bold');
+                doc.text(`Total Base Imponible: ${formatAmount(bookData.totals?.totalBaseImponible || 0)}`, { align: 'right' });
+                doc.text(`Total Cuota IVA: ${formatAmount(bookData.totals?.totalCuotaIVA || 0)}`, { align: 'right' });
+            }
+
+            // Finalizar documento
+            doc.end();
+
+            console.log('PDF generado correctamente:', filename);
+
+        } catch (error) {
+            console.error('Error en downloadVATBookPDF:', error);
+
+            if (!res.headersSent) {
+                return res.status(500).json({
+                    success: false,
+                    message: error.message || "Error interno del servidor al generar el PDF",
+                    error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                });
+            }
+        }
+    }
+
+
     // ==========================================
     // LIBRO DE IVA CONSOLIDADO POR PROPIETARIO
     // ==========================================
@@ -728,9 +996,7 @@ export default class VATBookController {
      */
     static async getVATBookByOwner(req, res) {
         try {
-            const { year } = req.params;
-            const { quarter, month } = req.query;
-
+            const {year, quarter, month} = req.params;
             // Validar año
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json({
@@ -766,4 +1032,149 @@ export default class VATBookController {
             });
         }
     }
+
+    // ==========================================
+    // LIBRO CONSOLIDADO (PARA COMPONENTE)
+    // ==========================================
+
+    /**
+     * Obtiene datos consolidados del libro de IVA para el componente frontend
+     * Combina: IVA soportado, repercutido y resumen por propietario
+     *
+     * @async
+     * @function getConsolidatedVATBook
+     * @param {express.Request} req - Objeto de solicitud
+     * @param {express.Response} res - Objeto de respuesta
+     * @returns {Promise<void>}
+     *
+     * @example
+     * // GET /api/vat-book/consolidated/2025
+     * // GET /api/vat-book/consolidated/2025/1 (trimestre)
+     * // GET /api/vat-book/consolidated/2025/0/7 (mes específico)
+     */
+    static async getConsolidatedVATBook(req, res) {
+        try {
+            const {year, quarter, month} = req.params;
+
+            if (!year || isNaN(Number(year))) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser un número válido"
+                });
+            }
+
+            const yearNum = Number(year);
+            const quarterNum = quarter && quarter !== '0' ? Number(quarter) : null;
+            const monthNum = month && month !== '0' ? Number(month) : null;
+
+            const consolidatedData = await VATBookService.generateConsolidatedVATBook(
+                yearNum,
+                quarterNum,
+                monthNum
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: "Libro de IVA consolidado generado correctamente",
+                data: consolidatedData // Ya son arrays limpios
+            });
+
+        } catch (error) {
+            console.error('Error en getConsolidatedVATBook:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Error al generar el libro de IVA consolidado",
+                error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            });
+        }
+    }
+
+
+    /**
+     * Obtiene estadísticas anuales del libro de IVA
+     */
+    static async getAnnualVATStats(req, res) {
+        try {
+            const {year} = req.params;
+
+            if (!year || isNaN(Number(year))) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
+            }
+
+            const stats = await VATBookService.getAnnualVATStats(Number(year));
+
+            return res.status(200).json({
+                success: true,
+                message: "Estadísticas anuales generadas correctamente",
+                data: stats
+            });
+
+        } catch (error) {
+            console.error('Error en getAnnualVATStats:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Error interno del servidor"
+            });
+        }
+    }
+
+    /**
+     * Compara trimestres del año
+     */
+    static async getQuarterlyVATComparison(req, res) {
+        try {
+            const {year} = req.params;
+
+            if (!year || isNaN(Number(year))) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Año requerido y debe ser válido",
+                    errors: ["El año debe ser un número válido"]
+                });
+            }
+
+            const comparison = await VATBookService.getQuarterlyVATComparison(Number(year));
+
+            return res.status(200).json({
+                success: true,
+                message: "Comparación trimestral generada correctamente",
+                data: comparison
+            });
+
+        } catch (error) {
+            console.error('Error en getQuarterlyVATComparison:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Error interno del servidor"
+            });
+        }
+    }
+
+    /**
+     * Obtiene configuración del libro de IVA
+     */
+    static async getVATBookConfig(req, res) {
+        try {
+            const config = await VATBookService.getVATBookConfig();
+
+            return res.status(200).json({
+                success: true,
+                message: "Configuración del libro de IVA",
+                data: config
+            });
+
+        } catch (error) {
+            console.error('Error en getVATBookConfig:', error);
+            return res.status(500).json({
+                success: false,
+                message: "Error interno del servidor"
+            });
+        }
+    }
+
+
 }

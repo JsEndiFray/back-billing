@@ -94,7 +94,7 @@ app.use('/api/cadastral', cadastralRoutes);
 app.use('/api/estate-owners', estatesOwnersRoutes);
 app.use('/api/invoices-received', invoicesReceivedRoutes);
 app.use('/api/invoices-issued', invoicesIssuedRoutes);
-app.use('/api/internal-expense', internalExpensesRoutes);
+app.use('/api/internal-expenses', internalExpensesRoutes);
 app.use('/api/vat-book', VATBookRoutes);
 
 //Documentación de la API con Swagger

@@ -79,6 +79,10 @@ export const handleUploadErrors = (error, req, res, next) => {
  * Servicio para gestión de archivos PDF en almacenamiento local
  * Maneja subida, descarga, eliminación y gestión de archivos de facturas
  */
+/**
+ * Servicio para gestión de archivos PDF en almacenamiento local
+ * CON ORGANIZACIÓN POR AÑO/MES
+ */
 export class LocalFileService {
 
     constructor() {
@@ -92,87 +96,135 @@ export class LocalFileService {
     ensureUploadDirectory() {
         if (!fs.existsSync(this.uploadPath)) {
             fs.mkdirSync(this.uploadPath, { recursive: true });
-            console.log(`Directorio de uploads creado: ${this.uploadPath}`);
+            console.log(`✅ Directorio de uploads creado: ${this.uploadPath}`);
         }
     }
 
     /**
-     * Sube un archivo PDF al almacenamiento local
+     * Genera ruta organizada por año/mes
+     * @param {string} date - Fecha en formato YYYY-MM-DD
+     * @param {string} type - Tipo: 'expenses' o 'invoices-received'
+     * @returns {string} Ruta relativa: expenses/2025/02
+     */
+    generateOrganizedPath(date, type) {
+        const dateObj = new Date(date);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        return path.join(type, year.toString(), month);
+    }
+
+    /**
+     * Sube un archivo PDF al almacenamiento local CON ORGANIZACIÓN
      * @param {Buffer} fileBuffer - Buffer del archivo
      * @param {string} fileName - Nombre original del archivo
      * @param {string} invoiceNumber - Número de factura para organizar
+     * @param {string} date - Fecha del gasto/factura (YYYY-MM-DD) - NUEVO PARÁMETRO
+     * @param {string} type - Tipo: 'expenses' o 'invoices-received' - NUEVO PARÁMETRO
      * @returns {Promise<Object>} Información del archivo guardado
      */
-    async uploadInvoiceFile(fileBuffer, fileName, invoiceNumber) {
+    async uploadInvoiceFile(fileBuffer, fileName, invoiceNumber, date = null, type = 'expenses') {
         try {
-            // Crear nombre único para el archivo
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const safeInvoiceNumber = invoiceNumber.replace(/[/\\?%*:|"<>]/g, '-');
-            const fileExtension = path.extname(fileName) || '.pdf';
-            const uniqueFileName = `${safeInvoiceNumber}_${timestamp}${fileExtension}`;
-            const filePath = path.join(this.uploadPath, uniqueFileName);
+            let relativePath;
+            let fullPath;
+
+            // SI HAY FECHA → Usar organización por año/mes
+            if (date) {
+                // Generar carpeta: expenses/2025/02
+                const organizedFolder = this.generateOrganizedPath(date, type);
+
+                // Crear nombre único
+                const timestamp = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
+                const safeInvoiceNumber = invoiceNumber.replace(/[/\\?%*:|"<>]/g, '-');
+                const fileExtension = path.extname(fileName) || '.pdf';
+                const uniqueFileName = `${safeInvoiceNumber}_${timestamp}${fileExtension}`;
+
+                // Ruta relativa: expenses/2025/02/invoice-123_20250210.pdf
+                relativePath = path.join(organizedFolder, uniqueFileName);
+
+                // Ruta completa: /app/uploads/expenses/2025/02/invoice-123_20250210.pdf
+                fullPath = path.join(this.uploadPath, relativePath);
+
+                // Crear directorios si no existen
+                const directory = path.dirname(fullPath);
+                if (!fs.existsSync(directory)) {
+                    fs.mkdirSync(directory, { recursive: true });
+                    console.log(`✅ Directorio creado: ${directory}`);
+                }
+            }
+            // SI NO HAY FECHA → Usar método antiguo (compatibilidad con archivos viejos)
+            else {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const safeInvoiceNumber = invoiceNumber.replace(/[/\\?%*:|"<>]/g, '-');
+                const fileExtension = path.extname(fileName) || '.pdf';
+                const uniqueFileName = `${safeInvoiceNumber}_${timestamp}${fileExtension}`;
+
+                relativePath = uniqueFileName;
+                fullPath = path.join(this.uploadPath, uniqueFileName);
+            }
 
             // Guardar archivo en disco
-            fs.writeFileSync(filePath, fileBuffer);
+            fs.writeFileSync(fullPath, fileBuffer);
 
-            console.log(`Archivo guardado localmente: ${uniqueFileName}`);
+            console.log(`✅ Archivo guardado: ${relativePath}`);
 
             return {
-                fileId: uniqueFileName,
-                fileName: uniqueFileName,
-                webViewLink: `/api/invoices-received/files/${uniqueFileName}`,
-                webContentLink: `/api/invoices-received/files/${uniqueFileName}`,
+                fileId: relativePath,  // ⬅️ AHORA GUARDA LA RUTA RELATIVA EN BD
+                fileName: path.basename(relativePath),
+                webViewLink: `/api/internal-expenses/files/${path.basename(relativePath)}`,
+                webContentLink: `/api/internal-expenses/files/${path.basename(relativePath)}`,
                 success: true,
-                localPath: filePath
+                localPath: fullPath
             };
 
         } catch (error) {
-            console.error('Error guardando archivo localmente:', error);
+            console.error('❌ Error guardando archivo:', error);
             throw new Error(`Error al guardar archivo: ${error.message}`);
         }
     }
 
     /**
      * Lee un archivo del almacenamiento local
-     * @param {string} fileName - Nombre del archivo
+     * ACTUALIZADO: Acepta tanto rutas relativas como nombres simples
+     * @param {string} filePathOrName - Ruta relativa o nombre del archivo
      * @returns {Promise<Buffer>} Buffer del archivo
      */
-    async downloadFile(fileName) {
+    async downloadFile(filePathOrName) {
         try {
-            const filePath = path.join(this.uploadPath, fileName);
+            const fullPath = path.join(this.uploadPath, filePathOrName);
 
-            if (!fs.existsSync(filePath)) {
+            if (!fs.existsSync(fullPath)) {
                 throw new Error('Archivo no encontrado');
             }
 
-            return fs.readFileSync(filePath);
+            return fs.readFileSync(fullPath);
 
         } catch (error) {
-            console.error('Error leyendo archivo:', error);
+            console.error('❌ Error leyendo archivo:', error);
             throw new Error(`Error al leer archivo: ${error.message}`);
         }
     }
 
     /**
      * Elimina un archivo del almacenamiento local
-     * @param {string} fileName - Nombre del archivo
+     * ACTUALIZADO: Acepta tanto rutas relativas como nombres simples
+     * @param {string} filePathOrName - Ruta relativa o nombre del archivo
      * @returns {Promise<boolean>} True si se eliminó correctamente
      */
-    async deleteFile(fileName) {
+    async deleteFile(filePathOrName) {
         try {
-            const filePath = path.join(this.uploadPath, fileName);
+            const fullPath = path.join(this.uploadPath, filePathOrName);
 
-            if (!fs.existsSync(filePath)) {
-                console.warn(`Archivo no encontrado para eliminar: ${fileName}`);
+            if (!fs.existsSync(fullPath)) {
+                console.warn(`⚠️ Archivo no encontrado para eliminar: ${filePathOrName}`);
                 return false;
             }
 
-            fs.unlinkSync(filePath);
-            console.log(`Archivo eliminado: ${fileName}`);
+            fs.unlinkSync(fullPath);
+            console.log(`🗑️ Archivo eliminado: ${filePathOrName}`);
             return true;
 
         } catch (error) {
-            console.error('Error eliminando archivo:', error);
+            console.error('❌ Error eliminando archivo:', error);
             throw new Error(`Error al eliminar archivo: ${error.message}`);
         }
     }
@@ -229,21 +281,23 @@ export class LocalFileService {
 
     /**
      * Verifica si un archivo existe
-     * @param {string} fileName - Nombre del archivo
+     * ACTUALIZADO: Acepta tanto rutas relativas como nombres simples
+     * @param {string} filePathOrName - Ruta relativa o nombre del archivo
      * @returns {boolean} True si el archivo existe
      */
-    fileExists(fileName) {
-        const filePath = path.join(this.uploadPath, fileName);
+    fileExists(filePathOrName) {
+        const filePath = path.join(this.uploadPath, filePathOrName);
         return fs.existsSync(filePath);
     }
 
     /**
      * Obtiene la ruta completa de un archivo
-     * @param {string} fileName - Nombre del archivo
+     * ACTUALIZADO: Acepta tanto rutas relativas como nombres simples
+     * @param {string} filePathOrName - Ruta relativa o nombre del archivo
      * @returns {string} Ruta completa del archivo
      */
-    getFilePath(fileName) {
-        return path.join(this.uploadPath, fileName);
+    getFilePath(filePathOrName) {
+        return path.join(this.uploadPath, filePathOrName);
     }
 }
 

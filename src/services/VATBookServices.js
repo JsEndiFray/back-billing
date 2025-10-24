@@ -60,8 +60,8 @@ export default class VATBookService {
             : formattedEntries;
 
         return {
-            bookType: 'IVA_SOPORTADO',
-            bookCode: 'R', // R = Facturas Recibidas según AEAT
+            bookType: 'CHARGED_VAT',
+            bookCode: 'E', // R = Facturas Recibidas según AEAT
             year,
             quarter,
             month,
@@ -191,7 +191,7 @@ export default class VATBookService {
         ]);
 
         // 4. Delegar la lógica de consolidación y cálculo al helper
-        const { summary_by_owner, overall_total } = CalculateHelper.calculateVATBookByOwner(
+        const {summary_by_owner, overall_total} = CalculateHelper.calculateVATBookByOwner(
             invoicesIssued,
             invoicesReceived,
             internalExpenses,
@@ -210,6 +210,131 @@ export default class VATBookService {
             period: CalculateHelper.generatePeriodDescription(year, quarter, month),
             summary_by_owner,
             overall_total,
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+    // ==========================================
+    // LIBRO CONSOLIDADO (PARA COMPONENTE FRONTEND)
+    // ==========================================
+
+    /**
+     * Genera datos consolidados para el componente del libro de IVA
+     * Combina: IVA soportado, repercutido y resumen por propietario
+     * @param {number} year - Año fiscal
+     * @param {number} [quarter=null] - Trimestre (1-4) o null
+     * @param {number} [month=null] - Mes específico (1-12) o null
+     * @returns {Promise<Object>} Datos consolidados
+     */
+    /**
+     * Genera datos consolidados para el componente del libro de IVA
+     */
+    /**
+     * Genera datos consolidados para el componente del libro de IVA
+     * Devuelve solo los arrays de entries, sin objetos anidados
+     */
+    static async generateConsolidatedVATBook(year, quarter = null, month = null) {
+        // Validar parámetros
+        const validation = CalculateHelper.validateDateParams(year, quarter, month);
+        if (!validation.isValid) {
+            throw new Error(validation.message);
+        }
+
+        // Obtener los tres libros en paralelo
+        const [supportedBook, chargedBook, byOwner] = await Promise.all([
+            this.generateVATSupportedBook(year, quarter, month),
+            this.generateVATChargedBook(year, quarter, month),
+            this.generateVATBookByOwner(year, quarter, month)
+        ]);
+
+        return {
+            supported: supportedBook.entries || [],
+            charged: chargedBook.entries || [],
+            summaryByOwner: byOwner.summary_by_owner || []
+        };
+    }
+
+
+    // ==========================================
+    // ESTADÍSTICAS ANUALES
+    // ==========================================
+
+    /**
+     * Genera estadísticas anuales del libro de IVA
+     * @param {number} year - Año fiscal
+     * @returns {Promise<Object>} Estadísticas anuales
+     */
+    static async getAnnualVATStats(year) {
+        // Obtener datos de los 4 trimestres
+        const quarterlyData = await Promise.all([
+            this.generateQuarterlyVATLiquidation(year, 1),
+            this.generateQuarterlyVATLiquidation(year, 2),
+            this.generateQuarterlyVATLiquidation(year, 3),
+            this.generateQuarterlyVATLiquidation(year, 4)
+        ]);
+
+        // Calcular totales anuales
+        const annualTotals = CalculateHelper.calculateAnnualTotals(quarterlyData);
+
+        return {
+            year,
+            quarterlyData: quarterlyData.map(q => ({
+                quarter: q.quarter,
+                totalSupported: q.supportedBook.totals.cuotaIVADeducible,
+                totalCharged: q.chargedBook.totals.totalCuotaIVA,
+                balance: q.liquidation.netResult
+            })),
+            annualTotals,
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+// ==========================================
+// COMPARACIÓN TRIMESTRAL
+// ==========================================
+
+    /**
+     * Compara trimestres del año (crecimiento)
+     * @param {number} year - Año fiscal
+     * @returns {Promise<Object>} Comparación trimestral
+     */
+    static async getQuarterlyVATComparison(year) {
+        const stats = await this.getAnnualVATStats(year);
+
+        // Calcular tasas de crecimiento
+        const quarters = stats.quarterlyData.map((current, index) => {
+            const previous = index > 0 ? stats.quarterlyData[index - 1] : null;
+            const growthRate = previous
+                ? ((current.totalCharged - previous.totalCharged) / previous.totalCharged) * 100
+                : 0;
+
+            return {
+                ...current,
+                growthRate: parseFloat(growthRate.toFixed(2))
+            };
+        });
+
+        return {
+            year,
+            quarters,
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+// ==========================================
+// CONFIGURACIÓN
+// ==========================================
+
+    /**
+     * Obtiene la configuración disponible del libro de IVA
+     * @returns {Promise<Object>} Configuración
+     */
+    static async getVATBookConfig() {
+        return {
+            availableYears: CalculateHelper.getAvailableYears(),
+            supportedFormats: ['Excel', 'PDF', 'CSV'],
+            vatRates: [0, 4, 10, 21],
+            bookTypes: ['supported', 'charged'],
             generatedAt: new Date().toISOString()
         };
     }
