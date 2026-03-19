@@ -8,7 +8,7 @@ import path from 'path';
 export class LocalFileService {
 
     constructor() {
-        this.uploadPath = process.env.UPLOAD_PATH || '/app/uploads';
+        this.uploadPath = process.env.UPLOAD_PATH || path.join(process.cwd(), 'uploads');
         if (process.env.NODE_ENV !== 'test') {
             this.ensureUploadDirectory();
         }
@@ -65,7 +65,7 @@ export class LocalFileService {
                 // Ruta relativa: expenses/2025/02/invoice-123_20250210.pdf
                 relativePath = path.join(organizedFolder, uniqueFileName);
 
-                // Ruta completa: /app/uploads/expenses/2025/02/invoice-123_20250210.pdf
+                // Ruta completa: {uploadPath}/expenses/2025/02/invoice-123_20250210.pdf
                 fullPath = path.join(this.uploadPath, relativePath);
 
                 // Crear directorios si no existen

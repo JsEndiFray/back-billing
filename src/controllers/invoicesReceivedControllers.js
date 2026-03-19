@@ -1091,7 +1091,7 @@ export default class InvoicesReceivedController {
             }
 
             // Construir ruta del archivo
-            const filePath = `/app/uploads/${fileName}`;
+            const filePath = localFileService.getFilePath(fileName);
 
             // Verificar que el archivo existe
             if (!fs.existsSync(filePath)) {
