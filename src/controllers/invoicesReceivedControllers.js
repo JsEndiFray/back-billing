@@ -1,6 +1,6 @@
 import InvoicesReceivedService from '../services/invoicesReceivedServices.js';
 import {generateReceivedInvoicePdf} from "../shared/utils/Pdf-Received/invoicePdfGenerator.js";
-import {localFileService} from "../middlewares/fileUpload.js";
+import {localFileService} from "../services/fileService.js";
 import path from 'path';
 import fs from 'fs';
 

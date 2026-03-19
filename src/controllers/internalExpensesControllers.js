@@ -17,7 +17,7 @@ import path from 'path';
 import fs from 'fs';
 import InternalExpensesService from '../services/internalExpensesServices.js';
 import CalculateHelper from '../shared/helpers/calculateTotal.js';
-import {localFileService} from "../middlewares/fileUpload.js";
+import {localFileService} from "../services/fileService.js";
 
 /**
  * Controlador para la gestión de gastos internos de la empresa
