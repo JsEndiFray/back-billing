@@ -50,7 +50,7 @@ export default class UserService {
 
         const decoded = verifyToken(
             refreshToken,
-            process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+            process.env.JWT_REFRESH_SECRET
         );
 
         if (!decoded) return null;

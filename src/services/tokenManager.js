@@ -134,9 +134,7 @@ export const generateRefreshToken = (user) => {
         },
 
         // 🔐 SECRET KEY ESPECÍFICO PARA REFRESH
-        // Puede usar clave diferente para refresh tokens por seguridad extra
-        // Si JWT_REFRESH_SECRET no existe, usa JWT_SECRET como fallback
-        process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+        process.env.JWT_REFRESH_SECRET,
 
         // ⚙️ OPCIONES DE CONFIGURACIÓN
         {
