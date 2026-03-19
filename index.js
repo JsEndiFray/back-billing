@@ -8,11 +8,13 @@
 
 //Importaciones
 import app from './src/app.js';
+import { checkDbConnection } from './src/db/dbConnect.js';
 
 //Carga de Variables de Entorno
 
 //Carga las variables desde el archivo .env a process.env
-//process.loadEnvFile();
+// Fallback: si no se usó --env-file al arrancar (e.g. node directo sin npm script)
+try { process.loadEnvFile(); } catch { /* .env no encontrado o ya cargado */ }
 
 /// --- Configuración del Puerto ---
 
@@ -22,7 +24,14 @@ const port = process.env.PORT || 3600;
 /// --- Arranque del Servidor ---
 
 // Inicia el servidor y lo pone a escuchar en el puerto definido
-app.listen(port, () => {
-    console.log(`Servidor conectado en el puerto..... ${port}`);
-    console.log(`Documentación disponible en http://localhost:${port}/api-docs`);
-})
+checkDbConnection()
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Servidor conectado en el puerto..... ${port}`);
+            console.log(`Documentación disponible en http://localhost:${port}/api-docs`);
+        });
+    })
+    .catch((error) => {
+        console.error('Error de conexión:', error.message);
+        process.exit(1);
+    });
