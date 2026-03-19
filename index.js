@@ -16,6 +16,24 @@ import { checkDbConnection } from './src/db/dbConnect.js';
 // Fallback: si no se usó --env-file al arrancar (e.g. node directo sin npm script)
 try { process.loadEnvFile(); } catch { /* .env no encontrado o ya cargado */ }
 
+/// --- Validación de Variables Críticas ---
+
+const REQUIRED_ENV_VARS = [
+    'JWT_SECRET',
+    'JWT_REFRESH_SECRET',
+    'DB_HOST',
+    'DB_USER',
+    'DB_PASSWORD',
+    'DB_DATABASE',
+    'COMPANY_NIF',
+];
+
+const missing = REQUIRED_ENV_VARS.filter(key => !process.env[key]);
+if (missing.length > 0) {
+    console.error(`Error: faltan variables de entorno obligatorias: ${missing.join(', ')}`);
+    process.exit(1);
+}
+
 /// --- Configuración del Puerto ---
 
 // Define el puerto para el servidor, usa el del entorno o 3600 por defecto
