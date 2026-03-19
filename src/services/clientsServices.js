@@ -159,7 +159,7 @@ export default class ClientsServices {
 
         // Verificar que existe
         const existing = await ClientsRepository.findById(cleanClientsData.id);
-        if (!existing.length > 0) return [];
+        if (!existing.length > 0) return {error: 'NOT_FOUND'};
 
         // Verificar identificación única (excepto este mismo cliente)
         if (cleanClientsData.identification) {

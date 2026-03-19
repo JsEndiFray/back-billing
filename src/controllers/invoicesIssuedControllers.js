@@ -23,7 +23,6 @@ import fs from 'fs';
 import {generateInvoicePdf} from "../shared/utils/Pdf-invoicesIssued/invoicePdfGenerator.js";
 import InvoicesIssuedService from '../services/invoicesIssuedServices.js';
 import { validate } from '../shared/helpers/nifHelpers.js';
-import CalculateHelper from "../shared/helpers/calculateTotal.js";
 
 /**
  * Controlador para la gestión de facturas emitidas y abonos
@@ -390,8 +389,7 @@ export default class InvoicesIssuedController {
      */
     static async createInvoice(req, res) {
         try {
-            const data = req.body;
-            const created = await InvoicesIssuedService.createInvoice(data);
+            const created = await InvoicesIssuedService.createInvoice({...req.body});
 
             if (created && created.error) {
                 if (created.error === 'DUPLICATE') {
@@ -436,20 +434,18 @@ export default class InvoicesIssuedController {
     static async updateInvoice(req, res) {
         try {
             const { id } = req.params;
-            const updateData = req.body;
+            const updateData = {...req.body};
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido.");
             }
 
-            const existing = await InvoicesIssuedService.getInvoiceById(id);
-            if (!existing || existing.length === 0) {
-                return res.status(404).json("Factura no encontrada.");
-            }
-
             const updated = await InvoicesIssuedService.updateInvoice(Number(id), updateData);
 
             if (updated && updated.error) {
+                if (updated.error === 'NOT_FOUND') {
+                    return res.status(404).json("Factura no encontrada.");
+                }
                 if (updated.error === 'DUPLICATE_NUMBER') {
                     return res.status(409).json("El número de factura ya existe.");
                 }
@@ -1007,19 +1003,8 @@ export default class InvoicesIssuedController {
                 });
             }
 
-            const validation = CalculateHelper.validateDateRange(start_date, end_date);
-
-            if (validation.isValid) {
-                // Añadir descripción legible del periodo
-                const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
-
-                return res.status(200).json({
-                    ...validation,
-                    periodDescription
-                });
-            } else {
-                return res.status(400).json(validation);
-            }
+            const validation = InvoicesIssuedService.validateProportionalDateRange(start_date, end_date);
+            return res.status(validation.isValid ? 200 : 400).json(validation);
 
         } catch (error) {
             console.error('Error en validateProportionalDateRange:', error);
@@ -1054,25 +1039,8 @@ export default class InvoicesIssuedController {
                 return res.status(400).json("Fechas de inicio y fin son requeridas");
             }
 
-            // Preparar datos para simulación
-            const billData = {
-                tax_base,
-                iva: iva || 0,
-                irpf: irpf || 0,
-                is_proportional: 1,
-                start_date,
-                end_date
-            };
-
-            // Calcular usando el helper
-            const calculation = CalculateHelper.calculateBillTotal(billData);
-            const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
-
-            return res.status(200).json({
-                ...calculation,
-                periodDescription,
-                simulation: true
-            });
+            const result = InvoicesIssuedService.simulateProportionalBilling({tax_base, iva, irpf, start_date, end_date});
+            return res.status(200).json(result);
 
         } catch (error) {
             console.error('Error en simulateProportionalBilling:', error);

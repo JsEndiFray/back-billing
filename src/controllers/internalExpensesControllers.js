@@ -13,10 +13,8 @@
  * @since 1.0.0
  */
 
-import path from 'path';
 import fs from 'fs';
 import InternalExpensesService from '../services/internalExpensesServices.js';
-import CalculateHelper from '../shared/helpers/calculateTotal.js';
 import {localFileService} from "../services/fileService.js";
 
 /**
@@ -349,25 +347,7 @@ export default class InternalExpensesController {
      */
     static async createExpense(req, res) {
         try {
-            const data = req.body;
-
-            // ✅ CONVERTIR TIPOS CORRECTAMENTE ANTES DE PASAR AL SERVICIO
-            const processedData = {
-                ...data,
-                // Números
-                amount: parseFloat(data.amount),
-                iva_percentage: data.iva_percentage ? parseFloat(data.iva_percentage) : 21,
-                iva_amount: data.iva_amount ? parseFloat(data.iva_amount) : undefined,
-                total_amount: data.total_amount ? parseFloat(data.total_amount) : undefined,
-
-                // ✅ Booleanos (convertir strings 'true'/'false' correctamente)
-                is_deductible: data.is_deductible === 'true' || data.is_deductible === true,
-                is_recurring: data.is_recurring === 'true' || data.is_recurring === true,
-                has_attachments: data.has_attachments === 'true' || data.has_attachments === true,
-
-                // Enteros
-                property_id: data.property_id ? parseInt(data.property_id) : null
-            };
+            const processedData = {...req.body};
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -419,25 +399,12 @@ export default class InternalExpensesController {
     static async updateExpense(req, res) {
         try {
             const {id} = req.params;
-            const updateData = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
 
-            //CONVERTIR TIPOS IGUAL QUE EN CREATE
-            const processedData = {
-                ...updateData,
-                amount: updateData.amount ? parseFloat(updateData.amount) : undefined,
-                iva_percentage: updateData.iva_percentage ? parseFloat(updateData.iva_percentage) : undefined,
-                iva_amount: updateData.iva_amount ? parseFloat(updateData.iva_amount) : undefined,
-                total_amount: updateData.total_amount ? parseFloat(updateData.total_amount) : undefined,
-
-                is_deductible: updateData.is_deductible === 'true' || updateData.is_deductible === true,
-                is_recurring: updateData.is_recurring === 'true' || updateData.is_recurring === true,
-
-                property_id: updateData.property_id ? parseInt(updateData.property_id) : undefined
-            };
+            const processedData = {...req.body};
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -456,23 +423,11 @@ export default class InternalExpensesController {
                 }
             }
 
-            // Formateo de fechas
-            const dateFields = ['expense_date', 'due_date', 'payment_date'];
-            dateFields.forEach(field => {
-                if (processedData[field]) {
-                    processedData[field] = new Date(processedData[field])
-                        .toISOString()
-                        .split('T')[0];
-                }
-            });
-
-            const existing = await InternalExpensesService.getExpenseById(id);
-            if (!existing || existing.length === 0) {
-                return res.status(404).json("Gasto no encontrado");
-            }
-
             const updated = await InternalExpensesService.updateExpense(Number(id), processedData);
 
+            if (updated && updated.error === 'NOT_FOUND') {
+                return res.status(404).json("Gasto no encontrado");
+            }
             if (updated === null || !updated || updated.length === 0) {
                 return res.status(400).json("Error en los datos proporcionados");
             }
@@ -509,8 +464,14 @@ export default class InternalExpensesController {
 
             const deleted = await InternalExpensesService.deleteExpense(id);
 
+            if (deleted && deleted.error) {
+                if (deleted.error === 'NOT_FOUND') return res.status(404).json("Gasto no encontrado");
+                if (deleted.error === 'CANNOT_DELETE') return res.status(409).json("No se puede eliminar un gasto aprobado o pagado");
+                return res.status(400).json("ID de gasto inválido");
+            }
+
             if (!deleted || deleted.length === 0) {
-                return res.status(400).json("Error al eliminar gasto - no encontrado o ya aprobado/pagado");
+                return res.status(404).json("Gasto no encontrado");
             }
 
             return res.status(204).send();
@@ -890,10 +851,7 @@ export default class InternalExpensesController {
                 });
             }
 
-            const validation = CalculateHelper.validateDateRange(start_date, end_date, {
-                maxRangeYears: 2,
-                allowFutureDates: false
-            });
+            const validation = InternalExpensesService.validateDateRange(start_date, end_date);
 
             return res.status(validation.isValid ? 200 : 400).json(validation);
         } catch (error) {
@@ -923,22 +881,8 @@ export default class InternalExpensesController {
                 return res.status(400).json("Importe debe ser mayor a 0");
             }
 
-            const ivaPercentage = iva_percentage || 21;
-
-            try {
-                const ivaAmount = CalculateHelper.calculateIVA(amount, ivaPercentage);
-                const totalAmount = parseFloat(amount) + ivaAmount;
-
-                return res.status(200).json({
-                    amount: parseFloat(amount),
-                    iva_percentage: ivaPercentage,
-                    iva_amount: ivaAmount,
-                    total_amount: totalAmount,
-                    simulation: true
-                });
-            } catch (calculationError) {
-                return res.status(400).json(calculationError.message);
-            }
+            const result = InternalExpensesService.simulateCalculation(amount, iva_percentage || 21);
+            return res.status(200).json(result);
         } catch (error) {
             console.error('Error en simulateExpenseCalculation:', error);
             return res.status(500).json("Error interno del servidor");
@@ -960,7 +904,7 @@ export default class InternalExpensesController {
      */
     static async getAvailableCategories(req, res) {
         try {
-            const categories = CalculateHelper.getValidInvoiceReceivedCategories();
+            const categories = InternalExpensesService.getAvailableCategories();
             return res.status(200).json(categories);
         } catch (error) {
             console.error('Error en getAvailableCategories:', error);
@@ -983,7 +927,7 @@ export default class InternalExpensesController {
      */
     static async getAvailablePaymentMethods(req, res) {
         try {
-            const methods = CalculateHelper.getAvailablePaymentMethods();
+            const methods = InternalExpensesService.getAvailablePaymentMethods();
             return res.status(200).json(methods);
         } catch (error) {
             console.error('Error en getAvailablePaymentMethods:', error);
@@ -1006,7 +950,7 @@ export default class InternalExpensesController {
      */
     static async getAvailableStatuses(req, res) {
         try {
-            const statuses = CalculateHelper.getAvailableStatuses();
+            const statuses = InternalExpensesService.getAvailableStatuses();
             return res.status(200).json(statuses);
         } catch (error) {
             console.error('Error en getAvailableStatuses:', error);

@@ -433,7 +433,7 @@ export default class InvoicesIssuedService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InvoicesIssuedRepository.findById(id);
-        if (!existing || existing.length === 0) return [];
+        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
 
         // Validar campos proporcionales
         const proportionalValidation = CalculateHelper.validateProportionalFields({
@@ -790,6 +790,21 @@ export default class InvoicesIssuedService {
 
         const invoiceData = invoice[0];
         return CalculateHelper.getCalculationDetails(invoiceData);
+    }
+
+    static validateProportionalDateRange(start_date, end_date) {
+        const validation = CalculateHelper.validateDateRange(start_date, end_date);
+        if (validation.isValid) {
+            return {...validation, periodDescription: CalculateHelper.generatePeriodDescription(start_date, end_date)};
+        }
+        return validation;
+    }
+
+    static simulateProportionalBilling({tax_base, iva = 0, irpf = 0, start_date, end_date}) {
+        const billData = {tax_base, iva, irpf, is_proportional: 1, start_date, end_date};
+        const calculation = CalculateHelper.calculateBillTotal(billData);
+        const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
+        return {...calculation, periodDescription, simulation: true};
     }
 
 }

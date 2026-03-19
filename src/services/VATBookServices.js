@@ -339,4 +339,13 @@ export default class VATBookService {
         };
     }
 
+    static generatePeriodDescription(year, quarter, month) {
+        return CalculateHelper.generatePeriodDescription(year, quarter, month);
+    }
+
+    static validateCompanyNIF(nif) {
+        const nifRegex = /^[A-Z]\d{8}$|^\d{8}[A-Z]$/;
+        return nifRegex.test(nif);
+    }
+
 }

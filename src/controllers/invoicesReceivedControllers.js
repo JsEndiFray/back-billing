@@ -1,7 +1,5 @@
 import InvoicesReceivedService from '../services/invoicesReceivedServices.js';
-import {generateReceivedInvoicePdf} from "../shared/utils/Pdf-Received/invoicePdfGenerator.js";
 import {localFileService} from "../services/fileService.js";
-import CalculateHelper from "../shared/helpers/calculateTotal.js";
 import path from 'path';
 import fs from 'fs';
 
@@ -351,12 +349,13 @@ export default class InvoicesReceivedController {
 
             const created = await InvoicesReceivedService.createInvoiceReceived(data);
 
-            if (created === null) {
+            if (created && created.error) {
+                if (created.error === 'INVALID_PROPORTIONAL') return res.status(400).json(created.message || "Error en campos proporcionales");
                 return res.status(400).json("Error en los datos proporcionados, proveedor no existe o factura duplicada");
             }
 
-            if (!created || created.length === 0) {
-                return res.status(400).json("Error al crear factura recibida");
+            if (created === null || !created || created.length === 0) {
+                return res.status(400).json("Error en los datos proporcionados, proveedor no existe o factura duplicada");
             }
 
             return res.status(201).json({
@@ -365,9 +364,6 @@ export default class InvoicesReceivedController {
             });
         } catch (error) {
             console.error('Error en createInvoiceReceived:', error);
-            if (error.message.includes('proporcional')) {
-                return res.status(400).json(error.message);
-            }
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -408,42 +404,20 @@ export default class InvoicesReceivedController {
                     return res.status(500).json("Error al subir el archivo adjunto");
                 }
             }
-            ;
-            //formateo de las fechas
-            const dateFields = [
-                'invoice_date',
-                'due_date',
-                'received_date',
-                'collection_date',
-                'start_date',
-                'end_date'
-            ];
-
-            dateFields.forEach(field => {
-                if (updateData[field]) {
-                    updateData[field] = new Date(updateData[field])
-                        .toISOString()
-                        .split('T')[0];
-                }
-            });
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
             }
 
-            // Verificar que la factura existe
-            const existing = await InvoicesReceivedService.getInvoiceById(id);
-            if (!existing || existing.length === 0) {
-                return res.status(404).json("Factura no encontrada");
-            }
-
             const updated = await InvoicesReceivedService.updateInvoiceReceived(Number(id), updateData);
 
-            if (updated === null) {
+            if (updated && updated.error) {
+                if (updated.error === 'NOT_FOUND') return res.status(404).json("Factura no encontrada");
+                if (updated.error === 'INVALID_PROPORTIONAL') return res.status(400).json(updated.message || "Error en campos proporcionales");
                 return res.status(400).json("Error en los datos proporcionados o proveedor no existe");
             }
 
-            if (!updated || updated.length === 0) {
+            if (updated === null || !updated || updated.length === 0) {
                 return res.status(400).json("Error al actualizar factura");
             }
 
@@ -453,9 +427,6 @@ export default class InvoicesReceivedController {
             });
         } catch (error) {
             console.error('Error en updateInvoiceReceived:', error);
-            if (error.message.includes('proporcional')) {
-                return res.status(400).json(error.message);
-            }
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -484,7 +455,7 @@ export default class InvoicesReceivedController {
             const deleted = await InvoicesReceivedService.deleteInvoiceReceived(id);
 
             if (!deleted || deleted.length === 0) {
-                return res.status(400).json("Error al eliminar factura o factura no encontrada");
+                return res.status(404).json("Factura no encontrada");
             }
 
             return res.status(204).send();
@@ -791,14 +762,12 @@ export default class InvoicesReceivedController {
             const refundId = req.params.id;
 
             // Obtener abono con todos los detalles necesarios
-            const refund = await InvoicesReceivedService.getInvoiceById(refundId);
+            const refund = await InvoicesReceivedService.getRefundById(refundId);
+            if (refund && refund.error === 'NOT_REFUND') {
+                return res.status(400).json("La factura especificada no es un abono");
+            }
             if (!refund || refund.length === 0) {
                 return res.status(404).json("Abono no encontrado");
-            }
-
-            // Verificar que es realmente un abono
-            if (!refund[0].is_refund) {
-                return res.status(400).json("La factura especificada no es un abono");
             }
 
             // Crear directorio para PDFs si no existe
@@ -851,19 +820,9 @@ export default class InvoicesReceivedController {
                 });
             }
 
-            const validation = CalculateHelper.validateDateRange(start_date, end_date);
+            const validation = InvoicesReceivedService.validateProportionalDateRange(start_date, end_date);
 
-            if (validation.isValid) {
-                // Añadir descripción legible del periodo
-                const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
-
-                return res.status(200).json({
-                    ...validation,
-                    periodDescription
-                });
-            } else {
-                return res.status(400).json(validation);
-            }
+            return res.status(validation.isValid ? 200 : 400).json(validation);
 
         } catch (error) {
             console.error('Error en validateProportionalDateRange:', error);
@@ -898,25 +857,8 @@ export default class InvoicesReceivedController {
                 return res.status(400).json("Fechas de inicio y fin son requeridas");
             }
 
-            // Preparar datos para simulación
-            const invoiceData = {
-                tax_base,
-                iva_percentage: iva_percentage || 21,
-                irpf_percentage: irpf_percentage || 0,
-                is_proportional: true,
-                start_date,
-                end_date
-            };
-
-            // Calcular usando el helper
-            const calculation = CalculateHelper.calculateFiscalAmounts(invoiceData);
-            const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
-
-            return res.status(200).json({
-                ...calculation,
-                periodDescription,
-                simulation: true
-            });
+            const result = InvoicesReceivedService.simulateProportionalInvoice({tax_base, iva_percentage, irpf_percentage, start_date, end_date});
+            return res.status(200).json(result);
 
         } catch (error) {
             console.error('Error en simulateProportionalInvoice:', error);
@@ -950,8 +892,7 @@ export default class InvoicesReceivedController {
                 return res.status(404).json("Factura no encontrada");
             }
 
-            const invoiceData = invoice[0];
-            const details = CalculateHelper.getCalculationDetails(invoiceData);
+            const details = InvoicesReceivedService.getProportionalCalculationDetails(invoice[0]);
 
             return res.status(200).json(details);
         } catch (error) {

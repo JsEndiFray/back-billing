@@ -14,7 +14,6 @@ import path from 'path';
 import fs from 'fs';
 import ExcelGenerator from "../shared/utils/excelGenerador/ExcelGenerator.js";
 import CompanyService from "../services/CompanyService.js";
-import CalculateHelper from "../shared/helpers/calculateTotal.js";
 import {generateVATBookPDFContent} from "../shared/utils/Pdf-VATBook/vatBookPdfGenerator.js";
 
 /**
@@ -73,8 +72,7 @@ export default class VATBookController {
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor",
-                error: error.message
+                message: "Error interno del servidor"
             });
         }
     }
@@ -130,8 +128,7 @@ export default class VATBookController {
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor",
-                error: error.message
+                message: "Error interno del servidor"
             });
         }
     }
@@ -188,8 +185,7 @@ export default class VATBookController {
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor",
-                error: error.message
+                message: "Error interno del servidor"
             });
         }
     }
@@ -257,8 +253,7 @@ export default class VATBookController {
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor",
-                error: error.message
+                message: "Error interno del servidor"
             });
         }
     }
@@ -335,7 +330,7 @@ export default class VATBookController {
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error al generar archivo Excel"
+                message: "Error interno del servidor"
             });
         }
     }
@@ -375,8 +370,7 @@ export default class VATBookController {
             }
 
             // Validar formato NIF
-            const nifRegex = /^[A-Z]\d{8}$|^\d{8}[A-Z]$/;
-            if (!nifRegex.test(companyData.nif)) {
+            if (!VATBookService.validateCompanyNIF(companyData.nif)) {
                 return res.status(400).json({
                     success: false,
                     message: "Formato de NIF inválido"
@@ -509,8 +503,7 @@ export default class VATBookController {
             if (!res.headersSent) {
                 return res.status(500).json({
                     success: false,
-                    message: error.message || "Error interno del servidor",
-                    error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                    message: "Error interno del servidor"
                 });
             }
         }
@@ -585,7 +578,7 @@ export default class VATBookController {
                 margins: { top: 50, bottom: 50, left: 50, right: 50 }
             });
 
-            const period = CalculateHelper.generatePeriodDescription(yearNum, quarterNum, monthNum);
+            const period = VATBookService.generatePeriodDescription(yearNum, quarterNum, monthNum);
             const filename = `Libro-IVA-${bookType}-${period.replace(/\s+/g, '-')}.pdf`;
 
             res.setHeader('Content-Type', 'application/pdf');
@@ -600,8 +593,7 @@ export default class VATBookController {
             if (!res.headersSent) {
                 return res.status(500).json({
                     success: false,
-                    message: error.message || "Error interno del servidor al generar el PDF",
-                    error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                    message: "Error interno del servidor"
                 });
             }
         }
@@ -660,8 +652,7 @@ export default class VATBookController {
             console.error('Error en getVATBookByOwner:', error);
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor al generar el libro de IVA por propietario.",
-                error: process.env.NODE_ENV === 'development' ? error.stack : undefined // Mostrar stack en desarrollo
+                message: "Error interno del servidor"
             });
         }
     }
@@ -716,8 +707,7 @@ export default class VATBookController {
             console.error('Error en getConsolidatedVATBook:', error);
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error al generar el libro de IVA consolidado",
-                error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                message: "Error interno del servidor"
             });
         }
     }
@@ -750,7 +740,7 @@ export default class VATBookController {
             console.error('Error en getAnnualVATStats:', error);
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor"
+                message: "Error interno del servidor"
             });
         }
     }
@@ -782,7 +772,7 @@ export default class VATBookController {
             console.error('Error en getQuarterlyVATComparison:', error);
             return res.status(500).json({
                 success: false,
-                message: error.message || "Error interno del servidor"
+                message: "Error interno del servidor"
             });
         }
     }

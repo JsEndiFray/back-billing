@@ -87,7 +87,7 @@ export default class EstatesServices {
 
         // Verificar que existe
         const existing = await EstatesRepository.findById(cleanEstatesData.id);
-        if (!existing.length > 0) return [];
+        if (!existing.length > 0) return {error: 'NOT_FOUND'};
 
         // Verificar referencia catastral única (excepto esta misma propiedad)
         const {cadastral_reference} = data;
@@ -111,7 +111,7 @@ export default class EstatesServices {
 
         // Verificar que existe
         const existing = await EstatesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (!existing.length > 0) return {error: 'NOT_FOUND'};
 
         const result = await EstatesRepository.delete(id);
         return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];

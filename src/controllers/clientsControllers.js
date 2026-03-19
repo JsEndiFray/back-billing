@@ -186,7 +186,8 @@ export default class ClientsControllers {
 
     static async createClient(req, res) {
         try {
-            const created = await ClientsServices.createClient(req.body);
+            const {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type} = req.body;
+            const created = await ClientsServices.createClient({type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type});
             if (!created || created.length === 0) {
                 return res.status(409).json("Cliente duplicado");
             }
@@ -203,12 +204,11 @@ export default class ClientsControllers {
                 return res.status(400).json("ID inválido");
             }
 
-            const existing = await ClientsServices.getClientById(id);
-            if (!existing || existing.length === 0) {
+            const {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type} = req.body;
+            const updated = await ClientsServices.updateClient(id, {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type});
+            if (updated && updated.error === 'NOT_FOUND') {
                 return res.status(404).json("Cliente no encontrado");
             }
-
-            const updated = await ClientsServices.updateClient(id, req.body);
             if (!updated || updated.length === 0) {
                 return res.status(409).json("Cliente duplicado");
             }

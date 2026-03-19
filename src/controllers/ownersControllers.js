@@ -85,7 +85,8 @@ export default class OwnersControllers {
      */
     static async createOwner(req, res) {
         try {
-            const created = await OwnersServices.createOwner(req.body);
+            const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
+            const created = await OwnersServices.createOwner({name, lastname, email, identification, phone, address, postal_code, location, province, country});
 
             if (!created.length) {
                 return res.status(400).json("Error al crear propietario o identificación duplicada");
@@ -103,7 +104,8 @@ export default class OwnersControllers {
                 return res.status(400).json("ID inválido");
             }
 
-            const updated = await OwnersServices.updateOwner(id, req.body);
+            const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
+            const updated = await OwnersServices.updateOwner(id, {name, lastname, email, identification, phone, address, postal_code, location, province, country});
             if (!updated || updated.length === 0) {
                 return res.status(404).json("Propietario no encontrado");
             }

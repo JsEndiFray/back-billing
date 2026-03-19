@@ -177,7 +177,7 @@ export default class SuppliersService {
 
         // Verificar que el proveedor existe
         const existing = await SuppliersRepository.findById(id);
-        if (!existing || existing.length === 0) return [];
+        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
 
         // Si se actualiza el Tax ID, validar que no esté duplicado
         if (updateData.tax_id) {

@@ -88,7 +88,8 @@ export default class EstateController {
      */
     static async createEstate(req, res) {
         try {
-            const created = await EstateService.createEstate(req.body);
+            const {cadastral_reference, price, address, postal_code, location, province, country, surface} = req.body;
+            const created = await EstateService.createEstate({cadastral_reference, price, address, postal_code, location, province, country, surface});
             if (!created || created.length === 0) {
                 return res.status(400).json('Error al crear inmueble o referencia catastral duplicada');
             }
@@ -106,13 +107,12 @@ export default class EstateController {
                 return res.status(400).json("ID inválido");
             }
 
-            const existing = await EstateService.getEstateById(id);
-            if (!existing.length) {
+            const {cadastral_reference, price, address, postal_code, location, province, country, surface} = req.body;
+            const updated = await EstateService.updateEstate(id, {cadastral_reference, price, address, postal_code, location, province, country, surface});
+            if (updated && updated.error === 'NOT_FOUND') {
                 return res.status(404).json("Inmueble no encontrado");
             }
-
-            const updated = await EstateService.updateEstate(id, req.body);
-            if (!updated.length) {
+            if (!updated || !updated.length) {
                 return res.status(400).json("Error al actualizar inmueble o referencia catastral duplicada");
             }
 
@@ -132,13 +132,11 @@ export default class EstateController {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const existing = await EstateService.getEstateById(id);
-            if (!existing.length) {
+            const deleted = await EstateService.deleteEstate(id);
+            if (deleted && deleted.error === 'NOT_FOUND') {
                 return res.status(404).json("Inmueble no encontrado");
             }
-
-            const deleted = await EstateService.deleteEstate(id);
-            if (!deleted.length) {
+            if (!deleted || !deleted.length) {
                 return res.status(400).json("Error al eliminar inmueble");
             }
             return res.status(204).send(); // No content - eliminación exitosa

@@ -234,13 +234,11 @@ export default class SuppliersController {
                 return res.status(400).json("ID de proveedor inválido");
             }
 
-            // Verificar que el proveedor existe
-            const existing = await SuppliersService.getSupplierById(id);
-            if (!existing || existing.length === 0) {
+            const updated = await SuppliersService.updateSupplier(Number(id), updateData);
+
+            if (updated && updated.error === 'NOT_FOUND') {
                 return res.status(404).json("Proveedor no encontrado");
             }
-
-            const updated = await SuppliersService.updateSupplier(Number(id), updateData);
 
             if (updated === null) {
                 return res.status(400).json("Error en los datos proporcionados o CIF/NIF duplicado");
@@ -284,7 +282,7 @@ export default class SuppliersController {
             const deleted = await SuppliersService.deleteSupplier(id);
 
             if (!deleted || deleted.length === 0) {
-                return res.status(400).json("Error al eliminar proveedor o proveedor no encontrado");
+                return res.status(404).json("Proveedor no encontrado");
             }
 
             return res.status(204).send();

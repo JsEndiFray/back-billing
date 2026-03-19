@@ -87,7 +87,8 @@ export default class UserController {
      */
     static async createUser(req, res) {
         try {
-            const result = await UserService.createUser(req.body);
+            const {username, password, email, phone, role} = req.body;
+            const result = await UserService.createUser({username, password, email, phone, role});
             if (!result.length) {
                 // Mensaje informativo que ayuda al usuario a identificar el problema
                 return res.status(409).json('Usuario duplicado.. Puede ser nombre de usuario email o teléfono.');
@@ -109,7 +110,8 @@ export default class UserController {
                 return res.status(400).json("ID inválido");
             }
 
-            const updated = await UserService.updateUser(id, req.body);
+            const {username, password, email, phone, role} = req.body;
+            const updated = await UserService.updateUser(id, {username, password, email, phone, role});
             if (!updated.length) {
                 // Mensaje que cubre tanto duplicados como usuario no encontrado
                 return res.status(409).json('Usuario duplicado o no encontrado');
@@ -128,7 +130,7 @@ export default class UserController {
             }
             const deleted = await UserService.deleteUser(id);
             if (!deleted.length) {
-                return res.status(400).json("Error al eliminar usuario");
+                return res.status(404).json("Usuario no encontrado");
             }
             return res.status(204).send();
         } catch (error) {

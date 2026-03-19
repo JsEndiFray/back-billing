@@ -48,8 +48,9 @@ export default class EstateOwnersService {
         if (!id || ownership_percentage === undefined || ownership_percentage === null) return [];
 
         // Validar que el porcentaje esté en rango válido
-        if (typeof ownership_percentage !== 'number' || ownership_percentage < 0 || ownership_percentage > 100) {
-            return [];
+        const pct = Number(ownership_percentage);
+        if (isNaN(pct) || pct < 0 || pct > 100) {
+            return {error: 'INVALID_PERCENTAGE'};
         }
 
         // Verificar que existe

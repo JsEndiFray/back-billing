@@ -172,7 +172,7 @@ export default class InvoicesReceivedService {
         if (data.is_proportional) {
             const proportionalValidation = CalculateHelper.validateProportionalFields(data);
             if (!proportionalValidation.isValid) {
-                throw new Error(proportionalValidation.message);
+                return {error: 'INVALID_PROPORTIONAL', message: proportionalValidation.message};
             }
         }
 
@@ -249,9 +249,17 @@ export default class InvoicesReceivedService {
     static async updateInvoiceReceived(id, updateData) {
         if (!id || isNaN(Number(id))) return [];
 
+        // Normalize dates
+        const dateFields = ['invoice_date', 'due_date', 'received_date', 'collection_date', 'start_date', 'end_date'];
+        dateFields.forEach(field => {
+            if (updateData[field]) {
+                updateData[field] = new Date(updateData[field]).toISOString().split('T')[0];
+            }
+        });
+
         // Verificar que la factura existe
         const existing = await InvoicesReceivedRepository.findById(id);
-        if (!existing || existing.length === 0) return [];
+        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
 
         // Si se actualiza el proveedor, verificar que existe
         if (updateData.supplier_id) {
@@ -268,7 +276,7 @@ export default class InvoicesReceivedService {
                 ...updateData
             });
             if (!proportionalValidation.isValid) {
-                throw new Error(proportionalValidation.message);
+                return {error: 'INVALID_PROPORTIONAL', message: proportionalValidation.message};
             }
         }
 
@@ -529,5 +537,31 @@ export default class InvoicesReceivedService {
         return newRefNumber;
     }
 
+    static async getRefundById(id) {
+        if (!id || isNaN(Number(id))) return [];
+        const refund = await InvoicesReceivedRepository.findById(id);
+        if (!refund || refund.length === 0) return [];
+        if (!refund[0].is_refund) return {error: 'NOT_REFUND'};
+        return refund;
+    }
+
+    static validateProportionalDateRange(start_date, end_date) {
+        const validation = CalculateHelper.validateDateRange(start_date, end_date);
+        if (validation.isValid) {
+            return {...validation, periodDescription: CalculateHelper.generatePeriodDescription(start_date, end_date)};
+        }
+        return validation;
+    }
+
+    static simulateProportionalInvoice({tax_base, iva_percentage = 21, irpf_percentage = 0, start_date, end_date}) {
+        const invoiceData = {tax_base, iva_percentage, irpf_percentage, is_proportional: true, start_date, end_date};
+        const calculation = CalculateHelper.calculateFiscalAmounts(invoiceData);
+        const periodDescription = CalculateHelper.generatePeriodDescription(start_date, end_date);
+        return {...calculation, periodDescription, simulation: true};
+    }
+
+    static getProportionalCalculationDetails(invoiceData) {
+        return CalculateHelper.getCalculationDetails(invoiceData);
+    }
 
 }

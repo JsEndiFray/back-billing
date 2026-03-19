@@ -48,7 +48,8 @@ export default class EmployeeControllers {
 
     static async createEmployee(req, res) {
         try {
-            const created = await EmployeeServices.createEmployee(req.body);
+            const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
+            const created = await EmployeeServices.createEmployee({name, lastname, email, identification, phone, address, postal_code, location, province, country});
             if (!created.length) {
                 return res.status(409).json("Error al crear empleado o identificación duplicada")
             }
@@ -61,7 +62,8 @@ export default class EmployeeControllers {
 
     static async updateEmployee(req, res) {
         try {
-            const updated = await EmployeeServices.updateEmployee(req.params.id, req.body,);
+            const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
+            const updated = await EmployeeServices.updateEmployee(req.params.id, {name, lastname, email, identification, phone, address, postal_code, location, province, country});
             if (!updated || updated.length === 0) {
                 return res.status(404).json("Empleado no encontrado o no se pudo actualizar")
             }

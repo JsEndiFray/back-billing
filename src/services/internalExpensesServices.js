@@ -311,11 +311,11 @@ export default class InternalExpensesService {
             subcategory: data.subcategory ? sanitizeString(data.subcategory) : null,
             description: sanitizeString(description),
             notes: data.notes ? sanitizeString(data.notes) : null,
-            is_deductible: data.is_deductible !== undefined ? Boolean(data.is_deductible) : true,
+            is_deductible: data.is_deductible !== undefined ? (data.is_deductible === 'true' || data.is_deductible === true) : true,
             payment_method: data.payment_method || 'card',
             status: data.status || 'pending',
-            is_recurring: data.is_recurring !== undefined ? Boolean(data.is_recurring) : false,
-            has_attachments: data.has_attachments !== undefined ? Boolean(data.has_attachments) : false
+            is_recurring: data.is_recurring !== undefined ? (data.is_recurring === 'true' || data.is_recurring === true) : false,
+            has_attachments: data.has_attachments !== undefined ? (data.has_attachments === 'true' || data.has_attachments === true) : false
         };
 
         // Validar recurrencia
@@ -347,7 +347,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing || existing.length === 0) return [];
+        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
 
         // Validar datos si se proporcionan
         if (updateData.category) {
@@ -377,7 +377,7 @@ export default class InternalExpensesService {
         // Preparar datos actualizados
         const cleanExpenseData = {
             id,
-            expense_date: updateData.expense_date || existing[0].expense_date,
+            expense_date: updateData.expense_date ? new Date(updateData.expense_date).toISOString().split('T')[0] : existing[0].expense_date,
             category: updateData.category || existing[0].category,
             subcategory: updateData.subcategory !== undefined ?
                 (updateData.subcategory ? sanitizeString(updateData.subcategory) : null) : existing[0].subcategory,
@@ -386,7 +386,7 @@ export default class InternalExpensesService {
             iva_percentage: dataForCalculation.iva_percentage,
             iva_amount: ivaAmount,
             total_amount: totalAmount,
-            is_deductible: updateData.is_deductible !== undefined ? Boolean(updateData.is_deductible) : existing[0].is_deductible,
+            is_deductible: updateData.is_deductible !== undefined ? (updateData.is_deductible === 'true' || updateData.is_deductible === true) : existing[0].is_deductible,
             supplier_name: updateData.supplier_name ? sanitizeString(updateData.supplier_name) : existing[0].supplier_name,
             supplier_nif: updateData.supplier_nif !== undefined ? updateData.supplier_nif : existing[0].supplier_nif,
             supplier_address: updateData.supplier_address !== undefined ? updateData.supplier_address : existing[0].supplier_address,
@@ -394,13 +394,13 @@ export default class InternalExpensesService {
             receipt_number: updateData.receipt_number !== undefined ? updateData.receipt_number : existing[0].receipt_number,
             receipt_date: updateData.receipt_date !== undefined ? updateData.receipt_date : existing[0].receipt_date,
             pdf_path: updateData.pdf_path !== undefined ? updateData.pdf_path : existing[0].pdf_path,
-            has_attachments: updateData.has_attachments !== undefined ? Boolean(updateData.has_attachments) : existing[0].has_attachments,
+            has_attachments: updateData.has_attachments !== undefined ? (updateData.has_attachments === 'true' || updateData.has_attachments === true) : existing[0].has_attachments,
             property_id: updateData.property_id !== undefined ? updateData.property_id : existing[0].property_id,
             project_code: updateData.project_code !== undefined ? updateData.project_code : existing[0].project_code,
             cost_center: updateData.cost_center !== undefined ? updateData.cost_center : existing[0].cost_center,
             notes: updateData.notes !== undefined ?
                 (updateData.notes ? sanitizeString(updateData.notes) : null) : existing[0].notes,
-            is_recurring: updateData.is_recurring !== undefined ? Boolean(updateData.is_recurring) : existing[0].is_recurring,
+            is_recurring: updateData.is_recurring !== undefined ? (updateData.is_recurring === 'true' || updateData.is_recurring === true) : existing[0].is_recurring,
             recurrence_period: updateData.recurrence_period !== undefined ? updateData.recurrence_period : existing[0].recurrence_period,
             next_occurrence_date: updateData.next_occurrence_date !== undefined ? updateData.next_occurrence_date : existing[0].next_occurrence_date,
             status: updateData.status || existing[0].status
@@ -418,16 +418,18 @@ export default class InternalExpensesService {
      * Elimina un gasto
      */
     static async deleteExpense(id) {
-        if (!id || isNaN(Number(id))) return [];
+        if (!id || isNaN(Number(id))) return {error: 'INVALID_ID'};
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (!existing.length > 0) return {error: 'NOT_FOUND'};
 
         // REGLA DE NEGOCIO: No se pueden eliminar gastos aprobados o pagados
-        if (existing[0].status === 'approved' || existing[0].status === 'paid') return [];
+        if (existing[0].status === 'approved' || existing[0].status === 'paid') {
+            return {error: 'CANNOT_DELETE'};
+        }
 
         const result = await InternalExpensesRepository.delete(id);
-        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : {error: 'NOT_FOUND'};
     }
 
     // ========================================
@@ -661,6 +663,36 @@ export default class InternalExpensesService {
         return processedExpenses;
     }
 
+    // ==========================================
+    // UTILIDADES Y METADATOS
+    // ==========================================
+
+    static validateDateRange(start_date, end_date) {
+        return CalculateHelper.validateDateRange(start_date, end_date, {
+            maxRangeYears: 2,
+            allowFutureDates: false
+        });
+    }
+
+    static simulateCalculation(amount, iva_percentage = 21) {
+        const amountNum = parseFloat(amount);
+        const ivaPercentage = Number(iva_percentage);
+        const ivaAmount = CalculateHelper.calculateIVA(amountNum, ivaPercentage);
+        const totalAmount = amountNum + ivaAmount;
+        return { amount: amountNum, iva_percentage: ivaPercentage, iva_amount: ivaAmount, total_amount: totalAmount, simulation: true };
+    }
+
+    static getAvailableCategories() {
+        return CalculateHelper.getValidInvoiceReceivedCategories();
+    }
+
+    static getAvailablePaymentMethods() {
+        return CalculateHelper.getAvailablePaymentMethods();
+    }
+
+    static getAvailableStatuses() {
+        return CalculateHelper.getAvailableStatuses();
+    }
 
 }
 

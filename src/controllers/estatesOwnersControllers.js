@@ -72,18 +72,17 @@ export default class EstateOwnersController {
                 return res.status(400).json("ID inválido");
             }
 
-            // Validar ownership_percentage
             if (ownership_percentage === undefined || ownership_percentage === null) {
                 return res.status(400).json("Porcentaje de propiedad es requerido");
-            }
-            if (typeof ownership_percentage !== 'number' || ownership_percentage < 0 || ownership_percentage > 100) {
-                return res.status(400).json("Porcentaje de propiedad inválido (debe ser entre 0 y 100)");
             }
 
             const result = await EstateOwnersService.updateEstateOwner(Number(id), ownership_percentage);
 
-            if (!result.length) {
-                return res.status(400).json("Error al actualizar relación inmueble-propietario");
+            if (result && result.error === 'INVALID_PERCENTAGE') {
+                return res.status(400).json("Porcentaje de propiedad inválido (debe ser entre 0 y 100)");
+            }
+            if (!result || !result.length) {
+                return res.status(404).json("Relación inmueble-propietario no encontrada");
             }
             return res.status(200).json(result);
         } catch (error) {
@@ -104,7 +103,7 @@ export default class EstateOwnersController {
 
             const result = await EstateOwnersService.deleteEstateOwners(id);
             if (!result.length) {
-                return res.status(400).json("Error al eliminar relación inmueble-propietario");
+                return res.status(404).json("Relación inmueble-propietario no encontrada");
             }
             return res.status(204).send(); // No content - eliminación exitosa
         } catch (error) {
