@@ -344,56 +344,11 @@ export default class InternalExpensesController {
      * // }
      */
 
-    /*static async createExpense(req, res) {
-        try {
-            const data = req.body;
-            // MANEJAR ARCHIVO ADJUNTO SI EXISTE
-            if (req.file) {
-                try {
-
-
-                    console.log('🔍 Body recibido:', req.body);
-                    console.log('🔍 File recibido:', req.file?.filename);
-
-
-                    const fileUploadResult = await localFileService.uploadInvoiceFile(
-                        req.file.buffer,
-                        req.file.originalname,
-                        data.receipt_number || `expense-${Date.now()}`
-                    );
-                    data.has_attachments = true;
-                    data.pdf_path = fileUploadResult.fileId;
-                } catch (fileError) {
-                    console.error('Error subiendo archivo:', fileError);
-                    return res.status(500).json("Error al subir el archivo adjunto");
-                }
-            }
-            const created = await InternalExpensesService.createExpense(data);
-
-            if (!created || created.length === 0) {
-                return res.status(400).json("Error al crear gasto interno - datos inválidos");
-            }
-
-            return res.status(201).json({
-                message: "Gasto interno creado correctamente",
-                expense: created[0]
-            });
-        } catch (error) {
-            console.error('Error en createExpense:', error);
-            if (error.message.includes('recurrente') || error.message.includes('IVA')) {
-                return res.status(400).json(error.message);
-            }
-            return res.status(500).json("Error interno del servidor");
-        }
-    }*/
     /**
      * Crea un nuevo gasto interno
      */
     static async createExpense(req, res) {
         try {
-            console.log('🔍 Body recibido:', req.body);
-            console.log('🔍 File recibido:', req.file?.filename);
-
             const data = req.body;
 
             // ✅ CONVERTIR TIPOS CORRECTAMENTE ANTES DE PASAR AL SERVICIO
@@ -428,30 +383,22 @@ export default class InternalExpensesController {
                     processedData.has_attachments = true;
                     processedData.pdf_path = fileUploadResult.fileId;
 
-                    console.log('✅ Archivo guardado:', fileUploadResult.fileId);
                 } catch (fileError) {
-                    console.error('❌ Error subiendo archivo:', fileError);
                     return res.status(500).json("Error al subir el archivo adjunto");
                 }
             }
 
-            console.log('📤 Datos procesados para servicio:', processedData);
-
             const created = await InternalExpensesService.createExpense(processedData);
 
             if (created === null || !created || created.length === 0) {
-                console.log('❌ El servicio retornó null o vacío');
                 return res.status(400).json("Error en los datos proporcionados o faltantes");
             }
-
-            console.log('✅ Gasto creado exitosamente:', created[0].id);
 
             return res.status(201).json({
                 message: "Gasto creado correctamente",
                 expense: created[0]
             });
         } catch (error) {
-            console.error('❌ Error en createExpense:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }

@@ -89,7 +89,7 @@ export default class EstateController {
     static async createEstate(req, res) {
         try {
             const created = await EstateService.createEstate(req.body);
-            if (!created.length > 0) {
+            if (!created || created.length === 0) {
                 return res.status(400).json('Error al crear inmueble o referencia catastral duplicada');
             }
             return res.status(201).json(created);

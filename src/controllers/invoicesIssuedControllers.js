@@ -393,29 +393,17 @@ export default class InvoicesIssuedController {
             const data = req.body;
             const created = await InvoicesIssuedService.createInvoice(data);
 
-            if (created === null) {
-                // El servicio devuelve null para:
-                // 1. Datos obligatorios faltantes
-                // 2. Validación de campos proporcionales fallida
-                // 3. Factura duplicada (mismo mes, propietario, propiedad, cliente)
-                const { owners_id, estates_id, clients_id, invoice_date } = data;
-
-                // Intentar dar un mensaje más específico si es un problema de duplicado
-                if (owners_id && estates_id && clients_id && invoice_date) {
-                    const month = CalculateHelper.generateCorrespondingMonth(invoice_date, data.corresponding_month);
-                    const existingForMonth = await InvoicesIssuedService.getInvoicesByCorrespondingMonth(month);
-                    const isDuplicate = existingForMonth.some(inv =>
-                        inv.owners_id === Number(owners_id) &&
-                        inv.estates_id === Number(estates_id) &&
-                        inv.clients_id === Number(clients_id) &&
-                        !Boolean(inv.is_refund)
-                    );
-                    if (isDuplicate) {
-                        return res.status(409).json("Ya existe una factura para este cliente en esa propiedad y mes.");
-                    }
+            if (created && created.error) {
+                if (created.error === 'DUPLICATE') {
+                    return res.status(409).json("Ya existe una factura para este cliente en esa propiedad y mes.");
                 }
-                // Si llegamos aquí, es un problema de validación de datos o campos proporcionales
-                return res.status(400).json("Datos de factura inválidos o faltantes, o error en campos proporcionales.");
+                if (created.error === 'INVALID_PROPORTIONAL') {
+                    return res.status(400).json("Error en campos proporcionales de la factura.");
+                }
+                if (created.error === 'DB_ERROR') {
+                    return res.status(500).json("Error al crear factura: La operación no se completó correctamente.");
+                }
+                return res.status(400).json("Datos de factura inválidos o faltantes.");
             }
 
             if (!created || created.length === 0) {
@@ -427,7 +415,6 @@ export default class InvoicesIssuedController {
                 invoice: created[0]
             });
         } catch (error) {
-            console.error('Error en createInvoice:', error);
             return res.status(500).json("Error interno del servidor al crear la factura.");
         }
     }
@@ -462,19 +449,14 @@ export default class InvoicesIssuedController {
 
             const updated = await InvoicesIssuedService.updateInvoice(Number(id), updateData);
 
-            if (updated === null) {
-                // El servicio devuelve null para:
-                // 1. Validación de campos proporcionales fallida
-                // 2. Número de factura duplicado
-                // 3. Error genérico de actualización de BD
-                if (updateData.invoice_number && updateData.invoice_number !== existing[0].invoice_number) {
-                    const invoiceWithSameNumber = await InvoicesIssuedService.getInvoiceByNumber(updateData.invoice_number);
-                    if (invoiceWithSameNumber.length > 0) {
-                        return res.status(409).json("El número de factura ya existe.");
-                    }
+            if (updated && updated.error) {
+                if (updated.error === 'DUPLICATE_NUMBER') {
+                    return res.status(409).json("El número de factura ya existe.");
                 }
-                // Si no es un problema de número de factura duplicado, asume validación proporcional o error interno
-                return res.status(400).json("Error de validación o datos de actualización inválidos para la factura.");
+                if (updated.error === 'INVALID_PROPORTIONAL') {
+                    return res.status(400).json("Error de validación en campos proporcionales de la factura.");
+                }
+                return res.status(400).json("Datos de actualización inválidos para la factura.");
             }
 
             if (!updated || updated.length === 0) {
@@ -571,16 +553,17 @@ export default class InvoicesIssuedController {
 
             const refund = await InvoicesIssuedService.createRefund(originalInvoiceId);
 
-            if (refund === null) {
-                // El servicio devuelve null si:
-                // 1. La factura original no se encuentra
-                // 2. Se intenta abonar un abono (is_refund es true)
-                const originalInvoice = await InvoicesIssuedService.getInvoiceById(originalInvoiceId);
-                if (!originalInvoice || originalInvoice.length === 0) {
+            if (refund && refund.error) {
+                if (refund.error === 'NOT_FOUND') {
                     return res.status(404).json("Factura original no encontrada.");
-                } else if (Boolean(originalInvoice[0].is_refund)) {
+                }
+                if (refund.error === 'CANNOT_REFUND_REFUND') {
                     return res.status(400).json("No se puede crear un abono a partir de otro abono.");
                 }
+                if (refund.error === 'INVALID_ID') {
+                    return res.status(400).json("ID de factura original inválido.");
+                }
+                return res.status(500).json("Error al crear abono: La operación no se completó correctamente.");
             }
 
             if (!refund || refund.length === 0) {

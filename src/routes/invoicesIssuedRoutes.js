@@ -3,6 +3,7 @@ import InvoicesIssuedController from '../controllers/invoicesIssuedControllers.j
 import {validateCreateInvoiceIssued} from "../validator/validatorInvoicesIssued.js";
 import auth from '../middlewares/auth.js';
 import role from '../middlewares/role.js';
+import errorHandler from '../middlewares/errorHandler.js';
 
 /**
  * @swagger
@@ -987,7 +988,7 @@ const router = express.Router()
      *       409:
      *         description: Ya existe una factura para este cliente en esa propiedad y mes
      */
-    .post('/', auth, role(['admin']), validateCreateInvoiceIssued, InvoicesIssuedController.createInvoice)
+    .post('/', auth, role(['admin']), validateCreateInvoiceIssued, errorHandler, InvoicesIssuedController.createInvoice)
 
     /**
      * @swagger

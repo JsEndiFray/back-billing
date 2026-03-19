@@ -460,18 +460,30 @@ export default class InvoicesReceivedRepository {
     /**
      * Obtiene resumen por categoría
      */
-    static async getStatsByCategory() {
+    static async getStatsByCategory(year = null, month = null) {
+        let whereClause = 'WHERE is_refund = FALSE';
+        const params = [];
+
+        if (year) {
+            whereClause += ' AND YEAR(invoice_date) = ?';
+            params.push(year);
+        }
+        if (month) {
+            whereClause += ' AND MONTH(invoice_date) = ?';
+            params.push(month);
+        }
+
         const [rows] = await db.query(`
-            SELECT 
+            SELECT
                 category,
                 COUNT(*) as invoice_count,
                 SUM(CASE WHEN is_refund = FALSE THEN total_amount ELSE 0 END) as total_amount,
                 SUM(CASE WHEN is_refund = FALSE THEN iva_amount ELSE 0 END) as total_iva
             FROM invoices_received
-            WHERE is_refund = FALSE
+            ${whereClause}
             GROUP BY category
             ORDER BY total_amount DESC
-        `);
+        `, params);
         return rows;
     }
 

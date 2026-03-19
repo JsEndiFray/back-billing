@@ -1,6 +1,7 @@
 import InvoicesReceivedService from '../services/invoicesReceivedServices.js';
 import {generateReceivedInvoicePdf} from "../shared/utils/Pdf-Received/invoicePdfGenerator.js";
 import {localFileService} from "../services/fileService.js";
+import CalculateHelper from "../shared/helpers/calculateTotal.js";
 import path from 'path';
 import fs from 'fs';
 
@@ -515,27 +516,28 @@ export default class InvoicesReceivedController {
         try {
             const {id} = req.params;
             const {
-                collection_status,
-                collection_method,
-                collection_date,
-                collection_reference,
-                collection_notes
+                payment_status,
+                payment_method,
+                payment_date,
+                payment_reference,
+                payment_notes
             } = req.body;
 
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID de factura inválido");
             }
 
-            if (!collection_status || !collection_method) {
+            if (!payment_status || !payment_method) {
                 return res.status(400).json("Estado y método de pago son requeridos");
             }
 
+            // Map API field names (payment_*) to internal storage names (collection_*)
             const paymentData = {
-                collection_status,
-                collection_method,
-                collection_date: collection_date || null,
-                collection_reference: collection_reference || null,
-                collection_notes: collection_notes || null
+                collection_status: payment_status,
+                collection_method: payment_method,
+                collection_date: payment_date || null,
+                collection_reference: payment_reference || null,
+                collection_notes: payment_notes || null
             };
 
             const updated = await InvoicesReceivedService.updatePaymentStatus(Number(id), paymentData);
@@ -549,7 +551,6 @@ export default class InvoicesReceivedController {
                 invoice: updated
             });
         } catch (error) {
-            console.error('Error en updatePaymentStatus:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -985,20 +986,18 @@ export default class InvoicesReceivedController {
                 return res.status(400).json("Año requerido y debe ser válido");
             }
 
+            const yearNum = Number(year);
             const validMonth = month && !isNaN(Number(month)) && Number(month) >= 1 && Number(month) <= 12
                 ? Number(month) : null;
 
-            // Obtener estadísticas por categoría como statement
-            const expenseData = await InvoicesReceivedService.getStatsByCategory();
+            const expenseData = await InvoicesReceivedService.getStatsByCategory(yearNum, validMonth);
 
-            // Filtrar por año si es necesario (esto dependería de cómo esté implementado el repository)
             if (!expenseData || expenseData.length === 0) {
                 return res.status(404).json("No hay datos de gastos para el período especificado");
             }
 
             return res.status(200).json(expenseData);
         } catch (error) {
-            console.error('Error en getExpenseStatement:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -1024,9 +1023,7 @@ export default class InvoicesReceivedController {
                 return res.status(400).json("Año requerido y debe ser válido");
             }
 
-            // Por ahora usar las estadísticas por categoría
-            // En un repositorio real habría un método específico para esto
-            const monthlyData = await InvoicesReceivedService.getStatsByCategory();
+            const monthlyData = await InvoicesReceivedService.getStatsByCategory(Number(year));
 
             if (!monthlyData || monthlyData.length === 0) {
                 return res.status(404).json("No hay datos de facturas para el año especificado");
@@ -1034,7 +1031,6 @@ export default class InvoicesReceivedController {
 
             return res.status(200).json(monthlyData);
         } catch (error) {
-            console.error('Error en getMonthlySummary:', error);
             return res.status(500).json("Error interno del servidor");
         }
     }

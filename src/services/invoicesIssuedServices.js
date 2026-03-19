@@ -346,12 +346,11 @@ export default class InvoicesIssuedService {
         const {owners_id, estates_id, clients_id, invoice_date, tax_base, iva, irpf} = data;
 
         // Validación de datos obligatorios
-        if (!owners_id || !estates_id || !clients_id || !invoice_date) return [];
-
+        if (!owners_id || !estates_id || !clients_id || !invoice_date) return {error: 'INVALID_DATA'};
 
         // Validar campos proporcionales
         const proportionalValidation = CalculateHelper.validateProportionalFields(data);
-        if (!proportionalValidation.isValid) return [];
+        if (!proportionalValidation.isValid) return {error: 'INVALID_PROPORTIONAL'};
 
 
         // REGLA DE NEGOCIO: Solo una factura por mes por owner+estate+client
@@ -365,7 +364,7 @@ export default class InvoicesIssuedService {
                     invoice.clients_id === Number(clients_id) &&
                     !Boolean(invoice.is_refund);
             });
-            if (sameMonthInvoice) return [];
+            if (sameMonthInvoice) return {error: 'DUPLICATE'};
 
         }
 
@@ -418,7 +417,7 @@ export default class InvoicesIssuedService {
         };
 
         const created = await InvoicesIssuedRepository.create(invoiceData);
-        if (!created.length > 0) return [];
+        if (!created || created.length === 0) return {error: 'DB_ERROR'};
 
         return [{...invoiceData, id: created[0].id}];
     }
@@ -442,13 +441,13 @@ export default class InvoicesIssuedService {
             ...updateData
         });
         if (!proportionalValidation.isValid) {
-            return null;
+            return {error: 'INVALID_PROPORTIONAL'};
         }
 
         // Validar que el nuevo número no esté duplicado y no sea el ID actual
         if (updateData.invoice_number !== undefined && updateData.invoice_number !== existing[0].invoice_number) {
             const invoiceWithSameNumber = await InvoicesIssuedRepository.findByInvoiceNumber(updateData.invoice_number);
-            if (invoiceWithSameNumber.length > 0) return [];
+            if (invoiceWithSameNumber.length > 0) return {error: 'DUPLICATE_NUMBER'};
 
 
         }
@@ -617,14 +616,14 @@ export default class InvoicesIssuedService {
      * Crea abono (factura negativa) basado en factura original
      */
     static async createRefund(originalInvoiceId) {
-        if (!originalInvoiceId || isNaN(Number(originalInvoiceId))) return null;
+        if (!originalInvoiceId || isNaN(Number(originalInvoiceId))) return {error: 'INVALID_ID'};
 
         // Obtener factura original
         const originalInvoice = await InvoicesIssuedRepository.findById(originalInvoiceId);
-        if (!originalInvoice.length) return [];
+        if (!originalInvoice.length) return {error: 'NOT_FOUND'};
 
         // REGLA: No se puede hacer abono de un abono
-        if (Boolean(originalInvoice[0].is_refund)) return null;
+        if (Boolean(originalInvoice[0].is_refund)) return {error: 'CANNOT_REFUND_REFUND'};
 
         // Generar número de abono secuencial
         const lastRefundNumber = await InvoicesIssuedRepository.getLastRefundNumber();
@@ -660,7 +659,7 @@ export default class InvoicesIssuedService {
         };
 
         const newRefundId = await InvoicesIssuedRepository.createRefund(refundToCreate);
-        return newRefundId.length > 0 ? newRefundId : [];
+        return newRefundId.length > 0 ? newRefundId : {error: 'DB_ERROR'};
     }
 
     // ==========================================

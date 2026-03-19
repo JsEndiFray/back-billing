@@ -494,8 +494,8 @@ export default class InvoicesReceivedService {
     /**
      * Obtiene estadísticas por categoría
      */
-    static async getStatsByCategory() {
-        return await InvoicesReceivedRepository.getStatsByCategory();
+    static async getStatsByCategory(year = null, month = null) {
+        return await InvoicesReceivedRepository.getStatsByCategory(year, month);
     }
 
     /**

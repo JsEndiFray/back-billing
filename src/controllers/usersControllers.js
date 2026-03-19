@@ -73,7 +73,6 @@ export default class UserController {
             }
             return res.status(200).json(userId);
         } catch (error) {
-            console.log(error);
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -117,7 +116,6 @@ export default class UserController {
             }
             return res.status(200).json(updated);
         } catch (error) {
-            console.log(error)
             return res.status(500).json("Error interno del servidor");
         }
     }
@@ -132,7 +130,7 @@ export default class UserController {
             if (!deleted.length) {
                 return res.status(400).json("Error al eliminar usuario");
             }
-            return res.status(204).json('Eliminado correctamente.');
+            return res.status(204).send();
         } catch (error) {
             return res.status(500).json("Error interno del servidor");
         }

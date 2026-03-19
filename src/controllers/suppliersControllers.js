@@ -1,5 +1,4 @@
 import SuppliersService from '../services/suppliersServices.js';
-import {validationResult} from 'express-validator';
 
 /**
  * Controlador para la gestión de proveedores

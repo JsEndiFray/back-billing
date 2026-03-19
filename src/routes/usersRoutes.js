@@ -157,7 +157,7 @@ const router = express.Router()
      *       400:
      *         description: Datos inválidos
      */
-    .post('/', ...validateUser, errorHandler, UsersController.createUser)
+    .post('/', auth, role(['admin']), ...validateUser, errorHandler, UsersController.createUser)
 
     /**
      * @swagger

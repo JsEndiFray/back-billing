@@ -20,7 +20,7 @@ export default class EmployeeControllers {
             const {name, lastname, identification} = req.query;
             const employee = await EmployeeServices.getEmployee(name, lastname, identification);
             if (!employee.length) {
-                return res.status(409).json("Empleado no encontrado");
+                return res.status(404).json("Empleado no encontrado");
             }
             return res.status(200).json(employee);
 
@@ -37,7 +37,7 @@ export default class EmployeeControllers {
             }
             const employee = await EmployeeServices.getEmployeeById(id);
             if (!employee.length) {
-                return res.status(409).json("Empleado no encontrado")
+                return res.status(404).json("Empleado no encontrado")
             }
             return res.status(200).json(employee);
 
@@ -62,7 +62,7 @@ export default class EmployeeControllers {
     static async updateEmployee(req, res) {
         try {
             const updated = await EmployeeServices.updateEmployee(req.params.id, req.body,);
-            if (!updated.length > 0) {
+            if (!updated || updated.length === 0) {
                 return res.status(404).json("Empleado no encontrado o no se pudo actualizar")
             }
             return res.status(200).json(updated);
@@ -78,7 +78,7 @@ export default class EmployeeControllers {
             if (!deleted.length) {
                 return res.status(404).json("Empleado no encontrado")
             }
-            return res.status(200).json('Empleado eliminado correctamente');
+            return res.status(204).send();
 
         } catch (error) {
             return res.status(500).json("Error interno del servidor.");

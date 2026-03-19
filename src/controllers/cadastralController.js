@@ -28,18 +28,13 @@ export default class CadastralController {
             // Validar usando el servicio
             const result = await CadastralService.validate(cleanReference);
 
-            // Log para debugging
-            console.log(`Validación catastral - ${cleanReference}: ${result.isValid ? 'VÁLIDA' : 'INVÁLIDA'}`);
-
             // Respuesta exitosa (200 tanto para válida como inválida)
             return res.status(200).json(result);
 
         } catch (error) {
-            console.error('Error en CadastralController.validateCadastralReference:', error);
-
             return res.status(500).json({
-                isValid: true,
-                message: 'Error interno del servidor. Formato válido por defecto.',
+                isValid: false,
+                message: 'Error interno del servidor',
                 error: 'server_error'
             });
         }

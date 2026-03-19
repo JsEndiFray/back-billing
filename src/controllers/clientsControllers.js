@@ -210,7 +210,6 @@ export default class ClientsControllers {
 
             const updated = await ClientsServices.updateClient(id, req.body);
             if (!updated || updated.length === 0) {
-                console.log(updated)
                 return res.status(409).json("Cliente duplicado");
             }
             return res.status(200).json(updated);
