@@ -97,25 +97,11 @@ const db = mysql2.createPool({
  *
  * // Si falla, muestra el error y termina la aplicación
  */
-const check = async () => {
-    try {
-        // Obtiene una conexión del pool para probar
-        const connection = await db.getConnection();
-        console.log('Conectado correctamente a MYSQL');
-
-        // Libera la conexión de vuelta al pool
-        connection.release();
-    } catch (error) {
-        console.error('Error de conexión:', error.message);
-
-        // Termina la aplicación si no puede conectar a la DB
-        // Esto previene que la app funcione sin base de datos
-        process.exit(1);
-    }
+export const checkDbConnection = async () => {
+    const connection = await db.getConnection();
+    console.log('Conectado correctamente a MYSQL');
+    connection.release();
 };
-
-// Ejecuta la verificación de conexión al cargar el módulo
-check();
 
 /**
  * Pool de conexiones MySQL exportado para uso en toda la aplicación

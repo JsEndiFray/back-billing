@@ -1,4 +1,4 @@
-import InternalExpensesRepository from "../repository/InternalExpensesRepository.js";
+import InternalExpensesRepository from "../repository/internalExpensesRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import CalculateHelper from "../shared/helpers/calculateTotal.js";
 
