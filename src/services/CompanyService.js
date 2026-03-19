@@ -10,13 +10,13 @@ export default class CompanyService {
      */
     static getCompanyData() {
         return {
-            nif: process.env.COMPANY_NIF || "B12345678",
-            name: process.env.COMPANY_NAME || "Tu Empresa SL",
-            address: process.env.COMPANY_ADDRESS || "Calle Ejemplo 123",
-            postal_code: process.env.COMPANY_POSTAL_CODE || "28001",
-            city: process.env.COMPANY_CITY || "Madrid",
-            province: process.env.COMPANY_PROVINCE || "Madrid",
-            country: process.env.COMPANY_COUNTRY || "España"
+            nif: process.env.COMPANY_NIF,
+            name: process.env.COMPANY_NAME,
+            address: process.env.COMPANY_ADDRESS,
+            postal_code: process.env.COMPANY_POSTAL_CODE,
+            city: process.env.COMPANY_CITY,
+            province: process.env.COMPANY_PROVINCE,
+            country: process.env.COMPANY_COUNTRY
         };
     }
 
