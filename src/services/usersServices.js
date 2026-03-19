@@ -1,6 +1,6 @@
 import UsersRepository from "../repository/usersRepository.js";
 import bcrypt from 'bcrypt';
-import {generateAccessToken, generateRefreshToken, verifyToken} from "../middlewares/tokenManager.js";
+import {generateAccessToken, generateRefreshToken, verifyToken} from "../services/tokenManager.js";
 
 //process.loadEnvFile();
 

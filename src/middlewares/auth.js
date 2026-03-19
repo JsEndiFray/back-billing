@@ -1,4 +1,4 @@
-import { verifyToken } from "./tokenManager.js";
+import { verifyToken } from "../services/tokenManager.js";
 
 /**
  * 🛡️ MIDDLEWARE DE AUTENTICACIÓN
