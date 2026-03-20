@@ -38,7 +38,7 @@ export default class VATBookController {
      * // GET /api/vat-book/supported/2024?quarter=1
      * // GET /api/vat-book/supported/2024?month=3
      */
-    static async getVATSupportedBook(req, res) {
+    static async getVATSupportedBook(req, res, next) {
         try {
             const {year, quarter, month} = req.params;
 
@@ -70,10 +70,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -94,7 +91,7 @@ export default class VATBookController {
      * // GET /api/vat-book/charged/2024?quarter=1
      * // GET /api/vat-book/charged/2024?month=3
      */
-    static async getVATChargedBook(req, res) {
+    static async getVATChargedBook(req, res, next) {
         try {
             const {year, quarter, month} = req.params;
 
@@ -126,10 +123,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -149,7 +143,7 @@ export default class VATBookController {
      * @example
      * // GET /api/vat-book/liquidation/2024/1
      */
-    static async getQuarterlyVATLiquidation(req, res) {
+    static async getQuarterlyVATLiquidation(req, res, next) {
         try {
             const {year, quarter} = req.params;
 
@@ -183,10 +177,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -206,7 +197,7 @@ export default class VATBookController {
      * @example
      * // GET /api/vat-book/complete/2024?quarter=1
      */
-    static async getCompleteVATBooks(req, res) {
+    static async getCompleteVATBooks(req, res, next) {
         try {
             const {year, quarter, month} = req.params;
             // Validar año
@@ -251,10 +242,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -275,7 +263,7 @@ export default class VATBookController {
      * // POST /api/vat-book/export/excel
      * // Body: { bookType: "supported", year: 2024, quarter: 1, companyData: {...} }
      */
-    static async exportVATBookToExcel(req, res) {
+    static async exportVATBookToExcel(req, res, next) {
         try {
             const {bookType, year, quarter, month, companyData} = req.body;
 
@@ -328,10 +316,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -348,7 +333,7 @@ export default class VATBookController {
      * @param {express.Response} res - Objeto de respuesta
      * @returns {Promise<void>}
      */
-    static async validateCompanyData(req, res) {
+    static async validateCompanyData(req, res, next) {
         try {
             const {companyData} = req.body;
 
@@ -387,10 +372,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -408,7 +390,7 @@ export default class VATBookController {
      * @param {express.Request} req
      * @param {express.Response} res
      */
-    static async downloadVATBookExcel(req, res) {
+    static async downloadVATBookExcel(req, res, next) {
         try {
             // Obtener parámetros según el método HTTP
             let bookType, year, quarter, month, companyData;
@@ -498,13 +480,8 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en downloadVATBookExcel:', error);
-
             if (!res.headersSent) {
-                return res.status(500).json({
-                    success: false,
-                    message: "Error interno del servidor"
-                });
+                next(error);
             }
         }
     }
@@ -527,7 +504,7 @@ export default class VATBookController {
      * POST /api/vat-book/download/pdf
      * Body: { year: 2024, quarter: 1, bookType: "supported" }
      */
-    static async downloadVATBookPDF(req, res) {
+    static async downloadVATBookPDF(req, res, next) {
         try {
             const { year, quarter, month, bookType } = req.body;
 
@@ -591,10 +568,7 @@ export default class VATBookController {
 
         } catch (error) {
             if (!res.headersSent) {
-                return res.status(500).json({
-                    success: false,
-                    message: "Error interno del servidor"
-                });
+                next(error);
             }
         }
     }
@@ -619,7 +593,7 @@ export default class VATBookController {
      * // GET /api/vat-book/by-owner/2024?month=7
      * // GET /api/vat-book/by-owner/2024 (para el año completo)
      */
-    static async getVATBookByOwner(req, res) {
+    static async getVATBookByOwner(req, res, next) {
         try {
             const {year, quarter, month} = req.params;
             // Validar año
@@ -649,11 +623,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getVATBookByOwner:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -676,7 +646,7 @@ export default class VATBookController {
      * // GET /api/vat-book/consolidated/2025/1 (trimestre)
      * // GET /api/vat-book/consolidated/2025/0/7 (mes específico)
      */
-    static async getConsolidatedVATBook(req, res) {
+    static async getConsolidatedVATBook(req, res, next) {
         try {
             const {year, quarter, month} = req.params;
 
@@ -704,11 +674,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getConsolidatedVATBook:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
@@ -716,7 +682,7 @@ export default class VATBookController {
     /**
      * Obtiene estadísticas anuales del libro de IVA
      */
-    static async getAnnualVATStats(req, res) {
+    static async getAnnualVATStats(req, res, next) {
         try {
             const {year} = req.params;
 
@@ -737,18 +703,14 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getAnnualVATStats:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
     /**
      * Compara trimestres del año
      */
-    static async getQuarterlyVATComparison(req, res) {
+    static async getQuarterlyVATComparison(req, res, next) {
         try {
             const {year} = req.params;
 
@@ -769,18 +731,14 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getQuarterlyVATComparison:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 
     /**
      * Obtiene configuración del libro de IVA
      */
-    static async getVATBookConfig(req, res) {
+    static async getVATBookConfig(req, res, next) {
         try {
             const config = await VATBookService.getVATBookConfig();
 
@@ -791,11 +749,7 @@ export default class VATBookController {
             });
 
         } catch (error) {
-            console.error('Error en getVATBookConfig:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Error interno del servidor"
-            });
+            next(error);
         }
     }
 

@@ -9,7 +9,7 @@ export default class CadastralController {
      * Valida una referencia catastral consultando el Catastro oficial
      * GET /api/cadastral/validate/:reference
      */
-    static async validateCadastralReference(req, res) {
+    static async validateCadastralReference(req, res, next) {
         try {
             const { reference } = req.params;
 
@@ -32,11 +32,7 @@ export default class CadastralController {
             return res.status(200).json(result);
 
         } catch (error) {
-            return res.status(500).json({
-                isValid: false,
-                message: 'Error interno del servidor',
-                error: 'server_error'
-            });
+            next(error);
         }
     }
 
@@ -44,7 +40,7 @@ export default class CadastralController {
      * Endpoint para verificar si el servicio está funcionando
      * GET /api/cadastral/health
      */
-    static async healthCheck(req, res) {
+    static async healthCheck(req, res, next) {
         try {
             return res.status(200).json({
                 status: 'ok',
@@ -53,10 +49,7 @@ export default class CadastralController {
                 version: '1.0.0'
             });
         } catch (error) {
-            return res.status(500).json({
-                status: 'error',
-                message: 'Service unavailable'
-            });
+            next(error);
         }
     }
 }

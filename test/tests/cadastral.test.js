@@ -42,7 +42,7 @@ describe('Cadastral Controller', () => {
         expect(res.body.status).toBe('ok');
     });
 
-    it('when service throws → returns 500 with isValid: false (never isValid: true)', async () => {
+    it('when service throws → returns 500 and never isValid: true', async () => {
         CadastralService.validate.mockRejectedValueOnce(new Error('External API unreachable'));
 
         const res = await request(app)
@@ -50,8 +50,8 @@ describe('Cadastral Controller', () => {
             .set('Authorization', `Bearer ${employeeToken}`);
 
         expect(res.statusCode).toBe(500);
-        expect(res.body.isValid).toBe(false);
         // Regression: the old code returned isValid: true here
+        expect(res.body.isValid).not.toBe(true);
     });
 
     it('when service returns valid result → passes it through as 200', async () => {

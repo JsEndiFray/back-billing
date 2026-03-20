@@ -380,10 +380,6 @@ export default class InvoicesIssuedController {
         try {
             const created = await InvoicesIssuedService.createInvoice({...req.body});
 
-            if (!created || created.length === 0) {
-                return res.status(500).json("Error al crear factura: La operación no se completó correctamente.");
-            }
-
             return res.status(201).json({
                 message: "Factura creada correctamente",
                 invoice: created[0]
@@ -417,10 +413,6 @@ export default class InvoicesIssuedController {
             }
 
             const updated = await InvoicesIssuedService.updateInvoice(Number(id), updateData);
-
-            if (!updated || updated.length === 0) {
-                return res.status(500).json("Error al actualizar factura: La operación no se completó correctamente.");
-            }
 
             return res.status(200).json({
                 message: "Factura actualizada correctamente",
@@ -509,10 +501,6 @@ export default class InvoicesIssuedController {
 
             const refund = await InvoicesIssuedService.createRefund(originalInvoiceId);
 
-            if (!refund || refund.length === 0) {
-                return res.status(500).json("Error al crear abono: La operación no se completó correctamente.");
-            }
-
             return res.status(201).json({
                 message: "Abono creado correctamente",
                 refund: refund[0]
@@ -566,10 +554,6 @@ export default class InvoicesIssuedController {
 
             // Actualizar usando el servicio
             const updated = await InvoicesIssuedService.updateCollectionStatus(Number(id), collectionData);
-
-            if (!updated || updated.length === 0) {
-                return res.status(500).json("Error al actualizar el estado de cobro: La operación no se completó correctamente.");
-            }
 
             return res.status(200).json({
                 message: "Estado de cobro actualizado correctamente",
