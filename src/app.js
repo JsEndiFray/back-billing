@@ -110,11 +110,23 @@ app.use((req, res) => {
 
 /// Middleware global para manejar errores inesperados (500)
 app.use((err, req, res, next) => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const statusCode = (err instanceof AppError && err.isOperational) ? err.statusCode : 500;
+    const method = req.method;
+    const url = req.originalUrl;
+
+    // Log estructurado: siempre en servidor, stack solo en dev
+    const logParts = [`[ERROR] ${method} ${url} ${statusCode} - ${err.message}`];
+    if (err.errorCode) logParts.push(`(${err.errorCode})`);
+    if (err.details) logParts.push(`details: ${JSON.stringify(err.details)}`);
+    console.error(logParts.join(' '));
+    if (isDev && err.stack) console.error(err.stack);
+
     if (err instanceof AppError && err.isOperational) {
-        return res.status(err.statusCode).json({ success: false, message: err.message });
+        return res.status(statusCode).json({ success: false, message: err.message });
     }
-    // Error no operativo (bug, fallo de DB, etc.): loguear y respuesta genérica
-    console.error(err);
+
+    // Error no operativo (bug, fallo de DB, etc.): respuesta genérica sin detalles internos
     res.status(500).json({ success: false, message: 'Error interno del servidor' });
 });
 
