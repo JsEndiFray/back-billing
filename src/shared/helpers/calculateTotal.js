@@ -1,4 +1,5 @@
 import InvoicesIssuedService from "../../services/invoicesIssuedServices.js";
+import { AppError } from '../../errors/AppError.js';
 
 /**
  * HELPER PARA CÁLCULOS DE FACTURAS Y VALIDACIONES
@@ -353,12 +354,12 @@ export default class CalculateHelper {
         const ivaRate = Number(ivaPercentage);
 
         if (!validIvaRates.includes(ivaRate)) {
-            throw new Error('Porcentaje de IVA no válido. Debe ser 0%, 4%, 10% o 21%.');
+            throw new AppError('Porcentaje de IVA no válido. Debe ser 0%, 4%, 10% o 21%.', 400, 'INVALID_IVA_RATE');
         }
 
         const baseAmount = Number(amount);
         if (isNaN(baseAmount) || baseAmount < 0) {
-            throw new Error('El importe debe ser un número positivo.');
+            throw new AppError('El importe debe ser un número positivo.', 400, 'INVALID_AMOUNT');
         }
 
         return Math.round((baseAmount * ivaRate / 100) * 100) / 100;
@@ -430,7 +431,7 @@ export default class CalculateHelper {
                 date.setFullYear(date.getFullYear() + 1);
                 break;
             default:
-                throw new Error('Período de recurrencia no válido. Debe ser: monthly, quarterly o yearly.');
+                throw new AppError('Período de recurrencia no válido. Debe ser: monthly, quarterly o yearly.', 400, 'INVALID_RECURRENCE_PERIOD');
         }
 
         return date.toISOString().split('T')[0];

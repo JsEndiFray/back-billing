@@ -21,6 +21,7 @@ import InvoicesIssuedService from './invoicesIssuedServices.js';
 import InternalExpensesService from './internalExpensesServices.js';
 import CalculateHelper from '../shared/helpers/calculateTotal.js';
 import OwnersRepository from "../repository/ownersRepository.js";
+import { AppError } from '../errors/AppError.js';
 
 export default class VATBookService {
 
@@ -39,7 +40,7 @@ export default class VATBookService {
         // Validar parámetros
         const validation = CalculateHelper.validateDateParams(year, quarter, month);
         if (!validation.isValid) {
-            throw new Error(validation.message);
+            throw new AppError(validation.message, 400, 'INVALID_DATE_PARAMS');
         }
 
         // Obtener datos de facturas recibidas
@@ -89,7 +90,7 @@ export default class VATBookService {
         // Validar parámetros
         const validation = CalculateHelper.validateDateParams(year, quarter, month);
         if (!validation.isValid) {
-            throw new Error(validation.message);
+            throw new AppError(validation.message, 400, 'INVALID_DATE_PARAMS');
         }
 
         // Obtener datos de facturas emitidas
@@ -134,7 +135,7 @@ export default class VATBookService {
     static async generateQuarterlyVATLiquidation(year, quarter) {
         // Validar trimestre
         if (!quarter || quarter < 1 || quarter > 4) {
-            throw new Error('Trimestre debe ser entre 1 y 4');
+            throw new AppError('Trimestre debe ser entre 1 y 4', 400, 'INVALID_QUARTER');
         }
 
         // Obtener ambos libros del trimestre
@@ -173,7 +174,7 @@ export default class VATBookService {
         // 1. Validar parámetros de fecha
         const validation = CalculateHelper.validateDateParams(year, quarter, month);
         if (!validation.isValid) {
-            throw new Error(validation.message);
+            throw new AppError(validation.message, 400, 'INVALID_DATE_PARAMS');
         }
 
         // 2. Obtener todos los propietarios
@@ -237,7 +238,7 @@ export default class VATBookService {
         // Validar parámetros
         const validation = CalculateHelper.validateDateParams(year, quarter, month);
         if (!validation.isValid) {
-            throw new Error(validation.message);
+            throw new AppError(validation.message, 400, 'INVALID_DATE_PARAMS');
         }
 
         // Obtener los tres libros en paralelo

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { AppError } from '../../../errors/AppError.js';
 
 export default class ExcelGenerator {
 
@@ -35,7 +36,8 @@ export default class ExcelGenerator {
                 success: true
             };
         } catch (error) {
-            throw new Error(`Error generando Excel: ${error.message}`);
+            console.error('Error generando Excel:', error);
+            throw new AppError('Error al generar el archivo Excel', 500, 'EXCEL_GENERATION_ERROR');
         }
     }
     /**
