@@ -53,7 +53,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getAllExpenses:', error);
             next(error);
         }
     }
@@ -87,7 +86,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expense[0]);
         } catch (error) {
-            console.error('Error en getExpenseById:', error);
             next(error);
         }
     }
@@ -125,7 +123,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getExpensesByCategory:', error);
             next(error);
         }
     }
@@ -159,7 +156,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getExpensesByStatus:', error);
             next(error);
         }
     }
@@ -193,7 +189,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getExpensesBySupplier:', error);
             next(error);
         }
     }
@@ -228,7 +223,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getExpensesByDateRange:', error);
             next(error);
         }
     }
@@ -256,7 +250,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getDeductibleExpenses:', error);
             next(error);
         }
     }
@@ -284,7 +277,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getRecurringExpenses:', error);
             next(error);
         }
     }
@@ -313,7 +305,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expenses);
         } catch (error) {
-            console.error('Error en getExpensesAdvanced:', error);
             next(error);
         }
     }
@@ -508,7 +499,6 @@ export default class InternalExpensesController {
                 expense: approved[0]
             });
         } catch (error) {
-            console.error('Error en approveExpense:', error);
             next(error);
         }
     }
@@ -546,7 +536,6 @@ export default class InternalExpensesController {
                 expense: rejected[0]
             });
         } catch (error) {
-            console.error('Error en rejectExpense:', error);
             next(error);
         }
     }
@@ -583,7 +572,6 @@ export default class InternalExpensesController {
                 expense: paid[0]
             });
         } catch (error) {
-            console.error('Error en markExpenseAsPaid:', error);
             next(error);
         }
     }
@@ -625,7 +613,6 @@ export default class InternalExpensesController {
                 expense: updated[0]
             });
         } catch (error) {
-            console.error('Error en updateExpenseStatus:', error);
             next(error);
         }
     }
@@ -657,7 +644,6 @@ export default class InternalExpensesController {
             const stats = await InternalExpensesService.getExpenseStats();
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getExpenseStats:', error);
             next(error);
         }
     }
@@ -681,7 +667,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getStatsByCategory:', error);
             next(error);
         }
     }
@@ -715,7 +700,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(monthlyData);
         } catch (error) {
-            console.error('Error en getMonthlySummary:', error);
             next(error);
         }
     }
@@ -750,7 +734,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(vatData);
         } catch (error) {
-            console.error('Error en getVATBookData:', error);
             next(error);
         }
     }
@@ -782,7 +765,6 @@ export default class InternalExpensesController {
 
             return res.status(200).json(expensesDue);
         } catch (error) {
-            console.error('Error en getRecurringExpensesDue:', error);
             next(error);
         }
     }
@@ -809,7 +791,6 @@ export default class InternalExpensesController {
                 processed: processed
             });
         } catch (error) {
-            console.error('Error en processRecurringExpenses:', error);
             next(error);
         }
     }
@@ -846,7 +827,6 @@ export default class InternalExpensesController {
 
             return res.status(validation.isValid ? 200 : 400).json(validation);
         } catch (error) {
-            console.error('Error en validateDateRange:', error);
             next(error);
         }
     }
@@ -875,7 +855,6 @@ export default class InternalExpensesController {
             const result = InternalExpensesService.simulateCalculation(amount, iva_percentage || 21);
             return res.status(200).json(result);
         } catch (error) {
-            console.error('Error en simulateExpenseCalculation:', error);
             next(error);
         }
     }
@@ -898,7 +877,6 @@ export default class InternalExpensesController {
             const categories = InternalExpensesService.getAvailableCategories();
             return res.status(200).json(categories);
         } catch (error) {
-            console.error('Error en getAvailableCategories:', error);
             next(error);
         }
     }
@@ -921,7 +899,6 @@ export default class InternalExpensesController {
             const methods = InternalExpensesService.getAvailablePaymentMethods();
             return res.status(200).json(methods);
         } catch (error) {
-            console.error('Error en getAvailablePaymentMethods:', error);
             next(error);
         }
     }
@@ -944,7 +921,6 @@ export default class InternalExpensesController {
             const statuses = InternalExpensesService.getAvailableStatuses();
             return res.status(200).json(statuses);
         } catch (error) {
-            console.error('Error en getAvailableStatuses:', error);
             next(error);
         }
     }
@@ -987,7 +963,6 @@ export default class InternalExpensesController {
             });
 
         } catch (error) {
-            console.error('Error en downloadAttachment:', error);
             next(error);
         }
     }

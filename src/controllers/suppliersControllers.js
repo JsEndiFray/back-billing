@@ -30,7 +30,6 @@ export default class SuppliersController {
 
             return res.status(200).json(suppliers);
         } catch (error) {
-            console.error('Error en getAllSuppliers:', error);
             next(error);
         }
     }
@@ -58,7 +57,6 @@ export default class SuppliersController {
 
             return res.status(200).json(suppliers);
         } catch (error) {
-            console.error('Error en getAllSuppliersIncludingInactive:', error);
             next(error);
         }
     }
@@ -92,7 +90,6 @@ export default class SuppliersController {
 
             return res.status(200).json(supplier[0]);
         } catch (error) {
-            console.error('Error en getSupplierById:', error);
             next(error);
         }
     }
@@ -126,7 +123,6 @@ export default class SuppliersController {
 
             return res.status(200).json(supplier[0]);
         } catch (error) {
-            console.error('Error en getSupplierByTaxId:', error);
             next(error);
         }
     }
@@ -160,7 +156,6 @@ export default class SuppliersController {
 
             return res.status(200).json(suppliers);
         } catch (error) {
-            console.error('Error en getSuppliersByName:', error);
             next(error);
         }
     }
@@ -198,7 +193,6 @@ export default class SuppliersController {
                 supplier: created[0]
             });
         } catch (error) {
-            console.error('Error en createSupplier:', error);
             next(error);
         }
     }
@@ -237,7 +231,6 @@ export default class SuppliersController {
                 supplier: updated[0]
             });
         } catch (error) {
-            console.error('Error en updateSupplier:', error);
             next(error);
         }
     }
@@ -271,7 +264,6 @@ export default class SuppliersController {
 
             return res.status(204).send();
         } catch (error) {
-            console.error('Error en deleteSupplier:', error);
             next(error);
         }
     }
@@ -307,7 +299,6 @@ export default class SuppliersController {
                 message: "Proveedor reactivado correctamente"
             });
         } catch (error) {
-            console.error('Error en activateSupplier:', error);
             next(error);
         }
     }
@@ -335,7 +326,6 @@ export default class SuppliersController {
             const stats = await SuppliersService.getSupplierStats();
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getSupplierStats:', error);
             next(error);
         }
     }
@@ -367,7 +357,6 @@ export default class SuppliersController {
             const suggestions = await SuppliersService.getSupplierSuggestions(q);
             return res.status(200).json(suggestions);
         } catch (error) {
-            console.error('Error en getSupplierSuggestions:', error);
             next(error);
         }
     }
@@ -401,7 +390,6 @@ export default class SuppliersController {
 
             return res.status(200).json(suppliers);
         } catch (error) {
-            console.error('Error en getSuppliersByPaymentTerms:', error);
             next(error);
         }
     }
