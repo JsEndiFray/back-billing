@@ -595,51 +595,46 @@ export default class InvoicesIssuedRepository {
      * Incluye información completa de cliente, propiedad y propietario
      */
     static async findByIdWithDetails(id) {
-        try {
-            const [rows] = await db.query(`
-                SELECT ii.*,
-                       ii.start_date,
-                       ii.end_date,
-                       ii.corresponding_month,
-                       ii.is_proportional,
-                       -- Datos del cliente
-                       c.name                as client_name,
-                       c.lastname            as client_lastname,
-                       c.identification      as client_identification,
-                       c.company_name        as client_company_name,
-                       c.address             as client_address,
-                       c.postal_code         as client_postal_code,
-                       c.location            as client_location,
-                       c.province            as client_province,
-                       c.country             as client_country,
-                       c.type_client         as client_type,
-                       c.phone               as client_phone,
+        const [rows] = await db.query(`
+            SELECT ii.*,
+                   ii.start_date,
+                   ii.end_date,
+                   ii.corresponding_month,
+                   ii.is_proportional,
+                   -- Datos del cliente
+                   c.name                as client_name,
+                   c.lastname            as client_lastname,
+                   c.identification      as client_identification,
+                   c.company_name        as client_company_name,
+                   c.address             as client_address,
+                   c.postal_code         as client_postal_code,
+                   c.location            as client_location,
+                   c.province            as client_province,
+                   c.country             as client_country,
+                   c.type_client         as client_type,
+                   c.phone               as client_phone,
 
-                       -- Datos de la propiedad
-                       e.cadastral_reference as estate_reference_cadastral,
-                       e.address             as estate_address,
+                   -- Datos de la propiedad
+                   e.cadastral_reference as estate_reference_cadastral,
+                   e.address             as estate_address,
 
-                       -- Datos del propietario
-                       o.name                as owner_name,
-                       o.lastname            as owner_lastname,
-                       o.identification      as owner_identification,
-                       o.address             as owner_address,
-                       o.postal_code         as owner_postal_code,
-                       o.location            as owner_location,
-                       o.province            as owner_province,
-                       o.country             as owner_country,
-                       o.phone               as owner_phone
-                FROM invoices_issued ii
-                         LEFT JOIN clients c ON ii.clients_id = c.id
-                         LEFT JOIN estates e ON ii.estates_id = e.id
-                         LEFT JOIN owners o ON ii.owners_id = o.id
-                WHERE ii.id = ?
-            `, [id]);
-
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+                   -- Datos del propietario
+                   o.name                as owner_name,
+                   o.lastname            as owner_lastname,
+                   o.identification      as owner_identification,
+                   o.address             as owner_address,
+                   o.postal_code         as owner_postal_code,
+                   o.location            as owner_location,
+                   o.province            as owner_province,
+                   o.country             as owner_country,
+                   o.phone               as owner_phone
+            FROM invoices_issued ii
+                     LEFT JOIN clients c ON ii.clients_id = c.id
+                     LEFT JOIN estates e ON ii.estates_id = e.id
+                     LEFT JOIN owners o ON ii.owners_id = o.id
+            WHERE ii.id = ?
+        `, [id]);
+        return rows;
     }
 
 // ========================================
@@ -704,56 +699,51 @@ export default class InvoicesIssuedRepository {
      * Incluye información de la factura original
      */
     static async findRefundByIdWithDetails(id) {
-        try {
-            const [rows] = await db.query(`
-                SELECT ii.*,
-                       ii.start_date,
-                       ii.end_date,
-                       ii.corresponding_month,
-                       ii.is_proportional,
-                       -- Datos del cliente
-                       c.name                as client_name,
-                       c.lastname            as client_lastname,
-                       c.identification      as client_identification,
-                       c.company_name        as client_company_name,
-                       c.address             as client_address,
-                       c.postal_code         as client_postal_code,
-                       c.location            as client_location,
-                       c.province            as client_province,
-                       c.country             as client_country,
-                       c.type_client         as client_type,
-                       c.phone               as client_phone,
+        const [rows] = await db.query(`
+            SELECT ii.*,
+                   ii.start_date,
+                   ii.end_date,
+                   ii.corresponding_month,
+                   ii.is_proportional,
+                   -- Datos del cliente
+                   c.name                as client_name,
+                   c.lastname            as client_lastname,
+                   c.identification      as client_identification,
+                   c.company_name        as client_company_name,
+                   c.address             as client_address,
+                   c.postal_code         as client_postal_code,
+                   c.location            as client_location,
+                   c.province            as client_province,
+                   c.country             as client_country,
+                   c.type_client         as client_type,
+                   c.phone               as client_phone,
 
-                       -- Datos de la propiedad
-                       e.cadastral_reference as estate_reference_cadastral,
-                       e.address             as estate_address,
+                   -- Datos de la propiedad
+                   e.cadastral_reference as estate_reference_cadastral,
+                   e.address             as estate_address,
 
-                       -- Datos del propietario
-                       o.name                as owner_name,
-                       o.lastname            as owner_lastname,
-                       o.identification      as owner_identification,
-                       o.address             as owner_address,
-                       o.postal_code         as owner_postal_code,
-                       o.location            as owner_location,
-                       o.province            as owner_province,
-                       o.country             as owner_country,
-                       o.phone               as owner_phone,
+                   -- Datos del propietario
+                   o.name                as owner_name,
+                   o.lastname            as owner_lastname,
+                   o.identification      as owner_identification,
+                   o.address             as owner_address,
+                   o.postal_code         as owner_postal_code,
+                   o.location            as owner_location,
+                   o.province            as owner_province,
+                   o.country             as owner_country,
+                   o.phone               as owner_phone,
 
-                       -- Datos de la factura original
-                       oi.invoice_number     as original_invoice_number
-                FROM invoices_issued ii
-                         LEFT JOIN clients c ON ii.clients_id = c.id
-                         LEFT JOIN estates e ON ii.estates_id = e.id
-                         LEFT JOIN owners o ON ii.owners_id = o.id
-                         LEFT JOIN invoices_issued oi ON ii.original_invoice_id = oi.id
-                WHERE ii.id = ?
-                  AND ii.is_refund = TRUE
-            `, [id]);
-
-            return rows;
-        } catch (error) {
-            throw error;
-        }
+                   -- Datos de la factura original
+                   oi.invoice_number     as original_invoice_number
+            FROM invoices_issued ii
+                     LEFT JOIN clients c ON ii.clients_id = c.id
+                     LEFT JOIN estates e ON ii.estates_id = e.id
+                     LEFT JOIN owners o ON ii.owners_id = o.id
+                     LEFT JOIN invoices_issued oi ON ii.original_invoice_id = oi.id
+            WHERE ii.id = ?
+              AND ii.is_refund = TRUE
+        `, [id]);
+        return rows;
     }
 
     /**
