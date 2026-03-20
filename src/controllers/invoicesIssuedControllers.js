@@ -802,8 +802,8 @@ export default class InvoicesIssuedController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    return res.status(500).json("Error al generar PDF");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
         } catch (error) {
@@ -848,8 +848,8 @@ export default class InvoicesIssuedController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    return res.status(500).json("Error al generar PDF");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
         } catch (error) {

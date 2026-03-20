@@ -703,9 +703,8 @@ export default class InvoicesReceivedController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    console.error('Error al descargar PDF:', err);
-                    return res.status(500).json("Error al generar PDF");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
         } catch (error) {
@@ -750,9 +749,8 @@ export default class InvoicesReceivedController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    console.error('Error al descargar PDF de abono:', err);
-                    return res.status(500).json("Error al generar PDF");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
         } catch (error) {
@@ -998,9 +996,8 @@ export default class InvoicesReceivedController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    console.error('Error al descargar archivo:', err);
-                    return res.status(500).json("Error al descargar archivo");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
 

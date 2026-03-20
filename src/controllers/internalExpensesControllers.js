@@ -981,9 +981,8 @@ export default class InternalExpensesController {
 
             // Enviar archivo para descarga
             res.download(filePath, fileName, (err) => {
-                if (err) {
-                    console.error('Error al descargar archivo:', err);
-                    return res.status(500).json("Error al descargar archivo");
+                if (err && !res.headersSent) {
+                    next(err);
                 }
             });
 

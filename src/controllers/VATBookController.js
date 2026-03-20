@@ -458,13 +458,8 @@ export default class VATBookController {
             const excelResult = await ExcelGenerator.generateVATBookExcel(bookData, companyData);
             // Enviar archivo para descarga
             res.download(excelResult.filePath, excelResult.fileName, (err) => {
-                if (err) {
-                    if (!res.headersSent) {
-                        return res.status(500).json({
-                            success: false,
-                            message: "Error enviando archivo para descarga"
-                        });
-                    }
+                if (err && !res.headersSent) {
+                    next(err);
                 }
 
                 // Limpiar archivo temporal después de la descarga
