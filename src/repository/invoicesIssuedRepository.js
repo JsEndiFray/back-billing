@@ -848,6 +848,65 @@ export default class InvoicesIssuedRepository {
         return result.insertId ? [{id: result.insertId, created: true}] : [];
     }
 
+    /**
+     * Crea un abono de forma atómica: genera el número de secuencia y realiza el INSERT
+     * en una única transacción para evitar números duplicados en concurrencia.
+     * @param {Object} refundData - Datos del abono (sin invoice_number, se genera aquí)
+     * @returns {Array} [{id, invoice_number, created: true}] o []
+     */
+    static async createRefundAtomic(refundData) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Bloquear la última fila para evitar race condition en la numeración
+            const [lastRow] = await connection.query(
+                'SELECT invoice_number FROM invoices_issued WHERE is_refund = TRUE ORDER BY id DESC LIMIT 1 FOR UPDATE'
+            );
+
+            let newRefundNumber = 'ABONO-0001';
+            if (lastRow.length > 0) {
+                const lastNumber = parseInt(lastRow[0].invoice_number.replace(/\D/g, ''), 10);
+                newRefundNumber = `ABONO-${String(lastNumber + 1).padStart(4, '0')}`;
+            }
+
+            const {
+                estates_id, owners_id, clients_id, invoice_date,
+                tax_base, iva, irpf, total, ownership_percent,
+                original_invoice_id,
+                collection_status = 'pending', collection_method = 'transfer',
+                collection_date = null, collection_reference = null, collection_notes = null,
+                start_date = null, end_date = null, corresponding_month = null,
+                is_proportional = 0, created_by = null
+            } = refundData;
+
+            const [result] = await connection.query(`
+                INSERT INTO invoices_issued (invoice_number, estates_id, owners_id, clients_id, invoice_date,
+                                             tax_base, iva, irpf, total, ownership_percent,
+                                             is_refund, original_invoice_id,
+                                             collection_status, collection_method, collection_date, collection_reference,
+                                             collection_notes,
+                                             start_date, end_date, corresponding_month, is_proportional,
+                                             created_by, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                [
+                    newRefundNumber, estates_id, owners_id, clients_id, invoice_date,
+                    tax_base, iva, irpf, total, ownership_percent, original_invoice_id,
+                    collection_status, collection_method, collection_date, collection_reference, collection_notes,
+                    start_date, end_date, corresponding_month, is_proportional, created_by
+                ]
+            );
+
+            await connection.commit();
+            return result.insertId ? [{id: result.insertId, invoice_number: newRefundNumber, created: true}] : [];
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
 }
 
 

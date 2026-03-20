@@ -625,18 +625,9 @@ export default class InvoicesIssuedService {
         // REGLA: No se puede hacer abono de un abono
         if (Boolean(originalInvoice[0].is_refund)) return {error: 'CANNOT_REFUND_REFUND'};
 
-        // Generar número de abono secuencial
-        const lastRefundNumber = await InvoicesIssuedRepository.getLastRefundNumber();
-        let newRefundNumber = 'ABONO-0001';
-        if (lastRefundNumber.length > 0) {
-            const lastNumber = parseInt(lastRefundNumber[0].invoice_number.replace(/\D/g, ''), 10);
-            const nextNumber = lastNumber + 1;
-            newRefundNumber = `ABONO-${String(nextNumber).padStart(4, '0')}`;
-        }
-
-        // Crear abono con valores negativos y campos proporcionales heredados
+        // Crear abono con valores negativos y campos proporcionales heredados.
+        // El número de secuencia (ABONO-XXXX) se genera atómicamente en el repositorio.
         const refundToCreate = {
-            invoice_number: newRefundNumber,
             estates_id: originalInvoice[0].estates_id,
             owners_id: originalInvoice[0].owners_id,
             clients_id: originalInvoice[0].clients_id,
@@ -658,8 +649,8 @@ export default class InvoicesIssuedService {
             is_proportional: Number(originalInvoice[0].is_proportional || 0)
         };
 
-        const newRefundId = await InvoicesIssuedRepository.createRefund(refundToCreate);
-        return newRefundId.length > 0 ? newRefundId : {error: 'DB_ERROR'};
+        const newRefund = await InvoicesIssuedRepository.createRefundAtomic(refundToCreate);
+        return newRefund.length > 0 ? newRefund : {error: 'DB_ERROR'};
     }
 
     // ==========================================
