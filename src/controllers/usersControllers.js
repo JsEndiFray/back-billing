@@ -89,10 +89,6 @@ export default class UserController {
         try {
             const {username, password, email, phone, role} = req.body;
             const result = await UserService.createUser({username, password, email, phone, role});
-            if (!result.length) {
-                // Mensaje informativo que ayuda al usuario a identificar el problema
-                return res.status(409).json('Usuario duplicado.. Puede ser nombre de usuario email o teléfono.');
-            }
             return res.status(201).json(result);
         } catch (error) {
             next(error);
@@ -112,10 +108,6 @@ export default class UserController {
 
             const {username, password, email, phone, role} = req.body;
             const updated = await UserService.updateUser(id, {username, password, email, phone, role});
-            if (!updated.length) {
-                // Mensaje que cubre tanto duplicados como usuario no encontrado
-                return res.status(409).json('Usuario duplicado o no encontrado');
-            }
             return res.status(200).json(updated);
         } catch (error) {
             next(error);
@@ -128,10 +120,7 @@ export default class UserController {
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-            const deleted = await UserService.deleteUser(id);
-            if (!deleted.length) {
-                return res.status(404).json("Usuario no encontrado");
-            }
+            await UserService.deleteUser(id);
             return res.status(204).send();
         } catch (error) {
             next(error);

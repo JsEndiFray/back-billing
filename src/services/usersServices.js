@@ -7,7 +7,6 @@ import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de usuarios con autenticación JWT
- * CORREGIDO: Ahora usa patrón consistente con otros servicios
  */
 export default class UserService {
 
@@ -21,11 +20,11 @@ export default class UserService {
      */
     static async login(username, password) {
         const users = await UsersRepository.findByUsername(username);
-        if (users.length === 0) throw new AppError('Credenciales inválidas', 401);
+        if (users.length === 0) throw new AppError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
 
         const user = users[0];
         const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) throw new AppError('Credenciales inválidas', 401);
+        if (!isValid) throw new AppError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -45,17 +44,17 @@ export default class UserService {
      * Renovar token de acceso usando refresh token
      */
     static async refreshToken(refreshToken) {
-        if (!refreshToken) throw new AppError('Token de actualización requerido', 400);
+        if (!refreshToken) throw new AppError('Token de actualización requerido', 400, 'MISSING_REFRESH_TOKEN');
 
         const decoded = verifyToken(
             refreshToken,
             process.env.JWT_REFRESH_SECRET
         );
 
-        if (!decoded) throw new AppError('Token expirado o inválido', 401);
+        if (!decoded) throw new AppError('Token expirado o inválido', 401, 'INVALID_REFRESH_TOKEN');
 
         const users = await UsersRepository.findById(decoded.id);
-        if (users.length === 0) throw new AppError('Token expirado o inválido', 401);
+        if (users.length === 0) throw new AppError('Token expirado o inválido', 401, 'INVALID_REFRESH_TOKEN');
 
         const user = users[0];
 
@@ -85,29 +84,22 @@ export default class UserService {
     static async getUserByEmail(email) {
         if (!email) return [];
         return await UsersRepository.findByEmail(email);
-
     }
 
     static async getUserByPhone(phone) {
         if (!phone) return [];
         return await UsersRepository.findByPhone(phone);
-
     }
 
     static async getUserById(id) {
         if (!id || isNaN(Number(id))) return [];
         return await UsersRepository.findById(id);
-
     }
 
     // ========================================
     // CRUD CON HASH PASSWORD Y VALIDACIONES
     // ========================================
 
-    /**
-     * Crear usuario con validaciones de unicidad
-     * ✅ CORREGIDO: Ahora usa null para consistencia
-     */
     static async createUser(user) {
         const userData = {
             username: user.username.toLowerCase().trim(),
@@ -115,34 +107,28 @@ export default class UserService {
             email: user.email.toLowerCase().trim(),
             phone: user.phone.trim(),
             role: user.role.trim(),
-        }
+        };
 
-        // Validar campos únicos - ahora retorna null para consistencia
         const existsUsername = await UsersRepository.findByUsername(userData.username);
-        if (existsUsername.length > 0) return [];
+        if (existsUsername.length > 0) throw new AppError('El nombre de usuario ya está en uso', 409, 'DUPLICATE_USERNAME');
 
         const existsEmail = await UsersRepository.findByEmail(userData.email);
-        if (existsEmail.length > 0) return [];
+        if (existsEmail.length > 0) throw new AppError('El email ya está en uso', 409, 'DUPLICATE_EMAIL');
 
         const existsPhone = await UsersRepository.findByPhone(userData.phone);
-        if (existsPhone.length > 0) return [];
+        if (existsPhone.length > 0) throw new AppError('El teléfono ya está en uso', 409, 'DUPLICATE_PHONE');
 
-        // Hash contraseña antes de guardar
         userData.password = await bcrypt.hash(userData.password, 10);
 
         const created = await UsersRepository.create(userData);
-        if (created.length === 0) return [];
+        if (created.length === 0) throw new AppError('Error al crear usuario', 500, 'USER_CREATE_ERROR');
 
         const {password: _, ...safeData} = userData;
         return [{...safeData, id: created[0].id}];
     }
 
-    /**
-     * Actualizar usuario con validaciones de duplicados
-     * Consistente con createUser
-     */
     static async updateUser(id, data) {
-        if (!id || isNaN(Number(id))) return [];
+        if (!id || isNaN(Number(id))) throw new AppError('ID de usuario inválido', 400, 'INVALID_USER_ID');
 
         const cleanUserData = {
             id: id,
@@ -151,59 +137,45 @@ export default class UserService {
             email: data.email.toLowerCase().trim(),
             phone: data.phone.trim(),
             role: data.role.trim(),
-        }
+        };
 
         const existing = await UsersRepository.findById(id);
-        if (existing.length === 0) return [];
+        if (existing.length === 0) throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
 
         const currentUser = existing[0];
-        if (!currentUser) return [];
 
-        // Verificar duplicados solo si cambian los valores
         if (cleanUserData.username && cleanUserData.username !== currentUser.username) {
             const existingUsername = await UsersRepository.findByUsername(cleanUserData.username);
-            if (existingUsername.length > 0) return [];
+            if (existingUsername.length > 0) throw new AppError('El nombre de usuario ya está en uso', 409, 'DUPLICATE_USERNAME');
         }
 
         if (cleanUserData.email && cleanUserData.email !== currentUser.email) {
             const existingEmail = await UsersRepository.findByEmail(data.email);
-            if (existingEmail.length > 0) return [];
+            if (existingEmail.length > 0) throw new AppError('El email ya está en uso', 409, 'DUPLICATE_EMAIL');
         }
 
         if (cleanUserData.phone && cleanUserData.phone !== currentUser.phone) {
             const existingPhone = await UsersRepository.findByPhone(cleanUserData.phone);
-            if (existingPhone.length > 0) return [];
+            if (existingPhone.length > 0) throw new AppError('El teléfono ya está en uso', 409, 'DUPLICATE_PHONE');
         }
 
-        // Hash nueva contraseña si existe
         if (cleanUserData.password) {
             cleanUserData.password = await bcrypt.hash(cleanUserData.password, 10);
         }
 
         const updated = await UsersRepository.update(cleanUserData);
-        return updated.length > 0 ? [cleanUserData] : [];
+        if (updated.length === 0) throw new AppError('Error al actualizar usuario', 500, 'USER_UPDATE_ERROR');
+        return [cleanUserData];
     }
 
     static async deleteUser(id) {
-        if (!id || isNaN(Number(id))) return [];
+        if (!id || isNaN(Number(id))) throw new AppError('ID de usuario inválido', 400, 'INVALID_USER_ID');
 
         const existing = await UsersRepository.findById(id);
-        if (existing.length === 0) return [];
-
-        const user = existing[0];
-        if (!user) return [];
+        if (existing.length === 0) throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
 
         const result = await UsersRepository.delete(id);
-        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
+        if (result.length === 0) throw new AppError('Error al eliminar usuario', 500, 'USER_DELETE_ERROR');
+        return [{deleted: true, id: Number(id)}];
     }
 }
-
-/**
- * ✅ PATRÓN CONSISTENTE APLICADO:
- * - Arrays [] para duplicados/errores
- * - Arrays [data] para éxito
- * - Verificaciones .length > 0 para arrays
- * - EXCEPCIÓN: login/refresh retornan objetos de auth (caso especial)
- * - Sanitización lowercase/trim apropiada
- * - Hash de contraseñas seguro
- */
