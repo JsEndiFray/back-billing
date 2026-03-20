@@ -11,6 +11,7 @@ import helmet from "helmet";
 
 //Importaciones de Configuración y Middlewares Locales
 import swaggerSpec from "./config/swagger.js";
+import { AppError } from "./errors/AppError.js";
 import {generalLimiter, authLimiter} from "./middlewares/rate-limit.js";
 
 //Importaciones de Rutas de la API
@@ -109,6 +110,10 @@ app.use((req, res) => {
 
 /// Middleware global para manejar errores inesperados (500)
 app.use((err, req, res, next) => {
+    if (err instanceof AppError && err.isOperational) {
+        return res.status(err.statusCode).json({ message: err.message });
+    }
+    // Error no operativo (bug, fallo de DB, etc.): loguear y respuesta genérica
     console.error(err);
     res.status(500).json({ message: 'Error interno del servidor' });
 });
