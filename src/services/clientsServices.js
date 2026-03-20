@@ -146,7 +146,7 @@ export default class ClientsServices {
                 cleanClientsData.relationship_type = 'ADMINISTRATOR';
             }
             const company = await ClientsRepository.findById(cleanClientsData.parent_company_id);
-            if (!company.length > 0 || company[0].type_client !== 'empresa') {
+            if (company.length === 0 || company[0].type_client !== 'empresa') {
                 return [];
             }
         }
@@ -159,7 +159,7 @@ export default class ClientsServices {
 
         // Verificar que existe
         const existing = await ClientsRepository.findById(cleanClientsData.id);
-        if (!existing.length > 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) return {error: 'NOT_FOUND'};
 
         // Verificar identificación única (excepto este mismo cliente)
         if (cleanClientsData.identification) {
@@ -181,7 +181,7 @@ export default class ClientsServices {
         if (!id || isNaN(Number(id))) return [];
 
         const client = await ClientsRepository.findById(id);
-        if (!client.length > 0) return [];
+        if (client.length === 0) return [];
 
         // REGLA 1: No eliminar si tiene facturas
         const billsCount = await ClientsRepository.countBillsByClient(id);

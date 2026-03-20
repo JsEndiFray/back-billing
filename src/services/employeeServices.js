@@ -106,7 +106,7 @@ export default class EmployeeServices {
         }
         // Verificar que existe
         const existing = await EmployeeRepository.findById(cleanEmployeeData.id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // Validar identificación única (excepto este mismo empleado)
         if (cleanEmployeeData.identification) {
@@ -117,7 +117,7 @@ export default class EmployeeServices {
         }
 
         const updated = await EmployeeRepository.update(cleanEmployeeData)
-        if (!updated.length > 0) return [];
+        if (updated.length === 0) return [];
 
         return [cleanEmployeeData];
 
@@ -127,10 +127,10 @@ export default class EmployeeServices {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await EmployeeRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const deleted = await EmployeeRepository.delete(id)
-        if (!deleted.length > 0) return [];
+        if (deleted.length === 0) return [];
 
         return [{deleted: true, id: Number(id)}];
     }

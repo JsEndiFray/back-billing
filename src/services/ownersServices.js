@@ -87,7 +87,7 @@ export default class OwnersServices {
         if (existing.length > 0) return [];
 
         const created = await OwnersRepository.create(ownersData);
-        if (!created.length > 0) return [];
+        if (created.length === 0) return [];
 
         return [{...ownersData, id: created[0].id}];
     }
@@ -114,7 +114,7 @@ export default class OwnersServices {
 
         // Verificar que existe
         const existing = await OwnersRepository.findById(cleanOwnersData.id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // Validar identificación única (excepto este mismo propietario)
         if (cleanOwnersData.identification) {
@@ -132,7 +132,7 @@ export default class OwnersServices {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await OwnersRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const result = await OwnersRepository.delete(id);
         return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];

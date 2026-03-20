@@ -523,7 +523,7 @@ export default class InvoicesIssuedService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InvoicesIssuedRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // TODO: Regla de negocio: ¿Se puede eliminar si tiene abonos asociados?
         // Esto requeriría un método en el repositorio como `hasRefundsAssociated(invoiceId)`.
@@ -673,7 +673,7 @@ export default class InvoicesIssuedService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InvoicesIssuedRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const validStatuses = CalculateHelper.getValidInvoicesIssuedStatuses();
         if (!validStatuses.includes(collectionData.collection_status)) {

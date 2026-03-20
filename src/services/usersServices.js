@@ -20,7 +20,7 @@ export default class UserService {
      */
     static async login(username, password) {
         const users = await UsersRepository.findByUsername(username);
-        if (!users.length > 0) return null;
+        if (users.length === 0) return null;
 
         const user = users[0];
         if (!user) return null;
@@ -56,7 +56,7 @@ export default class UserService {
         if (!decoded) return null;
 
         const users = await UsersRepository.findById(decoded.id);
-        if (!users.length > 0) return null;
+        if (users.length === 0) return null;
 
         const user = users[0];
         if (!user) return null;
@@ -133,7 +133,7 @@ export default class UserService {
         userData.password = await bcrypt.hash(userData.password, 10);
 
         const created = await UsersRepository.create(userData);
-        if (!created.length > 0) return [];
+        if (created.length === 0) return [];
 
         return [{...userData, id: created[0].id}];
     }
@@ -155,7 +155,7 @@ export default class UserService {
         }
 
         const existing = await UsersRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const currentUser = existing[0];
         if (!currentUser) return [];
@@ -189,7 +189,7 @@ export default class UserService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await UsersRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const user = existing[0];
         if (!user) return [];

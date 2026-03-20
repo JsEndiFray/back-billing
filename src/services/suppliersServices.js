@@ -160,7 +160,7 @@ export default class SuppliersService {
         };
 
         const created = await SuppliersRepository.create(supplierData);
-        if (!created.length > 0) return [];
+        if (created.length === 0) return [];
 
         return [{...supplierData, id: created[0].id}];
     }
@@ -251,7 +251,7 @@ export default class SuppliersService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await SuppliersRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // TODO: Verificar que no tenga facturas recibidas asociadas
         // Esto se implementará cuando tengamos invoices_received
@@ -267,7 +267,7 @@ export default class SuppliersService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await SuppliersRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         const result = await SuppliersRepository.activate(id);
         return result.length > 0 ? [{activated: true, id: Number(id)}] : [];

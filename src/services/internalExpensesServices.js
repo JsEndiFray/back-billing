@@ -421,7 +421,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return {error: 'INVALID_ID'};
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) return {error: 'NOT_FOUND'};
 
         // REGLA DE NEGOCIO: No se pueden eliminar gastos aprobados o pagados
         if (existing[0].status === 'approved' || existing[0].status === 'paid') {
@@ -443,7 +443,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // REGLA DE NEGOCIO: Solo se pueden aprobar gastos pendientes
         if (existing[0].status !== 'pending') return [];
@@ -459,7 +459,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // REGLA DE NEGOCIO: Solo se pueden rechazar gastos pendientes
         if (existing[0].status !== 'pending') return [];
@@ -475,7 +475,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // REGLA DE NEGOCIO: Solo se pueden marcar como pagados gastos aprobados
         if (existing[0].status !== 'approved') return [];
@@ -494,7 +494,7 @@ export default class InternalExpensesService {
         if (!validStatuses.includes(status)) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // Validaciones según el estado
         switch (status) {

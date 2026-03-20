@@ -234,7 +234,7 @@ export default class InvoicesReceivedService {
         };
 
         const created = await InvoicesReceivedRepository.create(invoiceData);
-        if (!created.length > 0) return [];
+        if (created.length === 0) return [];
 
         return [{...invoiceData, id: created[0].id}];
     }
@@ -364,7 +364,7 @@ export default class InvoicesReceivedService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InvoicesReceivedRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // TODO: Verificar que no tenga abonos asociados
 
@@ -381,7 +381,7 @@ export default class InvoicesReceivedService {
      */
     static async updatePaymentStatus(id, paymentData) {
         const existing = await InvoicesReceivedRepository.findById(id);
-        if (!existing.length > 0) return [];
+        if (existing.length === 0) return [];
 
         // Validar estados permitidos
         const validStatuses = CalculateHelper.getValidInvoicesReceivedStatuses();
@@ -472,7 +472,7 @@ export default class InvoicesReceivedService {
         };
 
         const created = await InvoicesReceivedRepository.createRefund(refundData);
-        if (!created.length > 0) return [];
+        if (created.length === 0) return [];
 
         return [{...refundData, id: created[0].id}];
     }
