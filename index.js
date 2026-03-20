@@ -10,6 +10,17 @@
 import app from './src/app.js';
 import { checkDbConnection } from './src/db/dbConnect.js';
 
+//Handlers de estabilidad del proceso — deben registrarse lo antes posible
+process.on('unhandledRejection', (err) => {
+    console.error('UNHANDLED REJECTION:', err);
+    process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+    process.exit(1);
+});
+
 //Carga de Variables de Entorno
 
 //Carga las variables desde el archivo .env a process.env
