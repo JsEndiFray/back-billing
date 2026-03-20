@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { AppError } from '../errors/AppError.js';
 
 /**
  * Servicio para gestión de archivos PDF en almacenamiento local
@@ -102,7 +103,7 @@ export class LocalFileService {
 
         } catch (error) {
             console.error('❌ Error guardando archivo:', error);
-            throw new Error(`Error al guardar archivo: ${error.message}`);
+            throw new AppError('Error al guardar el archivo', 500);
         }
     }
 
@@ -116,14 +117,15 @@ export class LocalFileService {
             const fullPath = path.join(this.uploadPath, filePathOrName);
 
             if (!fs.existsSync(fullPath)) {
-                throw new Error('Archivo no encontrado');
+                throw new AppError('Archivo no encontrado', 404);
             }
 
             return fs.readFileSync(fullPath);
 
         } catch (error) {
+            if (error instanceof AppError) throw error;
             console.error('❌ Error leyendo archivo:', error);
-            throw new Error(`Error al leer archivo: ${error.message}`);
+            throw new AppError('Error al leer el archivo', 500);
         }
     }
 
@@ -147,7 +149,7 @@ export class LocalFileService {
 
         } catch (error) {
             console.error('❌ Error eliminando archivo:', error);
-            throw new Error(`Error al eliminar archivo: ${error.message}`);
+            throw new AppError('Error al eliminar el archivo', 500);
         }
     }
 
@@ -161,7 +163,7 @@ export class LocalFileService {
             const filePath = path.join(this.uploadPath, fileName);
 
             if (!fs.existsSync(filePath)) {
-                throw new Error('Archivo no encontrado');
+                throw new AppError('Archivo no encontrado', 404);
             }
 
             const stats = fs.statSync(filePath);
@@ -177,8 +179,9 @@ export class LocalFileService {
             };
 
         } catch (error) {
+            if (error instanceof AppError) throw error;
             console.error('Error obteniendo información del archivo:', error);
-            throw new Error(`Error al obtener información: ${error.message}`);
+            throw new AppError('Error al obtener información del archivo', 500);
         }
     }
 
@@ -197,7 +200,7 @@ export class LocalFileService {
 
         } catch (error) {
             console.error('Error listando archivos:', error);
-            throw new Error(`Error al listar archivos: ${error.message}`);
+            throw new AppError('Error al listar los archivos', 500);
         }
     }
 
