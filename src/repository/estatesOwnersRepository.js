@@ -100,7 +100,7 @@ export default class EstateOwnersRepository {
      * @param {number} ownershipPercent - Nuevo porcentaje de propiedad
      * @returns {boolean} true si se actualizó algún registro, false si no
      */
-    static async updateById(id, ownershipPercent) {
+    static async update(id, ownershipPercent) {
         const [result] = await db.query(
             `UPDATE estate_owners
              SET ownership_percentage = ?
@@ -116,7 +116,7 @@ export default class EstateOwnersRepository {
      * @param {number} id - ID único del registro a eliminar
      * @returns {number} Número de filas eliminadas (0 si no existía el registro)
      */
-    static async deleteById(id) {
+    static async delete(id) {
         const [result] = await db.query(
             `DELETE
              FROM estate_owners

@@ -58,7 +58,7 @@ export default class EstateOwnersService {
         if (!existing.length) return [];
 
         // Actualizar en la base de datos
-        const updated = await EstateOwnersRepository.updateById(id, ownership_percentage);
+        const updated = await EstateOwnersRepository.update(id, ownership_percentage);
 
         return updated.length > 0 ? [{id: Number(id), ownership_percentage, updated: true}] : [];
     }
@@ -74,7 +74,7 @@ export default class EstateOwnersService {
         const existing = await EstateOwnersRepository.findById(id);
         if (!existing.length) return [];
 
-        const deleted = await EstateOwnersRepository.deleteById(id);
+        const deleted = await EstateOwnersRepository.delete(id);
         return deleted.length > 0 ? [{deleted: true, id: Number(id)}] : [];
     }
 }
