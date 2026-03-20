@@ -63,7 +63,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company,
                    s.tax_id AS supplier_tax_id,
@@ -80,7 +88,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findByInvoiceNumber(invoiceNumber) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company
             FROM invoices_received ir
@@ -95,7 +111,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findBySupplierId(supplierId) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company
             FROM invoices_received ir
@@ -111,7 +135,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findByCategory(category) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company
             FROM invoices_received ir
@@ -127,7 +159,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findByDateRange(startDate, endDate) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company
             FROM invoices_received ir
@@ -143,7 +183,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findByPaymentStatus(status) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company
             FROM invoices_received ir
@@ -159,7 +207,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findOverdueInvoices() {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company,
                    DATEDIFF(CURRENT_DATE, ir.due_date) AS days_overdue
@@ -177,7 +233,15 @@ export default class InvoicesReceivedRepository {
      */
     static async findDueSoon(days = 7) {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company,
                    DATEDIFF(ir.due_date, CURRENT_DATE) AS days_until_due
@@ -365,7 +429,15 @@ export default class InvoicesReceivedRepository {
      */
     static async getAllRefunds() {
         const [rows] = await db.query(`
-            SELECT ir.*,
+            SELECT ir.id, ir.invoice_number, ir.our_reference, ir.supplier_id, ir.property_id,
+                   ir.invoice_date, ir.due_date, ir.received_date,
+                   ir.tax_base, ir.iva_percentage, ir.iva_amount, ir.irpf_percentage, ir.irpf_amount, ir.total_amount,
+                   ir.category, ir.subcategory, ir.description, ir.notes,
+                   ir.collection_status, ir.collection_method, ir.collection_date,
+                   ir.collection_reference, ir.collection_notes,
+                   ir.start_date, ir.end_date, ir.corresponding_month, ir.is_proportional,
+                   ir.is_refund, ir.original_invoice_id, ir.pdf_path, ir.has_attachments,
+                   ir.created_at, ir.updated_at,
                    s.name AS supplier_name,
                    s.company_name AS supplier_company,
                    orig.invoice_number AS original_invoice_number

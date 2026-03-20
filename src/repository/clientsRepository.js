@@ -58,7 +58,9 @@ export default class ClientsRepository {
      */
     static async getAutonomsWithCompanies() {
         const [rows] = await db.query(`
-            SELECT a.*,
+            SELECT a.id, a.type_client, a.name, a.lastname, a.company_name, a.identification,
+                   a.phone, a.email, a.address, a.postal_code, a.location, a.province, a.country,
+                   a.parent_company_id, a.relationship_type, a.date_create, a.date_update,
                    c.company_name as related_company_name
             FROM clients a
                      LEFT JOIN clients c ON a.parent_company_id = c.id
@@ -73,7 +75,9 @@ export default class ClientsRepository {
      */
     static async getAdministratorsByCompany(companyId) {
         const [rows] = await db.query(`
-            SELECT *
+            SELECT id, type_client, name, lastname, company_name, identification,
+                   phone, email, address, postal_code, location, province, country,
+                   parent_company_id, relationship_type, date_create, date_update
             FROM clients
             WHERE parent_company_id = ?
               AND relationship_type = ?
@@ -90,7 +94,7 @@ export default class ClientsRepository {
      * Busca por tipo de cliente (empresa, autonomo, etc.)
      */
     static async findByType(type_client) {
-        const [rows] = await db.query('SELECT * FROM clients WHERE type_client = ?', [type_client]);
+        const [rows] = await db.query('SELECT id, type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update FROM clients WHERE type_client = ?', [type_client]);
         return rows;
     }
 
@@ -98,7 +102,7 @@ export default class ClientsRepository {
      * Busca por nombre de empresa (case-insensitive)
      */
     static async findByCompany(company_name) {
-        const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(company_name)) = LOWER(TRIM(?))', [company_name]);
+        const [rows] = await db.query('SELECT id, type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update FROM clients WHERE LOWER(TRIM(company_name)) = LOWER(TRIM(?))', [company_name]);
         return rows;
     }
 
@@ -107,7 +111,7 @@ export default class ClientsRepository {
      * Permite buscar solo por uno de los campos
      */
     static async findByNameOrLastname(name, lastname) {
-        let query = 'SELECT * FROM clients WHERE 1=1';
+        let query = 'SELECT id, type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update FROM clients WHERE 1=1';
         const values = [];
 
         if (name) {
@@ -128,7 +132,7 @@ export default class ClientsRepository {
      * Busca por identificación (NIF/CIF) - único
      */
     static async findByIdentification(identification) {
-        const [rows] = await db.query('SELECT * FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
+        const [rows] = await db.query('SELECT id, type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update FROM clients WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))', [identification]);
         return rows;
     }
 
@@ -136,7 +140,7 @@ export default class ClientsRepository {
      * Busca por ID único
      */
     static async findById(id) {
-        const [rows] = await db.query('SELECT * FROM clients WHERE id = ?', [id]);
+        const [rows] = await db.query('SELECT id, type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type, date_create, date_update FROM clients WHERE id = ?', [id]);
         return rows;
     }
 

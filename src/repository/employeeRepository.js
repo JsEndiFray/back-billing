@@ -11,7 +11,7 @@ export default class EmployeeRepository {
      * @returns {Array} Lista completa de empleados
      */
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM employee ORDER BY id ASC');
+        const [rows] = await db.query('SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM employee ORDER BY id ASC');
         return rows;
     }
 
@@ -26,7 +26,7 @@ export default class EmployeeRepository {
      */
     static async findByName(name) {
         const [rows] = await db.query(
-            'SELECT * FROM employee WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM employee WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))',
             [name]
         );
         return rows;
@@ -39,7 +39,7 @@ export default class EmployeeRepository {
      */
     static async findByLastname(lastname) {
         const [rows] = await db.query(
-            'SELECT * FROM employee WHERE LOWER(TRIM(lastname)) = LOWER(TRIM(?))',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM employee WHERE LOWER(TRIM(lastname)) = LOWER(TRIM(?))',
             [lastname]
         );
         return rows;
@@ -52,7 +52,7 @@ export default class EmployeeRepository {
      */
     static async findByIdentification(identification) {
         const [rows] = await db.query(
-            'SELECT * FROM employee WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM employee WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))',
             [identification]
         );
         return rows;
@@ -64,7 +64,7 @@ export default class EmployeeRepository {
      * @returns {Array} Empleado que coincide con el ID
      */
     static async findById(id) {
-        const [rows] = await db.query('SELECT * FROM employee WHERE id = ?', [id]);
+        const [rows] = await db.query('SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM employee WHERE id = ?', [id]);
         return rows;
     }
 

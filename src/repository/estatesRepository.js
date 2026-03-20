@@ -9,7 +9,7 @@ export default class EstatesRepository {
      * Obtiene todas las propiedades
      */
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM estates');
+        const [rows] = await db.query('SELECT id, cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update FROM estates');
         return rows;
     }
 
@@ -29,7 +29,7 @@ export default class EstatesRepository {
      * Busca por referencia catastral (único)
      */
     static async findByCadastralReference(cadastral_reference) {
-        const [rows] = await db.query(`SELECT * FROM estates WHERE LOWER(TRIM(cadastral_reference)) = LOWER(TRIM(?))`, [cadastral_reference]);
+        const [rows] = await db.query(`SELECT id, cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update FROM estates WHERE LOWER(TRIM(cadastral_reference)) = LOWER(TRIM(?))`, [cadastral_reference]);
         return rows;
     }
 
@@ -37,7 +37,7 @@ export default class EstatesRepository {
      * Busca por ID único
      */
     static async findById(id) {
-        const [rows] = await db.query('SELECT * FROM estates WHERE id = ?', [id]);
+        const [rows] = await db.query('SELECT id, cadastral_reference, price, address, postal_code, location, province, country, surface, date_create, date_update FROM estates WHERE id = ?', [id]);
         return rows;
     }
 

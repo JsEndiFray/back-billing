@@ -41,7 +41,9 @@ export default class SuppliersRepository {
      */
     static async getAllIncludingInactive() {
         const [rows] = await db.query(`
-            SELECT s.*
+            SELECT s.id, s.name, s.company_name, s.tax_id, s.address, s.postal_code, s.city,
+                   s.province, s.country, s.phone, s.email, s.contact_person,
+                   s.payment_terms, s.bank_account, s.notes, s.active, s.created_at, s.updated_at
             FROM suppliers s
             ORDER BY s.active DESC, s.id ASC
         `);
@@ -54,7 +56,9 @@ export default class SuppliersRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(`
-            SELECT s.*
+            SELECT s.id, s.name, s.company_name, s.tax_id, s.address, s.postal_code, s.city,
+                   s.province, s.country, s.phone, s.email, s.contact_person,
+                   s.payment_terms, s.bank_account, s.notes, s.active, s.created_at, s.updated_at
             FROM suppliers s
             WHERE s.id = ?
         `, [id]);
@@ -67,7 +71,9 @@ export default class SuppliersRepository {
      */
     static async findByTaxId(taxId) {
         const [rows] = await db.query(`
-            SELECT s.*
+            SELECT s.id, s.name, s.company_name, s.tax_id, s.address, s.postal_code, s.city,
+                   s.province, s.country, s.phone, s.email, s.contact_person,
+                   s.payment_terms, s.bank_account, s.notes, s.active, s.created_at, s.updated_at
             FROM suppliers s
             WHERE s.tax_id = ?
         `, [taxId]);
@@ -80,7 +86,9 @@ export default class SuppliersRepository {
      */
     static async findByName(name) {
         const [rows] = await db.query(`
-            SELECT s.*
+            SELECT s.id, s.name, s.company_name, s.tax_id, s.address, s.postal_code, s.city,
+                   s.province, s.country, s.phone, s.email, s.contact_person,
+                   s.payment_terms, s.bank_account, s.notes, s.active, s.created_at, s.updated_at
             FROM suppliers s
             WHERE (s.name LIKE ? OR s.company_name LIKE ?)
               AND s.active = TRUE
@@ -245,7 +253,9 @@ export default class SuppliersRepository {
      */
     static async findByPaymentTerms(paymentTerms) {
         const [rows] = await db.query(`
-            SELECT s.*
+            SELECT s.id, s.name, s.company_name, s.tax_id, s.address, s.postal_code, s.city,
+                   s.province, s.country, s.phone, s.email, s.contact_person,
+                   s.payment_terms, s.bank_account, s.notes, s.active, s.created_at, s.updated_at
             FROM suppliers s
             WHERE s.payment_terms = ?
               AND s.active = TRUE

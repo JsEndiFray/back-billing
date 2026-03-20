@@ -65,7 +65,15 @@ export default class InternalExpensesRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(`
-            SELECT ie.*,
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at,
                    e.address AS estate_address,
                    eo.owners_id,
                    eo.ownership_percentage
@@ -81,7 +89,15 @@ export default class InternalExpensesRepository {
      */
     static async findByCategory(category) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.category = ?
             ORDER BY ie.expense_date DESC`, [category]);
@@ -93,7 +109,15 @@ export default class InternalExpensesRepository {
      */
     static async findBySubcategory(subcategory) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.subcategory LIKE ?
             ORDER BY ie.expense_date DESC`, [`%${subcategory}%`]);
@@ -105,7 +129,15 @@ export default class InternalExpensesRepository {
      */
     static async findBySupplier(supplierName) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.supplier_name LIKE ?
             ORDER BY ie.expense_date DESC`, [`%${supplierName}%`]);
@@ -117,7 +149,15 @@ export default class InternalExpensesRepository {
      */
     static async findByStatus(status) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.status = ?
             ORDER BY ie.expense_date DESC`, [status]);
@@ -129,7 +169,15 @@ export default class InternalExpensesRepository {
      */
     static async findByPaymentMethod(paymentMethod) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.payment_method = ?
             ORDER BY ie.expense_date DESC`, [paymentMethod]);
@@ -141,7 +189,15 @@ export default class InternalExpensesRepository {
      */
     static async findDeductible() {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.is_deductible = TRUE
             ORDER BY ie.expense_date DESC`);
@@ -153,7 +209,15 @@ export default class InternalExpensesRepository {
      */
     static async findNonDeductible() {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.is_deductible = FALSE
             ORDER BY ie.expense_date DESC`);
@@ -165,7 +229,15 @@ export default class InternalExpensesRepository {
      */
     static async findByDateRange(startDate, endDate) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.expense_date BETWEEN ? AND ?
             ORDER BY ie.expense_date DESC`, [startDate, endDate]);
@@ -177,7 +249,15 @@ export default class InternalExpensesRepository {
      */
     static async findByAmountRange(minAmount, maxAmount) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.total_amount BETWEEN ? AND ?
             ORDER BY ie.total_amount DESC`, [minAmount, maxAmount]);
@@ -189,7 +269,15 @@ export default class InternalExpensesRepository {
      */
     static async findByProperty(propertyId) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.property_id = ?
             ORDER BY ie.expense_date DESC`, [propertyId]);
@@ -201,7 +289,15 @@ export default class InternalExpensesRepository {
      */
     static async findByProject(projectCode) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.project_code = ?
             ORDER BY ie.expense_date DESC`, [projectCode]);
@@ -213,7 +309,15 @@ export default class InternalExpensesRepository {
      */
     static async findByCostCenter(costCenter) {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.cost_center = ?
             ORDER BY ie.expense_date DESC`, [costCenter]);
@@ -225,7 +329,15 @@ export default class InternalExpensesRepository {
      */
     static async findRecurring() {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.is_recurring = TRUE
             ORDER BY ie.next_occurrence_date ASC`);
@@ -237,7 +349,15 @@ export default class InternalExpensesRepository {
      */
     static async findPendingApproval() {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.status = 'pending'
             ORDER BY ie.expense_date ASC`);
@@ -306,7 +426,15 @@ export default class InternalExpensesRepository {
             : '';
 
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             ${whereClause}
             ORDER BY ie.expense_date DESC
@@ -676,7 +804,15 @@ export default class InternalExpensesRepository {
      */
     static async getRecurringExpensesDue() {
         const [rows] = await db.query(`
-            SELECT ie.*
+            SELECT ie.id, ie.expense_date, ie.category, ie.subcategory, ie.description,
+                   ie.amount, ie.iva_percentage, ie.iva_amount, ie.total_amount, ie.is_deductible,
+                   ie.supplier_name, ie.supplier_nif, ie.supplier_address,
+                   ie.payment_method, ie.receipt_number, ie.receipt_date,
+                   ie.pdf_path, ie.has_attachments, ie.status,
+                   ie.property_id, ie.project_code, ie.cost_center, ie.notes,
+                   ie.is_recurring, ie.recurrence_period, ie.next_occurrence_date,
+                   ie.created_by, ie.approved_by, ie.approval_date,
+                   ie.created_at, ie.updated_at
             FROM internal_expenses ie
             WHERE ie.is_recurring = TRUE 
             AND ie.next_occurrence_date <= CURDATE()

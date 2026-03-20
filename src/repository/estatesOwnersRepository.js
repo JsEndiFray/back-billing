@@ -58,7 +58,7 @@ export default class EstateOwnersRepository {
      */
     static async findByEstateAndOwners(estate_id, owners_id) {
         const [rows] = await db.query(
-            'SELECT * FROM estate_owners WHERE estate_id = ? AND owners_id = ?',
+            'SELECT id, estate_id, owners_id, ownership_percentage, date_create, date_update FROM estate_owners WHERE estate_id = ? AND owners_id = ?',
             [estate_id, owners_id]
         );
         return rows;
@@ -71,7 +71,7 @@ export default class EstateOwnersRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(
-            'SELECT * FROM estate_owners WHERE id = ?',
+            'SELECT id, estate_id, owners_id, ownership_percentage, date_create, date_update FROM estate_owners WHERE id = ?',
             [id]
         );
         return rows;

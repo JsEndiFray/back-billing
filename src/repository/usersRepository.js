@@ -21,7 +21,7 @@ export default class UsersRepository {
      * Busca por nombre de usuario (para login)
      */
     static async findByUsername(username) {
-        const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
+        const [rows] = await db.query('SELECT id, username, password, email, phone, role, date_create, date_update FROM users WHERE username = ?', [username]);
         return rows;
     }
 

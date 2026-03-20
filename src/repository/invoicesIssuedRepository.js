@@ -59,16 +59,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(`
-            SELECT ii.*,
-                   ii.collection_status,
-                   ii.collection_method,
-                   ii.collection_date,
-                   ii.collection_reference,
-                   ii.collection_notes,
-                   ii.start_date,
-                   ii.end_date,
-                   ii.corresponding_month,
-                   ii.is_proportional
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at
             FROM invoices_issued ii
             WHERE ii.id = ?`, [id]);
         return rows;
@@ -78,7 +76,15 @@ export default class InvoicesIssuedRepository {
      * Busca factura por número de factura (único)
      */
     static async findByInvoiceNumber(invoice_number) {
-        const [rows] = await db.query('SELECT * FROM invoices_issued WHERE invoice_number = ?', [invoice_number]);
+        const [rows] = await db.query(`
+            SELECT id, invoice_number, estates_id, clients_id, owners_id, ownership_percent,
+                   invoice_date, due_date, tax_base, iva, irpf, total,
+                   is_refund, original_invoice_id,
+                   collection_status, collection_method, collection_date,
+                   collection_reference, collection_notes,
+                   start_date, end_date, corresponding_month, is_proportional,
+                   created_at, updated_at
+            FROM invoices_issued WHERE invoice_number = ?`, [invoice_number]);
         return rows;
     }
 
@@ -87,16 +93,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByOwnersId(ownersId) {
         const [rows] = await db.query(`
-            SELECT ii.*,
-                   ii.collection_status,
-                   ii.collection_method,
-                   ii.collection_date,
-                   ii.collection_reference,
-                   ii.collection_notes,
-                   ii.start_date,
-                   ii.end_date,
-                   ii.corresponding_month,
-                   ii.is_proportional
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at
             FROM invoices_issued ii
             WHERE ii.owners_id = ?`, [ownersId]);
         return rows;
@@ -107,16 +111,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByClientId(clientId) {
         const [rows] = await db.query(`
-            SELECT ii.*,
-                   ii.collection_status,
-                   ii.collection_method,
-                   ii.collection_date,
-                   ii.collection_reference,
-                   ii.collection_notes,
-                   ii.start_date,
-                   ii.end_date,
-                   ii.corresponding_month,
-                   ii.is_proportional
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at
             FROM invoices_issued ii
             WHERE ii.clients_id = ?`, [clientId]);
         return rows;
@@ -127,18 +129,16 @@ export default class InvoicesIssuedRepository {
      */
     static async findByClientNif(nif) {
         const [rows] = await db.query(`
-            SELECT invoices_issued.*,
-                   invoices_issued.collection_status,
-                   invoices_issued.collection_method,
-                   invoices_issued.collection_date,
-                   invoices_issued.collection_reference,
-                   invoices_issued.collection_notes,
-                   invoices_issued.start_date,
-                   invoices_issued.end_date,
-                   invoices_issued.corresponding_month,
-                   invoices_issued.is_proportional
-            FROM invoices_issued
-                     JOIN clients ON invoices_issued.clients_id = clients.id
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at
+            FROM invoices_issued ii
+                     JOIN clients ON ii.clients_id = clients.id
             WHERE clients.identification = ?`, [nif]);
         return rows;
     }
@@ -148,10 +148,16 @@ export default class InvoicesIssuedRepository {
      */
     static async findByOwnersAndEstate(ownersId, estateId) {
         const [rows] = await db.query(`
-                    SELECT *
-                    FROM invoices_issued
-                    WHERE owners_id = ?
-                      AND estates_id = ?`,
+            SELECT id, invoice_number, estates_id, clients_id, owners_id, ownership_percent,
+                   invoice_date, due_date, tax_base, iva, irpf, total,
+                   is_refund, original_invoice_id,
+                   collection_status, collection_method, collection_date,
+                   collection_reference, collection_notes,
+                   start_date, end_date, corresponding_month, is_proportional,
+                   created_at, updated_at
+            FROM invoices_issued
+            WHERE owners_id = ?
+              AND estates_id = ?`,
             [ownersId, estateId]
         );
         return rows;
@@ -162,7 +168,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByCollectionStatus(status) {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    e.address AS estate_name,
                    o.name    AS owner_name,
                    c.name    AS client_name
@@ -181,7 +194,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findOverdueInvoices() {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    e.address                           AS estate_name,
                    o.name                              AS owner_name,
                    c.name                              AS client_name,
@@ -202,7 +222,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findDueSoon(days = 7) {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    e.address                           AS estate_name,
                    o.name                              AS owner_name,
                    c.name                              AS client_name,
@@ -223,7 +250,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByDateRange(startDate, endDate) {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    e.address AS estate_name,
                    o.name    AS owner_name,
                    c.name    AS client_name
@@ -456,7 +490,14 @@ export default class InvoicesIssuedRepository {
      */
     static async getPendingInvoicesAging() {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    c.name                              as client_name,
                    e.address                           as estate_name,
                    DATEDIFF(CURRENT_DATE, ii.due_date) as days_overdue,
@@ -482,7 +523,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByCorrespondingMonth(correspondingMonth) {
         const [rows] = await db.query(`
-            SELECT ii.*,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    c.name    as client_name,
                    e.address as estate_name
             FROM invoices_issued ii
@@ -596,11 +644,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findByIdWithDetails(id) {
         const [rows] = await db.query(`
-            SELECT ii.*,
-                   ii.start_date,
-                   ii.end_date,
-                   ii.corresponding_month,
-                   ii.is_proportional,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    -- Datos del cliente
                    c.name                as client_name,
                    c.lastname            as client_lastname,
@@ -700,11 +751,14 @@ export default class InvoicesIssuedRepository {
      */
     static async findRefundByIdWithDetails(id) {
         const [rows] = await db.query(`
-            SELECT ii.*,
-                   ii.start_date,
-                   ii.end_date,
-                   ii.corresponding_month,
-                   ii.is_proportional,
+            SELECT ii.id, ii.invoice_number, ii.estates_id, ii.clients_id, ii.owners_id,
+                   ii.ownership_percent, ii.invoice_date, ii.due_date,
+                   ii.tax_base, ii.iva, ii.irpf, ii.total,
+                   ii.is_refund, ii.original_invoice_id,
+                   ii.collection_status, ii.collection_method, ii.collection_date,
+                   ii.collection_reference, ii.collection_notes,
+                   ii.start_date, ii.end_date, ii.corresponding_month, ii.is_proportional,
+                   ii.created_at, ii.updated_at,
                    -- Datos del cliente
                    c.name                as client_name,
                    c.lastname            as client_lastname,

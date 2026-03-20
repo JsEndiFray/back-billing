@@ -9,7 +9,7 @@ export default class OwnersRepository {
      * Obtiene todos los propietarios
      */
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM owners');
+        const [rows] = await db.query('SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM owners');
         return rows;
     }
 
@@ -29,9 +29,8 @@ export default class OwnersRepository {
      * Busca propietarios por nombre exacto (sin distinguir mayúsculas/minúsculas)
      */
     static async findByName(name) {
-        const [rows] = await db.query(`SELECT *
-                                       FROM owners
-                                       WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`,
+        const [rows] = await db.query(
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM owners WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))',
             [name]
         );
         return rows;
@@ -42,7 +41,7 @@ export default class OwnersRepository {
      */
     static async findByLastname(lastname) {
         const [rows] = await db.query(
-            'SELECT * FROM owners WHERE LOWER(TRIM(lastname)) = LOWER(TRIM(?))',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM owners WHERE LOWER(TRIM(lastname)) = LOWER(TRIM(?))',
             [lastname]
         );
         return rows;
@@ -53,7 +52,7 @@ export default class OwnersRepository {
      */
     static async findByIdentification(identification) {
         const [rows] = await db.query(
-            'SELECT * FROM owners WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM owners WHERE LOWER(TRIM(identification)) = LOWER(TRIM(?))',
             [identification]
         );
         return rows;
@@ -64,7 +63,7 @@ export default class OwnersRepository {
      */
     static async findById(id) {
         const [rows] = await db.query(
-            'SELECT * FROM owners WHERE id = ?',
+            'SELECT id, name, lastname, email, identification, phone, address, postal_code, location, province, country, date_create, date_update FROM owners WHERE id = ?',
             [id]
         );
         return rows;
