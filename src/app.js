@@ -109,7 +109,8 @@ app.use((req, res) => {
 
 /// Middleware global para manejar errores inesperados (500)
 app.use((err, req, res, next) => {
-    res.status(500).json('Error interno del servidor');
+    console.error(err);
+    res.status(500).json({ message: 'Error interno del servidor' });
 });
 
 //Exportación de la App
