@@ -1,6 +1,7 @@
 import SuppliersRepository from "../repository/suppliersRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import {validate} from "../shared/helpers/nifHelpers.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de proveedores
@@ -82,7 +83,7 @@ export default class SuppliersService {
 
         // Validar formato de CIF/NIF
         if (!validate(cleanTaxId)) {
-            return null; // Formato inválido
+            throw new AppError('Formato de NIF/CIF inválido', 400);
         }
 
         return await SuppliersRepository.findByTaxId(cleanTaxId);
@@ -116,28 +117,25 @@ export default class SuppliersService {
     static async createSupplier(data) {
         // Validación de datos obligatorios
         if (!data.name || !data.tax_id) {
-            return null; // Faltan datos obligatorios
+            throw new AppError('Nombre y NIF/CIF son obligatorios', 400);
         }
 
         // Limpiar y validar Tax ID
         const cleanTaxId = sanitizeString(data.tax_id).toUpperCase();
         if (!validate(cleanTaxId)) {
-            return null; // Tax ID inválido
+            throw new AppError('Formato de NIF/CIF inválido', 400);
         }
 
         // Verificar que el Tax ID no esté duplicado
         const existingSupplier = await SuppliersRepository.findByTaxId(cleanTaxId);
         if (existingSupplier.length > 0) {
-            return null; // Tax ID duplicado
+            throw new AppError('Ya existe un proveedor con ese NIF/CIF', 409);
         }
-
-        // Validar email si se proporciona (ya validado por express-validator)
-        // Solo verificamos que llegue limpio
 
         // Validar términos de pago
         const paymentTerms = Number(data.payment_terms) || 30;
         if (paymentTerms < 0 || paymentTerms > 365) {
-            return null; // Términos de pago inválidos
+            throw new AppError('Términos de pago inválidos (0-365 días)', 400);
         }
 
         // Preparar datos limpios
@@ -177,30 +175,27 @@ export default class SuppliersService {
 
         // Verificar que el proveedor existe
         const existing = await SuppliersRepository.findById(id);
-        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
+        if (!existing || existing.length === 0) throw new AppError('Proveedor no encontrado', 404);
 
         // Si se actualiza el Tax ID, validar que no esté duplicado
         if (updateData.tax_id) {
             const cleanTaxId = sanitizeString(updateData.tax_id).toUpperCase();
             if (!validate(cleanTaxId)) {
-                return null; // Tax ID inválido
+                throw new AppError('Formato de NIF/CIF inválido', 400);
             }
 
             const supplierWithSameTaxId = await SuppliersRepository.findByTaxId(cleanTaxId);
             if (supplierWithSameTaxId.length > 0 && supplierWithSameTaxId[0].id !== Number(id)) {
-                return null; // Tax ID duplicado
+                throw new AppError('Ya existe un proveedor con ese NIF/CIF', 409);
             }
             updateData.tax_id = cleanTaxId;
         }
-
-        // Validar email si se actualiza (ya validado por express-validator)
-        // Solo verificamos que llegue limpio
 
         // Validar términos de pago si se actualizan
         if (updateData.payment_terms !== undefined) {
             const paymentTerms = Number(updateData.payment_terms);
             if (isNaN(paymentTerms) || paymentTerms < 0 || paymentTerms > 365) {
-                return null; // Términos de pago inválidos
+                throw new AppError('Términos de pago inválidos (0-365 días)', 400);
             }
             updateData.payment_terms = paymentTerms;
         }

@@ -1,6 +1,7 @@
 import InternalExpensesRepository from "../repository/internalExpensesRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import CalculateHelper from "../shared/helpers/calculateTotal.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de gastos internos de la empresa
@@ -347,7 +348,7 @@ export default class InternalExpensesService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
+        if (!existing || existing.length === 0) throw new AppError('Gasto no encontrado', 404);
 
         // Validar datos si se proporcionan
         if (updateData.category) {
@@ -418,18 +419,18 @@ export default class InternalExpensesService {
      * Elimina un gasto
      */
     static async deleteExpense(id) {
-        if (!id || isNaN(Number(id))) return {error: 'INVALID_ID'};
+        if (!id || isNaN(Number(id))) throw new AppError('ID de gasto inválido', 400);
 
         const existing = await InternalExpensesRepository.findById(id);
-        if (existing.length === 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) throw new AppError('Gasto no encontrado', 404);
 
         // REGLA DE NEGOCIO: No se pueden eliminar gastos aprobados o pagados
         if (existing[0].status === 'approved' || existing[0].status === 'paid') {
-            return {error: 'CANNOT_DELETE'};
+            throw new AppError('No se puede eliminar un gasto aprobado o pagado', 409);
         }
 
         const result = await InternalExpensesRepository.delete(id);
-        return result.length > 0 ? [{deleted: true, id: Number(id)}] : {error: 'NOT_FOUND'};
+        return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];
     }
 
     // ========================================

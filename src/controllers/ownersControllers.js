@@ -10,7 +10,7 @@ export default class OwnersControllers {
     // MÉTODOS DE CONSULTA
     // ========================================
 
-    static async getAllOwners(req, res) {
+    static async getAllOwners(req, res, next) {
         try {
             const owners = await OwnersServices.getAllOwners();
             if (!owners.length) {
@@ -18,7 +18,7 @@ export default class OwnersControllers {
             }
             return res.status(200).json(owners);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -26,7 +26,7 @@ export default class OwnersControllers {
      * Para dropdown de propietarios
      * Nota: Usa 404 - podrías considerar 200+[] para mejor UX
      */
-    static async getAllForDropdownOwners(req, res) {
+    static async getAllForDropdownOwners(req, res, next) {
         try {
             const owners = await OwnersServices.getAllForDropdownOwners();
             if (!owners.length) {
@@ -35,7 +35,7 @@ export default class OwnersControllers {
             }
             return res.status(200).json(owners);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -47,7 +47,7 @@ export default class OwnersControllers {
      * Búsqueda flexible por nombre, apellido o NIF usando query parameters
      * Permite buscar por uno o varios campos simultáneamente
      */
-    static async getOwner(req, res) {
+    static async getOwner(req, res, next) {
         try {
             const {name, lastname, nif} = req.query;
             const owner = await OwnersServices.getOwner(name, lastname, nif);
@@ -56,11 +56,11 @@ export default class OwnersControllers {
             }
             return res.status(200).json(owner);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getOwnerId(req, res) {
+    static async getOwnerId(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -72,7 +72,7 @@ export default class OwnersControllers {
             }
             return res.status(200).json(owner);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -83,7 +83,7 @@ export default class OwnersControllers {
     /**
      * Crear propietario
      */
-    static async createOwner(req, res) {
+    static async createOwner(req, res, next) {
         try {
             const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
             const created = await OwnersServices.createOwner({name, lastname, email, identification, phone, address, postal_code, location, province, country});
@@ -93,11 +93,11 @@ export default class OwnersControllers {
             }
             return res.status(201).json(created);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async updateOwner(req, res) {
+    static async updateOwner(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -111,11 +111,11 @@ export default class OwnersControllers {
             }
             return res.status(200).json(updated);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async deleteOwner(req, res) {
+    static async deleteOwner(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -128,7 +128,7 @@ export default class OwnersControllers {
             }
             return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

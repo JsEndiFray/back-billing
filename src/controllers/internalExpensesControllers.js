@@ -43,7 +43,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses
      * // Response: [{ id: 1, description: "Material oficina", amount: 150.50, ... }]
      */
-    static async getAllExpenses(req, res) {
+    static async getAllExpenses(req, res, next) {
         try {
             const expenses = await InternalExpensesService.getAllExpenses();
 
@@ -54,7 +54,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getAllExpenses:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -71,7 +71,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/123
      * // Response: { id: 123, description: "Licencia software", ... }
      */
-    static async getExpenseById(req, res) {
+    static async getExpenseById(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -88,7 +88,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expense[0]);
         } catch (error) {
             console.error('Error en getExpenseById:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -109,7 +109,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/category/office_supplies
      * // Response: [{ id: 1, category: "office_supplies", ... }, ...]
      */
-    static async getExpensesByCategory(req, res) {
+    static async getExpensesByCategory(req, res, next) {
         try {
             const {category} = req.params;
 
@@ -126,7 +126,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getExpensesByCategory:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -143,7 +143,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/status/pending
      * // Response: [{ id: 1, status: "pending", ... }, ...]
      */
-    static async getExpensesByStatus(req, res) {
+    static async getExpensesByStatus(req, res, next) {
         try {
             const {status} = req.params;
 
@@ -160,7 +160,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getExpensesByStatus:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -177,7 +177,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/supplier/Amazon%20Business
      * // Response: [{ id: 1, supplier_name: "Amazon Business", ... }, ...]
      */
-    static async getExpensesBySupplier(req, res) {
+    static async getExpensesBySupplier(req, res, next) {
         try {
             const {supplier_name} = req.params;
 
@@ -194,7 +194,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getExpensesBySupplier:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -212,7 +212,7 @@ export default class InternalExpensesController {
      * // Body: { startDate: "2024-01-01", endDate: "2024-12-31" }
      * // Response: [{ id: 1, expense_date: "2024-06-15", ... }, ...]
      */
-    static async getExpensesByDateRange(req, res) {
+    static async getExpensesByDateRange(req, res, next) {
         try {
             const {startDate, endDate} = req.body;
 
@@ -229,7 +229,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getExpensesByDateRange:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -246,7 +246,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/deductible
      * // Response: [{ id: 1, is_deductible: true, ... }, ...]
      */
-    static async getDeductibleExpenses(req, res) {
+    static async getDeductibleExpenses(req, res, next) {
         try {
             const expenses = await InternalExpensesService.getDeductibleExpenses();
 
@@ -257,7 +257,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getDeductibleExpenses:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -274,7 +274,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/recurring
      * // Response: [{ id: 1, is_recurring: true, recurrence_period: "monthly", ... }, ...]
      */
-    static async getRecurringExpenses(req, res) {
+    static async getRecurringExpenses(req, res, next) {
         try {
             const expenses = await InternalExpensesService.getRecurringExpenses();
 
@@ -285,7 +285,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getRecurringExpenses:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -302,7 +302,7 @@ export default class InternalExpensesController {
      * // POST /api/internal-expenses/advanced-search
      * // Body: { category: "office_supplies", status: "pending", min_amount: 100 }
      */
-    static async getExpensesAdvanced(req, res) {
+    static async getExpensesAdvanced(req, res, next) {
         try {
             const filters = req.body;
             const expenses = await InternalExpensesService.getExpensesAdvanced(filters);
@@ -314,7 +314,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expenses);
         } catch (error) {
             console.error('Error en getExpensesAdvanced:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -345,7 +345,7 @@ export default class InternalExpensesController {
     /**
      * Crea un nuevo gasto interno
      */
-    static async createExpense(req, res) {
+    static async createExpense(req, res, next) {
         try {
             const processedData = {...req.body};
 
@@ -364,7 +364,7 @@ export default class InternalExpensesController {
                     processedData.pdf_path = fileUploadResult.fileId;
 
                 } catch (fileError) {
-                    return res.status(500).json("Error al subir el archivo adjunto");
+                    return next(fileError);
                 }
             }
 
@@ -379,7 +379,7 @@ export default class InternalExpensesController {
                 expense: created[0]
             });
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -396,7 +396,7 @@ export default class InternalExpensesController {
      * // PUT /api/internal-expenses/123
      * // Body: { amount: 200.75, category: "equipment_furniture" }
      */
-    static async updateExpense(req, res) {
+    static async updateExpense(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -419,15 +419,12 @@ export default class InternalExpensesController {
                     processedData.has_attachments = true;
                     processedData.pdf_path = fileUploadResult.fileId;
                 } catch (fileError) {
-                    return res.status(500).json("Error al subir el archivo adjunto");
+                    return next(fileError);
                 }
             }
 
             const updated = await InternalExpensesService.updateExpense(Number(id), processedData);
 
-            if (updated && updated.error === 'NOT_FOUND') {
-                return res.status(404).json("Gasto no encontrado");
-            }
             if (updated === null || !updated || updated.length === 0) {
                 return res.status(400).json("Error en los datos proporcionados");
             }
@@ -437,7 +434,7 @@ export default class InternalExpensesController {
                 expense: updated[0]
             });
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -454,7 +451,7 @@ export default class InternalExpensesController {
      * // DELETE /api/internal-expenses/123
      * // Response: 204 No Content
      */
-    static async deleteExpense(req, res) {
+    static async deleteExpense(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -464,19 +461,13 @@ export default class InternalExpensesController {
 
             const deleted = await InternalExpensesService.deleteExpense(id);
 
-            if (deleted && deleted.error) {
-                if (deleted.error === 'NOT_FOUND') return res.status(404).json("Gasto no encontrado");
-                if (deleted.error === 'CANNOT_DELETE') return res.status(409).json("No se puede eliminar un gasto aprobado o pagado");
-                return res.status(400).json("ID de gasto inválido");
-            }
-
             if (!deleted || deleted.length === 0) {
                 return res.status(404).json("Gasto no encontrado");
             }
 
             return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -497,7 +488,7 @@ export default class InternalExpensesController {
      * // PUT /api/internal-expenses/123/approve
      * // Body: { approved_by: "manager@company.com" }
      */
-    static async approveExpense(req, res) {
+    static async approveExpense(req, res, next) {
         try {
             const {id} = req.params;
             const {approved_by} = req.body;
@@ -518,7 +509,7 @@ export default class InternalExpensesController {
             });
         } catch (error) {
             console.error('Error en approveExpense:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -535,7 +526,7 @@ export default class InternalExpensesController {
      * // PUT /api/internal-expenses/123/reject
      * // Body: { approved_by: "manager@company.com" }
      */
-    static async rejectExpense(req, res) {
+    static async rejectExpense(req, res, next) {
         try {
             const {id} = req.params;
             const {approved_by} = req.body;
@@ -556,7 +547,7 @@ export default class InternalExpensesController {
             });
         } catch (error) {
             console.error('Error en rejectExpense:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -573,7 +564,7 @@ export default class InternalExpensesController {
      * // PUT /api/internal-expenses/123/pay
      * // Response: { message: "Gasto marcado como pagado", expense: {...} }
      */
-    static async markExpenseAsPaid(req, res) {
+    static async markExpenseAsPaid(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -593,7 +584,7 @@ export default class InternalExpensesController {
             });
         } catch (error) {
             console.error('Error en markExpenseAsPaid:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -610,7 +601,7 @@ export default class InternalExpensesController {
      * // PUT /api/internal-expenses/123/status
      * // Body: { status: "approved", approved_by: "manager@company.com" }
      */
-    static async updateExpenseStatus(req, res) {
+    static async updateExpenseStatus(req, res, next) {
         try {
             const {id} = req.params;
             const {status, approved_by} = req.body;
@@ -635,7 +626,7 @@ export default class InternalExpensesController {
             });
         } catch (error) {
             console.error('Error en updateExpenseStatus:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -661,13 +652,13 @@ export default class InternalExpensesController {
      * //   approval_rate: 85
      * // }
      */
-    static async getExpenseStats(req, res) {
+    static async getExpenseStats(req, res, next) {
         try {
             const stats = await InternalExpensesService.getExpenseStats();
             return res.status(200).json(stats);
         } catch (error) {
             console.error('Error en getExpenseStats:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -680,7 +671,7 @@ export default class InternalExpensesController {
      * @param {express.Response} res - Objeto de respuesta
      * @returns {Promise<void>}
      */
-    static async getStatsByCategory(req, res) {
+    static async getStatsByCategory(req, res, next) {
         try {
             const stats = await InternalExpensesService.getStatsByCategory();
 
@@ -691,7 +682,7 @@ export default class InternalExpensesController {
             return res.status(200).json(stats);
         } catch (error) {
             console.error('Error en getStatsByCategory:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -708,7 +699,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/monthly-summary/2024
      * // Response: resumen mensual de gastos del año
      */
-    static async getMonthlySummary(req, res) {
+    static async getMonthlySummary(req, res, next) {
         try {
             const {year} = req.params;
 
@@ -725,7 +716,7 @@ export default class InternalExpensesController {
             return res.status(200).json(monthlyData);
         } catch (error) {
             console.error('Error en getMonthlySummary:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -742,7 +733,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/vat-book/2024?month=7
      * // Response: datos del libro de IVA soportado
      */
-    static async getVATBookData(req, res) {
+    static async getVATBookData(req, res, next) {
         try {
             const {year} = req.params;
             const {month} = req.query;
@@ -760,7 +751,7 @@ export default class InternalExpensesController {
             return res.status(200).json(vatData);
         } catch (error) {
             console.error('Error en getVATBookData:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -781,7 +772,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/recurring-due
      * // Response: gastos recurrentes pendientes de crear
      */
-    static async getRecurringExpensesDue(req, res) {
+    static async getRecurringExpensesDue(req, res, next) {
         try {
             const expensesDue = await InternalExpensesService.getRecurringExpensesDue();
 
@@ -792,7 +783,7 @@ export default class InternalExpensesController {
             return res.status(200).json(expensesDue);
         } catch (error) {
             console.error('Error en getRecurringExpensesDue:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -809,7 +800,7 @@ export default class InternalExpensesController {
      * // POST /api/internal-expenses/process-recurring
      * // Response: { message: "Procesados 5 gastos recurrentes", processed: [...] }
      */
-    static async processRecurringExpenses(req, res) {
+    static async processRecurringExpenses(req, res, next) {
         try {
             const processed = await InternalExpensesService.processRecurringExpenses();
 
@@ -819,7 +810,7 @@ export default class InternalExpensesController {
             });
         } catch (error) {
             console.error('Error en processRecurringExpenses:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -840,7 +831,7 @@ export default class InternalExpensesController {
      * // POST /api/internal-expenses/validate-dates
      * // Body: { start_date: "2024-01-01", end_date: "2024-12-31" }
      */
-    static async validateDateRange(req, res) {
+    static async validateDateRange(req, res, next) {
         try {
             const {start_date, end_date} = req.body;
 
@@ -856,7 +847,7 @@ export default class InternalExpensesController {
             return res.status(validation.isValid ? 200 : 400).json(validation);
         } catch (error) {
             console.error('Error en validateDateRange:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -873,7 +864,7 @@ export default class InternalExpensesController {
      * // POST /api/internal-expenses/simulate-calculation
      * // Body: { amount: 1000, iva_percentage: 21 }
      */
-    static async simulateExpenseCalculation(req, res) {
+    static async simulateExpenseCalculation(req, res, next) {
         try {
             const {amount, iva_percentage} = req.body;
 
@@ -885,7 +876,7 @@ export default class InternalExpensesController {
             return res.status(200).json(result);
         } catch (error) {
             console.error('Error en simulateExpenseCalculation:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -902,13 +893,13 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/categories
      * // Response: [{ value: "office_supplies", label: "Material de oficina" }, ...]
      */
-    static async getAvailableCategories(req, res) {
+    static async getAvailableCategories(req, res, next) {
         try {
             const categories = InternalExpensesService.getAvailableCategories();
             return res.status(200).json(categories);
         } catch (error) {
             console.error('Error en getAvailableCategories:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -925,13 +916,13 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/payment-methods
      * // Response: [{ value: "card", label: "Tarjeta de crédito/débito" }, ...]
      */
-    static async getAvailablePaymentMethods(req, res) {
+    static async getAvailablePaymentMethods(req, res, next) {
         try {
             const methods = InternalExpensesService.getAvailablePaymentMethods();
             return res.status(200).json(methods);
         } catch (error) {
             console.error('Error en getAvailablePaymentMethods:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -948,13 +939,13 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/statuses
      * // Response: [{ value: "pending", label: "Pendiente", color: "warning" }, ...]
      */
-    static async getAvailableStatuses(req, res) {
+    static async getAvailableStatuses(req, res, next) {
         try {
             const statuses = InternalExpensesService.getAvailableStatuses();
             return res.status(200).json(statuses);
         } catch (error) {
             console.error('Error en getAvailableStatuses:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -971,7 +962,7 @@ export default class InternalExpensesController {
      * // GET /api/internal-expenses/files/EXPENSE-001_2024-08-12.pdf
      * // Response: Archivo PDF para descarga
      */
-    static async downloadAttachment(req, res) {
+    static async downloadAttachment(req, res, next) {
         try {
             const {fileName} = req.params;
 
@@ -998,7 +989,7 @@ export default class InternalExpensesController {
 
         } catch (error) {
             console.error('Error en downloadAttachment:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

@@ -46,7 +46,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued
      * // Response: [{ id: 1, invoice_number: "FACT-0001", ... }]
      */
-    static async getAllInvoicesIssued(req, res) {
+    static async getAllInvoicesIssued(req, res, next) {
         try {
             const invoices = await InvoicesIssuedService.getAllInvoicesIssued();
             if (!invoices || invoices.length === 0) {
@@ -54,8 +54,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getAllInvoicesIssued:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -72,7 +71,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/search/FACT-0001
      * // Response: { id: 1, invoice_number: "FACT-0001", ... }
      */
-    static async getInvoiceByNumber(req, res) {
+    static async getInvoiceByNumber(req, res, next) {
         try {
             const { invoice_number } = req.params;
             const invoiceNumberSanitized = invoice_number.trim();
@@ -85,8 +84,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(invoices[0]); // Devuelve el primer resultado, asumiendo unicidad
         } catch (error) {
-            console.error('Error en getInvoiceByNumber:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -103,7 +101,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/123
      * // Response: { id: 123, invoice_number: "FACT-0123", ... }
      */
-    static async getInvoiceById(req, res) {
+    static async getInvoiceById(req, res, next) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
@@ -115,8 +113,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(result[0]);
         } catch (error) {
-            console.error('Error en getInvoiceById:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -133,7 +130,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/owners/5
      * // Response: [{ id: 1, owner_name: "Juan", ... }, ...]
      */
-    static async getInvoicesByOwnerId(req, res) {
+    static async getInvoicesByOwnerId(req, res, next) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
@@ -145,8 +142,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(result);
         } catch (error) {
-            console.error('Error en getInvoicesByOwnerId:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -163,7 +159,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/clients/10
      * // Response: [{ id: 1, client_name: "María", ... }, ...]
      */
-    static async getInvoicesByClientId(req, res) {
+    static async getInvoicesByClientId(req, res, next) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
@@ -175,8 +171,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(result);
         } catch (error) {
-            console.error('Error en getInvoicesByClientId:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -193,7 +188,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/clients/nif/12345678Z
      * // Response: [{ id: 1, client_name: "Ana", ... }, ...]
      */
-    static async getInvoicesByClientNif(req, res) {
+    static async getInvoicesByClientNif(req, res, next) {
         try {
             const { nif } = req.params;
             // Validación de formato NIF/NIE/CIF usando helper
@@ -206,8 +201,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(result);
         } catch (error) {
-            console.error('Error en getInvoicesByClientNif:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -224,7 +218,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/collection-status/pending
      * // Response: [{ id: 1, collection_status: "pending", ... }, ...]
      */
-    static async getInvoicesByCollectionStatus(req, res) {
+    static async getInvoicesByCollectionStatus(req, res, next) {
         try {
             const { status } = req.params;
 
@@ -240,8 +234,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getInvoicesByCollectionStatus:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -258,7 +251,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/overdue
      * // Response: [{ id: 1, due_date: "2024-01-15", days_overdue: 30, ... }, ...]
      */
-    static async getOverdueInvoices(req, res) {
+    static async getOverdueInvoices(req, res, next) {
         try {
             const invoices = await InvoicesIssuedService.getOverdueInvoices();
 
@@ -268,8 +261,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getOverdueInvoices:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -286,7 +278,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/due-soon?days=7
      * // Response: [{ id: 1, due_date: "2024-07-25", days_until_due: 5, ... }, ...]
      */
-    static async getInvoicesDueSoon(req, res) {
+    static async getInvoicesDueSoon(req, res, next) {
         try {
             const { days } = req.query;
             const daysNumber = days ? Number(days) : 7;
@@ -299,8 +291,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getInvoicesDueSoon:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -318,7 +309,7 @@ export default class InvoicesIssuedController {
      * // Body: { startDate: "2024-01-01", endDate: "2024-12-31" }
      * // Response: [{ id: 1, invoice_date: "2024-06-15", ... }, ...]
      */
-    static async getInvoicesByDateRange(req, res) {
+    static async getInvoicesByDateRange(req, res, next) {
         try {
             const { startDate, endDate } = req.body;
 
@@ -334,8 +325,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getInvoicesByDateRange:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -352,7 +342,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/month/2024-07
      * // Response: [{ id: 1, corresponding_month: "2024-07", ... }, ...]
      */
-    static async getInvoicesByCorrespondingMonth(req, res) {
+    static async getInvoicesByCorrespondingMonth(req, res, next) {
         try {
             const { month } = req.params;
 
@@ -368,8 +358,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(invoices);
         } catch (error) {
-            console.error('Error en getInvoicesByCorrespondingMonth:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -387,22 +376,9 @@ export default class InvoicesIssuedController {
      * // Body: { owners_id: 1, clients_id: 2, estates_id: 3, tax_base: 1000, iva: 21, irpf: 15 }
      * // Response: { id: 123, invoice_number: "FACT-0123", total: 1060, ... }
      */
-    static async createInvoice(req, res) {
+    static async createInvoice(req, res, next) {
         try {
             const created = await InvoicesIssuedService.createInvoice({...req.body});
-
-            if (created && created.error) {
-                if (created.error === 'DUPLICATE') {
-                    return res.status(409).json("Ya existe una factura para este cliente en esa propiedad y mes.");
-                }
-                if (created.error === 'INVALID_PROPORTIONAL') {
-                    return res.status(400).json("Error en campos proporcionales de la factura.");
-                }
-                if (created.error === 'DB_ERROR') {
-                    return res.status(500).json("Error al crear factura: La operación no se completó correctamente.");
-                }
-                return res.status(400).json("Datos de factura inválidos o faltantes.");
-            }
 
             if (!created || created.length === 0) {
                 return res.status(500).json("Error al crear factura: La operación no se completó correctamente.");
@@ -413,7 +389,7 @@ export default class InvoicesIssuedController {
                 invoice: created[0]
             });
         } catch (error) {
-            return res.status(500).json("Error interno del servidor al crear la factura.");
+            next(error);
         }
     }
 
@@ -431,7 +407,7 @@ export default class InvoicesIssuedController {
      * // Body: { tax_base: 1200, iva: 21, irpf: 15 }
      * // Response: { id: 123, total: 1272, ... }
      */
-    static async updateInvoice(req, res) {
+    static async updateInvoice(req, res, next) {
         try {
             const { id } = req.params;
             const updateData = {...req.body};
@@ -441,19 +417,6 @@ export default class InvoicesIssuedController {
             }
 
             const updated = await InvoicesIssuedService.updateInvoice(Number(id), updateData);
-
-            if (updated && updated.error) {
-                if (updated.error === 'NOT_FOUND') {
-                    return res.status(404).json("Factura no encontrada.");
-                }
-                if (updated.error === 'DUPLICATE_NUMBER') {
-                    return res.status(409).json("El número de factura ya existe.");
-                }
-                if (updated.error === 'INVALID_PROPORTIONAL') {
-                    return res.status(400).json("Error de validación en campos proporcionales de la factura.");
-                }
-                return res.status(400).json("Datos de actualización inválidos para la factura.");
-            }
 
             if (!updated || updated.length === 0) {
                 return res.status(500).json("Error al actualizar factura: La operación no se completó correctamente.");
@@ -465,8 +428,7 @@ export default class InvoicesIssuedController {
             });
 
         } catch (error) {
-            console.error('Error en updateInvoice:', error);
-            return res.status(500).json("Error interno del servidor al actualizar la factura.");
+            next(error);
         }
     }
 
@@ -483,7 +445,7 @@ export default class InvoicesIssuedController {
      * // DELETE /api/invoices-issued/123
      * // Response: 204 No Content
      */
-    static async deleteInvoice(req, res) {
+    static async deleteInvoice(req, res, next) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
@@ -495,8 +457,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(204).send();
         } catch (error) {
-            console.error('Error en deleteInvoice:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -513,7 +474,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/refunds
      * // Response: [{ id: 1, invoice_number: "ABONO-0001", ... }]
      */
-    static async getAllRefunds(req, res) {
+    static async getAllRefunds(req, res, next) {
         try {
             const refunds = await InvoicesIssuedService.getAllRefunds();
             if (!refunds || refunds.length === 0) {
@@ -521,8 +482,7 @@ export default class InvoicesIssuedController {
             }
             return res.status(200).json(refunds);
         } catch (error) {
-            console.error('Error en getAllRefunds:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -540,7 +500,7 @@ export default class InvoicesIssuedController {
      * // Body: { originalInvoiceId: 123 }
      * // Response: { id: 124, invoice_number: "ABONO-0001", total: -1060, ... }
      */
-    static async createRefund(req, res) {
+    static async createRefund(req, res, next) {
         try {
             const { originalInvoiceId } = req.body;
             if (!originalInvoiceId) {
@@ -548,19 +508,6 @@ export default class InvoicesIssuedController {
             }
 
             const refund = await InvoicesIssuedService.createRefund(originalInvoiceId);
-
-            if (refund && refund.error) {
-                if (refund.error === 'NOT_FOUND') {
-                    return res.status(404).json("Factura original no encontrada.");
-                }
-                if (refund.error === 'CANNOT_REFUND_REFUND') {
-                    return res.status(400).json("No se puede crear un abono a partir de otro abono.");
-                }
-                if (refund.error === 'INVALID_ID') {
-                    return res.status(400).json("ID de factura original inválido.");
-                }
-                return res.status(500).json("Error al crear abono: La operación no se completó correctamente.");
-            }
 
             if (!refund || refund.length === 0) {
                 return res.status(500).json("Error al crear abono: La operación no se completó correctamente.");
@@ -571,8 +518,7 @@ export default class InvoicesIssuedController {
                 refund: refund[0]
             });
         } catch (error) {
-            console.error('Error en createRefund:', error);
-            return res.status(500).json("Error interno del servidor al crear el abono.");
+            next(error);
         }
     }
 
@@ -594,7 +540,7 @@ export default class InvoicesIssuedController {
      * //   collection_notes: "Cobrado con tarjeta Visa"
      * // }
      */
-    static async updateCollectionStatus(req, res) {
+    static async updateCollectionStatus(req, res, next) {
         try {
             const { id } = req.params;
             const { collection_status, collection_method, collection_date, collection_reference, collection_notes } = req.body;
@@ -621,11 +567,6 @@ export default class InvoicesIssuedController {
             // Actualizar usando el servicio
             const updated = await InvoicesIssuedService.updateCollectionStatus(Number(id), collectionData);
 
-            if (updated === null) {
-                // El servicio devuelve null si el estado o método de cobro es inválido
-                return res.status(400).json("Estado o método de cobro inválido para la factura.");
-            }
-
             if (!updated || updated.length === 0) {
                 return res.status(500).json("Error al actualizar el estado de cobro: La operación no se completó correctamente.");
             }
@@ -636,8 +577,7 @@ export default class InvoicesIssuedController {
             });
 
         } catch (error) {
-            console.error('Error en updateCollectionStatus:', error);
-            return res.status(500).json("Error interno del servidor al actualizar el estado de cobro.");
+            next(error);
         }
     }
 
@@ -659,13 +599,12 @@ export default class InvoicesIssuedController {
      * //   total_iva_repercutido: 9450.11
      * // }
      */
-    static async getInvoiceStats(req, res) {
+    static async getInvoiceStats(req, res, next) {
         try {
             const stats = await InvoicesIssuedService.getInvoiceStats();
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getInvoiceStats:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -678,7 +617,7 @@ export default class InvoicesIssuedController {
      * @param {express.Response} res - Objeto de respuesta
      * @returns {Promise<void>}
      */
-    static async getStatsByClient(req, res) {
+    static async getStatsByClient(req, res, next) {
         try {
             const stats = await InvoicesIssuedService.getStatsByClient();
 
@@ -688,8 +627,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getStatsByClient:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -702,7 +640,7 @@ export default class InvoicesIssuedController {
      * @param {express.Response} res - Objeto de respuesta
      * @returns {Promise<void>}
      */
-    static async getStatsByOwner(req, res) {
+    static async getStatsByOwner(req, res, next) {
         try {
             const stats = await InvoicesIssuedService.getStatsByOwner();
 
@@ -712,8 +650,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(stats);
         } catch (error) {
-            console.error('Error en getStatsByOwner:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -730,7 +667,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/vat-book/2024?month=7
      * // Response: datos del libro de IVA repercutido
      */
-    static async getVATBookData(req, res) {
+    static async getVATBookData(req, res, next) {
         try {
             const { year } = req.params;
             const { month } = req.query;
@@ -747,8 +684,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(vatData);
         } catch (error) {
-            console.error('Error en getVATBookData:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -765,7 +701,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/income-statement/2024?month=7
      * // Response: balance de ingresos del período
      */
-    static async getIncomeStatement(req, res) {
+    static async getIncomeStatement(req, res, next) {
         try {
             const { year } = req.params;
             const { month } = req.query;
@@ -782,8 +718,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(incomeData);
         } catch (error) {
-            console.error('Error en getIncomeStatement:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -800,7 +735,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/monthly-summary/2024
      * // Response: resumen mensual de facturación del año
      */
-    static async getMonthlySummary(req, res) {
+    static async getMonthlySummary(req, res, next) {
         try {
             const { year } = req.params;
 
@@ -816,8 +751,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(monthlyData);
         } catch (error) {
-            console.error('Error en getMonthlySummary:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -834,7 +768,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/aging
      * // Response: facturas pendientes con información de antigüedad
      */
-    static async getPendingInvoicesAging(req, res) {
+    static async getPendingInvoicesAging(req, res, next) {
         try {
             const agingData = await InvoicesIssuedService.getPendingInvoicesAging();
 
@@ -844,8 +778,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(agingData);
         } catch (error) {
-            console.error('Error en getPendingInvoicesAging:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -862,7 +795,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/123/pdf
      * // Response: Archivo PDF para descarga
      */
-    static async downloadPdf(req, res) {
+    static async downloadPdf(req, res, next) {
         try {
             const invoiceId = req.params.id;
 
@@ -890,8 +823,7 @@ export default class InvoicesIssuedController {
                 }
             });
         } catch (error) {
-            console.error('Error en downloadPdf:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -908,7 +840,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/refunds/123/pdf
      * // Response: Archivo PDF de abono para descarga
      */
-    static async downloadRefundPdf(req, res) {
+    static async downloadRefundPdf(req, res, next) {
         try {
             const refundId = req.params.id;
 
@@ -937,8 +869,7 @@ export default class InvoicesIssuedController {
                 }
             });
         } catch (error) {
-            console.error('Error en downloadRefundPdf:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -959,7 +890,7 @@ export default class InvoicesIssuedController {
      * // GET /api/invoices-issued/123/proportional-details
      * // Response: detalles del cálculo proporcional
      */
-    static async getProportionalCalculationDetails(req, res) {
+    static async getProportionalCalculationDetails(req, res, next) {
         try {
             const { id } = req.params;
             if (!id || isNaN(Number(id))) {
@@ -973,8 +904,7 @@ export default class InvoicesIssuedController {
 
             return res.status(200).json(details);
         } catch (error) {
-            console.error('Error en getProportionalCalculationDetails:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -992,7 +922,7 @@ export default class InvoicesIssuedController {
      * // Body: { start_date: "2025-07-17", end_date: "2025-07-31" }
      * // Response: validación del rango de fechas
      */
-    static async validateProportionalDateRange(req, res) {
+    static async validateProportionalDateRange(req, res, next) {
         try {
             const { start_date, end_date } = req.body;
 
@@ -1007,8 +937,7 @@ export default class InvoicesIssuedController {
             return res.status(validation.isValid ? 200 : 400).json(validation);
 
         } catch (error) {
-            console.error('Error en validateProportionalDateRange:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -1026,7 +955,7 @@ export default class InvoicesIssuedController {
      * // Body: { tax_base: 1000, iva: 21, irpf: 15, start_date: "2025-07-17", end_date: "2025-07-31" }
      * // Response: simulación del cálculo proporcional
      */
-    static async simulateProportionalBilling(req, res) {
+    static async simulateProportionalBilling(req, res, next) {
         try {
             const { tax_base, iva, irpf, start_date, end_date } = req.body;
 
@@ -1043,8 +972,7 @@ export default class InvoicesIssuedController {
             return res.status(200).json(result);
 
         } catch (error) {
-            console.error('Error en simulateProportionalBilling:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

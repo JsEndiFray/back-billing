@@ -1,4 +1,5 @@
 import EstateOwnersRepository from "../repository/estatesOwnersRepository.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio para gestionar relaciones propiedad-propietario
@@ -50,7 +51,7 @@ export default class EstateOwnersService {
         // Validar que el porcentaje esté en rango válido
         const pct = Number(ownership_percentage);
         if (isNaN(pct) || pct < 0 || pct > 100) {
-            return {error: 'INVALID_PERCENTAGE'};
+            throw new AppError('Porcentaje de propiedad inválido (debe ser entre 0 y 100)', 400);
         }
 
         // Verificar que existe

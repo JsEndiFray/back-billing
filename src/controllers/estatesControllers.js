@@ -6,11 +6,7 @@ import EstateService from '../services/estatesServices.js';
  */
 export default class EstateController {
 
-    // ========================================
-    // MÉTODOS DE CONSULTA
-    // ========================================
-
-    static async getAllEstate(req, res) {
+    static async getAllEstate(req, res, next) {
         try {
             const estate = await EstateService.getAllEstates();
             if (!estate.length) {
@@ -18,35 +14,23 @@ export default class EstateController {
             }
             return res.status(200).json(estate);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Para dropdown de inmuebles
-     * Nota: Usa 404 - podrías considerar 200+[] para mejor UX en dropdowns
-     */
-    static async getAllForDropdownEstates(req, res) {
+    static async getAllForDropdownEstates(req, res, next) {
         try {
             const estates = await EstateService.getAllForDropdownEstates();
             if (!estates.length) {
                 return res.status(404).json("No se encontraron inmuebles");
-                // Alternativa UX: return res.status(200).json([]);
             }
             return res.status(200).json(estates);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    // ========================================
-    // BÚSQUEDAS ESPECÍFICAS
-    // ========================================
-
-    /**
-     * Busca por referencia catastral (identificador único)
-     */
-    static async getByCadastralReference(req, res) {
+    static async getByCadastralReference(req, res, next) {
         try {
             const {cadastral} = req.params;
             if (!cadastral || typeof cadastral !== 'string' || cadastral.trim() === '') {
@@ -58,11 +42,11 @@ export default class EstateController {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getById(req, res) {
+    static async getById(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(id)) {
@@ -74,19 +58,11 @@ export default class EstateController {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    // ========================================
-    // OPERACIONES CRUD
-    // ========================================
-
-    /**
-     * Crear inmueble con validación extra de duplicados
-     * Nota: Esta validación ya debería estar en el servicio
-     */
-    static async createEstate(req, res) {
+    static async createEstate(req, res, next) {
         try {
             const {cadastral_reference, price, address, postal_code, location, province, country, surface} = req.body;
             const created = await EstateService.createEstate({cadastral_reference, price, address, postal_code, location, province, country, surface});
@@ -95,61 +71,40 @@ export default class EstateController {
             }
             return res.status(201).json(created);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async updateEstate(req, res) {
+    static async updateEstate(req, res, next) {
         try {
             const {id} = req.params;
-
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-
             const {cadastral_reference, price, address, postal_code, location, province, country, surface} = req.body;
             const updated = await EstateService.updateEstate(id, {cadastral_reference, price, address, postal_code, location, province, country, surface});
-            if (updated && updated.error === 'NOT_FOUND') {
-                return res.status(404).json("Inmueble no encontrado");
-            }
             if (!updated || !updated.length) {
                 return res.status(400).json("Error al actualizar inmueble o referencia catastral duplicada");
             }
-
             return res.status(200).json(updated);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Eliminar inmueble
-     * Nota: Llama a deleteEstate - asegúrate que el método del servicio coincida
-     */
-    static async deleteEstate(req, res) {
+    static async deleteEstate(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
             const deleted = await EstateService.deleteEstate(id);
-            if (deleted && deleted.error === 'NOT_FOUND') {
-                return res.status(404).json("Inmueble no encontrado");
-            }
             if (!deleted || !deleted.length) {
                 return res.status(400).json("Error al eliminar inmueble");
             }
-            return res.status(204).send(); // No content - eliminación exitosa
+            return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }
-
-/**
- * OBSERVACIONES:
- * 1. Más simple que ClientsController - sin lógica de relaciones complejas
- * 2. createEstate hace validación duplicada que ya está en el servicio
- * 3. getAllForDropdownEstates podría usar 200+[] para mejor UX
- * 4. Validaciones básicas de parámetros funcionan bien
- */

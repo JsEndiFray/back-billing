@@ -2,7 +2,7 @@ import EmployeeServices from "../services/employeeServices.js";
 
 export default class EmployeeControllers {
 
-    static async getAllEmployee(req, res) {
+    static async getAllEmployee(req, res, next) {
         try {
             const employee = await EmployeeServices.getAllEmployees();
             if (!employee.length) {
@@ -11,11 +11,11 @@ export default class EmployeeControllers {
             return res.status(200).json(employee);
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     };
 
-    static async getEmployee(req, res) {
+    static async getEmployee(req, res, next) {
         try {
             const {name, lastname, identification} = req.query;
             const employee = await EmployeeServices.getEmployee(name, lastname, identification);
@@ -25,11 +25,11 @@ export default class EmployeeControllers {
             return res.status(200).json(employee);
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     }
 
-    static async getEmployeeById(req, res) {
+    static async getEmployeeById(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -42,11 +42,11 @@ export default class EmployeeControllers {
             return res.status(200).json(employee);
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     };
 
-    static async createEmployee(req, res) {
+    static async createEmployee(req, res, next) {
         try {
             const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
             const created = await EmployeeServices.createEmployee({name, lastname, email, identification, phone, address, postal_code, location, province, country});
@@ -56,11 +56,11 @@ export default class EmployeeControllers {
             return res.status(201).json(created);
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     };
 
-    static async updateEmployee(req, res) {
+    static async updateEmployee(req, res, next) {
         try {
             const {name, lastname, email, identification, phone, address, postal_code, location, province, country} = req.body;
             const updated = await EmployeeServices.updateEmployee(req.params.id, {name, lastname, email, identification, phone, address, postal_code, location, province, country});
@@ -70,11 +70,11 @@ export default class EmployeeControllers {
             return res.status(200).json(updated);
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     };
 
-    static async deleteEmployee(req, res) {
+    static async deleteEmployee(req, res, next) {
         try {
             const deleted = await EmployeeServices.deleteEmployee(req.params.id);
             if (!deleted.length) {
@@ -83,7 +83,7 @@ export default class EmployeeControllers {
             return res.status(204).send();
 
         } catch (error) {
-            return res.status(500).json("Error interno del servidor.");
+            next(error);
         }
     }
 

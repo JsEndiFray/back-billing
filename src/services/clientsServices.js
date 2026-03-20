@@ -1,5 +1,6 @@
 import ClientsRepository from "../repository/clientsRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de clientes con lógica de negocio compleja
@@ -159,7 +160,7 @@ export default class ClientsServices {
 
         // Verificar que existe
         const existing = await ClientsRepository.findById(cleanClientsData.id);
-        if (existing.length === 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) throw new AppError('Cliente no encontrado', 404);
 
         // Verificar identificación única (excepto este mismo cliente)
         if (cleanClientsData.identification) {
@@ -186,20 +187,20 @@ export default class ClientsServices {
         // REGLA 1: No eliminar si tiene facturas
         const billsCount = await ClientsRepository.countBillsByClient(id);
         if (billsCount[0].count > 0) {
-            return ['CLIENT_HAS_BILLS'];
+            throw new AppError('El cliente tiene facturas asociadas', 409);
         }
 
         // REGLA 2: No eliminar empresa si tiene administradores
         if (client[0].type_client === 'empresa') {
             const adminsCount = await ClientsRepository.countAdministratorsByCompany(id);
             if (adminsCount[0].count > 0) {
-                return ['CLIENT_HAS_ADMINISTRATORS'];
+                throw new AppError('La empresa tiene administradores asociados', 409);
             }
         }
 
         // REGLA 3: No eliminar administrador activo
         if (client[0].type_client === 'autonomo' && client[0].parent_company_id && client[0].relationship_type === 'administrator') {
-            return ['CLIENT_IS_ADMINISTRATOR'];
+            throw new AppError('El cliente es administrador de una empresa', 409);
         }
 
         const result = await ClientsRepository.delete(id);

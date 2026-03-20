@@ -1,7 +1,8 @@
- import InvoicesIssuedRepository from "../repository/invoicesIssuedRepository.js";
+import InvoicesIssuedRepository from "../repository/invoicesIssuedRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import EstateOwnersRepository from "../repository/estatesOwnersRepository.js";
 import CalculateHelper from "../shared/helpers/calculateTotal.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de facturas emitidas a clientes
@@ -346,11 +347,11 @@ export default class InvoicesIssuedService {
         const {owners_id, estates_id, clients_id, invoice_date, tax_base, iva, irpf} = data;
 
         // Validación de datos obligatorios
-        if (!owners_id || !estates_id || !clients_id || !invoice_date) return {error: 'INVALID_DATA'};
+        if (!owners_id || !estates_id || !clients_id || !invoice_date) throw new AppError('Datos de factura inválidos o faltantes', 400);
 
         // Validar campos proporcionales
         const proportionalValidation = CalculateHelper.validateProportionalFields(data);
-        if (!proportionalValidation.isValid) return {error: 'INVALID_PROPORTIONAL'};
+        if (!proportionalValidation.isValid) throw new AppError('Error en campos proporcionales de la factura', 400);
 
 
         // REGLA DE NEGOCIO: Solo una factura por mes por owner+estate+client
@@ -364,7 +365,7 @@ export default class InvoicesIssuedService {
                     invoice.clients_id === Number(clients_id) &&
                     !Boolean(invoice.is_refund);
             });
-            if (sameMonthInvoice) return {error: 'DUPLICATE'};
+            if (sameMonthInvoice) throw new AppError('Ya existe una factura para este cliente en esa propiedad y mes', 409);
 
         }
 
@@ -417,7 +418,7 @@ export default class InvoicesIssuedService {
         };
 
         const created = await InvoicesIssuedRepository.create(invoiceData);
-        if (!created || created.length === 0) return {error: 'DB_ERROR'};
+        if (!created || created.length === 0) throw new AppError('Error al crear factura: La operación no se completó correctamente', 500);
 
         return [{...invoiceData, id: created[0].id}];
     }
@@ -433,7 +434,7 @@ export default class InvoicesIssuedService {
         if (!id || isNaN(Number(id))) return [];
 
         const existing = await InvoicesIssuedRepository.findById(id);
-        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
+        if (!existing || existing.length === 0) throw new AppError('Factura no encontrada', 404);
 
         // Validar campos proporcionales
         const proportionalValidation = CalculateHelper.validateProportionalFields({
@@ -441,13 +442,13 @@ export default class InvoicesIssuedService {
             ...updateData
         });
         if (!proportionalValidation.isValid) {
-            return {error: 'INVALID_PROPORTIONAL'};
+            throw new AppError('Error de validación en campos proporcionales de la factura', 400);
         }
 
         // Validar que el nuevo número no esté duplicado y no sea el ID actual
         if (updateData.invoice_number !== undefined && updateData.invoice_number !== existing[0].invoice_number) {
             const invoiceWithSameNumber = await InvoicesIssuedRepository.findByInvoiceNumber(updateData.invoice_number);
-            if (invoiceWithSameNumber.length > 0) return {error: 'DUPLICATE_NUMBER'};
+            if (invoiceWithSameNumber.length > 0) throw new AppError('El número de factura ya existe', 409);
 
 
         }
@@ -508,12 +509,8 @@ export default class InvoicesIssuedService {
             has_attachments: updateData.has_attachments !== undefined ? Boolean(updateData.has_attachments) : Boolean(existing[0].has_attachments)
         };
 
-        try {
-            const updated = await InvoicesIssuedRepository.update(cleanInvoiceData);
-            return updated;
-        } catch (error) {
-            return null;
-        }
+        const updated = await InvoicesIssuedRepository.update(cleanInvoiceData);
+        return updated;
     }
 
     /**
@@ -616,14 +613,14 @@ export default class InvoicesIssuedService {
      * Crea abono (factura negativa) basado en factura original
      */
     static async createRefund(originalInvoiceId) {
-        if (!originalInvoiceId || isNaN(Number(originalInvoiceId))) return {error: 'INVALID_ID'};
+        if (!originalInvoiceId || isNaN(Number(originalInvoiceId))) throw new AppError('ID de factura original inválido', 400);
 
         // Obtener factura original
         const originalInvoice = await InvoicesIssuedRepository.findById(originalInvoiceId);
-        if (!originalInvoice.length) return {error: 'NOT_FOUND'};
+        if (!originalInvoice.length) throw new AppError('Factura original no encontrada', 404);
 
         // REGLA: No se puede hacer abono de un abono
-        if (Boolean(originalInvoice[0].is_refund)) return {error: 'CANNOT_REFUND_REFUND'};
+        if (Boolean(originalInvoice[0].is_refund)) throw new AppError('No se puede crear un abono a partir de otro abono', 400);
 
         // Crear abono con valores negativos y campos proporcionales heredados.
         // El número de secuencia (ABONO-XXXX) se genera atómicamente en el repositorio.
@@ -650,7 +647,8 @@ export default class InvoicesIssuedService {
         };
 
         const newRefund = await InvoicesIssuedRepository.createRefundAtomic(refundToCreate);
-        return newRefund.length > 0 ? newRefund : {error: 'DB_ERROR'};
+        if (!newRefund.length) throw new AppError('Error al crear abono: La operación no se completó correctamente', 500);
+        return newRefund;
     }
 
     // ==========================================
@@ -668,12 +666,12 @@ export default class InvoicesIssuedService {
 
         const validStatuses = CalculateHelper.getValidInvoicesIssuedStatuses();
         if (!validStatuses.includes(collectionData.collection_status)) {
-            return null;
+            throw new AppError('Estado o método de cobro inválido para la factura', 400);
         }
 
         const validMethods = CalculateHelper.getValidPaymentMethods();
         if (collectionData.collection_method && !validMethods.includes(collectionData.collection_method)) {
-            return null;
+            throw new AppError('Estado o método de cobro inválido para la factura', 400);
         }
 
         if (collectionData.collection_status === 'collected' && !collectionData.collection_date) {
@@ -777,7 +775,7 @@ export default class InvoicesIssuedService {
      */
     static async getProportionalCalculationDetails(invoiceId) {
         const invoice = await InvoicesIssuedRepository.findById(invoiceId);
-        if (!invoice.length) return null;
+        if (!invoice.length) throw new AppError('Factura no encontrada', 404);
 
         const invoiceData = invoice[0];
         return CalculateHelper.getCalculationDetails(invoiceData);

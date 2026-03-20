@@ -6,7 +6,7 @@ import UserService from "../services/usersServices.js";
  */
 export default class UserController {
 
-    static async getAllUsers(req, res) {
+    static async getAllUsers(req, res, next) {
         try {
             const users = await UserService.getAllUsers();
             if (!users.length) {
@@ -14,7 +14,7 @@ export default class UserController {
             }
             return res.status(200).json(users);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -22,7 +22,7 @@ export default class UserController {
     // BÚSQUEDAS ESPECÍFICAS
     // ========================================
 
-    static async getUsername(req, res) {
+    static async getUsername(req, res, next) {
         try {
             const {username} = req.params;
             const user = await UserService.getUserByUsername(username);
@@ -31,11 +31,11 @@ export default class UserController {
             }
             return res.status(200).json(user);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getEmail(req, res) {
+    static async getEmail(req, res, next) {
         try {
             const {email} = req.params;
             const userEmail = await UserService.getUserByEmail(email);
@@ -44,11 +44,11 @@ export default class UserController {
             }
             return res.status(200).json(userEmail);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getPhone(req, res) {
+    static async getPhone(req, res, next) {
         try {
             const {phone} = req.params;
             const userPhone = await UserService.getUserByPhone(phone);
@@ -57,11 +57,11 @@ export default class UserController {
             }
             return res.status(200).json(userPhone);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getUserId(req, res) {
+    static async getUserId(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -73,7 +73,7 @@ export default class UserController {
             }
             return res.status(200).json(userId);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -85,7 +85,7 @@ export default class UserController {
      * Crear usuario
      * ✅ CORREGIDO: Maneja null como duplicado con mensaje informativo
      */
-    static async createUser(req, res) {
+    static async createUser(req, res, next) {
         try {
             const {username, password, email, phone, role} = req.body;
             const result = await UserService.createUser({username, password, email, phone, role});
@@ -95,7 +95,7 @@ export default class UserController {
             }
             return res.status(201).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -103,7 +103,7 @@ export default class UserController {
      * Actualizar usuario
      * ✅ CORREGIDO: Maneja null apropiadamente
      */
-    static async updateUser(req, res) {
+    static async updateUser(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -118,11 +118,11 @@ export default class UserController {
             }
             return res.status(200).json(updated);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async deleteUser(req, res) {
+    static async deleteUser(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -134,7 +134,7 @@ export default class UserController {
             }
             return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

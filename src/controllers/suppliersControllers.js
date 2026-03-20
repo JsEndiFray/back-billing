@@ -20,7 +20,7 @@ export default class SuppliersController {
      * // GET /api/suppliers
      * // Response: [{ id: 1, name: "Proveedor A", tax_id: "B12345678", ... }]
      */
-    static async getAllSuppliers(req, res) {
+    static async getAllSuppliers(req, res, next) {
         try {
             const suppliers = await SuppliersService.getAllSuppliers();
 
@@ -31,7 +31,7 @@ export default class SuppliersController {
             return res.status(200).json(suppliers);
         } catch (error) {
             console.error('Error en getAllSuppliers:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -48,7 +48,7 @@ export default class SuppliersController {
      * // GET /api/suppliers/all
      * // Response: [{ id: 1, name: "Proveedor A", active: true, ... }]
      */
-    static async getAllSuppliersIncludingInactive(req, res) {
+    static async getAllSuppliersIncludingInactive(req, res, next) {
         try {
             const suppliers = await SuppliersService.getAllSuppliersIncludingInactive();
 
@@ -59,7 +59,7 @@ export default class SuppliersController {
             return res.status(200).json(suppliers);
         } catch (error) {
             console.error('Error en getAllSuppliersIncludingInactive:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -76,7 +76,7 @@ export default class SuppliersController {
      * // GET /api/suppliers/123
      * // Response: { id: 123, name: "Proveedor A", tax_id: "B12345678", ... }
      */
-    static async getSupplierById(req, res) {
+    static async getSupplierById(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -93,7 +93,7 @@ export default class SuppliersController {
             return res.status(200).json(supplier[0]);
         } catch (error) {
             console.error('Error en getSupplierById:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -110,7 +110,7 @@ export default class SuppliersController {
      * // GET /api/suppliers/tax/B12345678
      * // Response: { id: 1, name: "Empresa ABC", tax_id: "B12345678", ... }
      */
-    static async getSupplierByTaxId(req, res) {
+    static async getSupplierByTaxId(req, res, next) {
         try {
             const {tax_id} = req.params;
 
@@ -120,10 +120,6 @@ export default class SuppliersController {
 
             const supplier = await SuppliersService.getSupplierByTaxId(tax_id);
 
-            if (supplier === null) {
-                return res.status(400).json("Formato de CIF/NIF inválido");
-            }
-
             if (!supplier || supplier.length === 0) {
                 return res.status(404).json("Proveedor no encontrado con ese CIF/NIF");
             }
@@ -131,7 +127,7 @@ export default class SuppliersController {
             return res.status(200).json(supplier[0]);
         } catch (error) {
             console.error('Error en getSupplierByTaxId:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -148,7 +144,7 @@ export default class SuppliersController {
      * // GET /api/suppliers/search/electricidad
      * // Response: [{ id: 1, name: "Iberdrola", ... }, { id: 2, name: "Endesa", ... }]
      */
-    static async getSuppliersByName(req, res) {
+    static async getSuppliersByName(req, res, next) {
         try {
             const {name} = req.params;
 
@@ -165,7 +161,7 @@ export default class SuppliersController {
             return res.status(200).json(suppliers);
         } catch (error) {
             console.error('Error en getSuppliersByName:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -188,14 +184,10 @@ export default class SuppliersController {
      * // }
      * // Response: { id: 123, name: "Juan Pérez", tax_id: "12345678Z", ... }
      */
-    static async createSupplier(req, res) {
+    static async createSupplier(req, res, next) {
         try {
             const data = req.body;
             const created = await SuppliersService.createSupplier(data);
-
-            if (created === null) {
-                return res.status(400).json("Error en los datos proporcionados o CIF/NIF duplicado");
-            }
 
             if (!created || created.length === 0) {
                 return res.status(400).json("Error al crear proveedor");
@@ -207,7 +199,7 @@ export default class SuppliersController {
             });
         } catch (error) {
             console.error('Error en createSupplier:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -225,7 +217,7 @@ export default class SuppliersController {
      * // Body: { name: "Juan Pérez García", payment_terms: 45 }
      * // Response: { message: "Proveedor actualizado", supplier: {...} }
      */
-    static async updateSupplier(req, res) {
+    static async updateSupplier(req, res, next) {
         try {
             const {id} = req.params;
             const updateData = req.body;
@@ -235,14 +227,6 @@ export default class SuppliersController {
             }
 
             const updated = await SuppliersService.updateSupplier(Number(id), updateData);
-
-            if (updated && updated.error === 'NOT_FOUND') {
-                return res.status(404).json("Proveedor no encontrado");
-            }
-
-            if (updated === null) {
-                return res.status(400).json("Error en los datos proporcionados o CIF/NIF duplicado");
-            }
 
             if (!updated || updated.length === 0) {
                 return res.status(400).json("Error al actualizar proveedor");
@@ -254,7 +238,7 @@ export default class SuppliersController {
             });
         } catch (error) {
             console.error('Error en updateSupplier:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -271,7 +255,7 @@ export default class SuppliersController {
      * // DELETE /api/suppliers/123
      * // Response: 204 No Content
      */
-    static async deleteSupplier(req, res) {
+    static async deleteSupplier(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -288,7 +272,7 @@ export default class SuppliersController {
             return res.status(204).send();
         } catch (error) {
             console.error('Error en deleteSupplier:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -305,7 +289,7 @@ export default class SuppliersController {
      * // PUT /api/suppliers/123/activate
      * // Response: { message: "Proveedor reactivado correctamente" }
      */
-    static async activateSupplier(req, res) {
+    static async activateSupplier(req, res, next) {
         try {
             const {id} = req.params;
 
@@ -324,7 +308,7 @@ export default class SuppliersController {
             });
         } catch (error) {
             console.error('Error en activateSupplier:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -346,13 +330,13 @@ export default class SuppliersController {
      * //   percentage_active: 80
      * // }
      */
-    static async getSupplierStats(req, res) {
+    static async getSupplierStats(req, res, next) {
         try {
             const stats = await SuppliersService.getSupplierStats();
             return res.status(200).json(stats);
         } catch (error) {
             console.error('Error en getSupplierStats:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -372,7 +356,7 @@ export default class SuppliersController {
      * //   { id: 2, label: "Ibercaja", tax_id: "B87654321", payment_terms: 60 }
      * // ]
      */
-    static async getSupplierSuggestions(req, res) {
+    static async getSupplierSuggestions(req, res, next) {
         try {
             const {q} = req.query;
 
@@ -384,7 +368,7 @@ export default class SuppliersController {
             return res.status(200).json(suggestions);
         } catch (error) {
             console.error('Error en getSupplierSuggestions:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -401,7 +385,7 @@ export default class SuppliersController {
      * // GET /api/suppliers/payment-terms/30
      * // Response: [{ id: 1, name: "Proveedor A", payment_terms: 30, ... }]
      */
-    static async getSuppliersByPaymentTerms(req, res) {
+    static async getSuppliersByPaymentTerms(req, res, next) {
         try {
             const {payment_terms} = req.params;
 
@@ -418,7 +402,7 @@ export default class SuppliersController {
             return res.status(200).json(suppliers);
         } catch (error) {
             console.error('Error en getSuppliersByPaymentTerms:', error);
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

@@ -1,6 +1,7 @@
 import UsersRepository from "../repository/usersRepository.js";
 import bcrypt from 'bcrypt';
 import {generateAccessToken, generateRefreshToken, verifyToken} from "../services/tokenManager.js";
+import { AppError } from "../errors/AppError.js";
 
 //process.loadEnvFile();
 
@@ -20,13 +21,11 @@ export default class UserService {
      */
     static async login(username, password) {
         const users = await UsersRepository.findByUsername(username);
-        if (users.length === 0) return null;
+        if (users.length === 0) throw new AppError('Credenciales inválidas', 401);
 
         const user = users[0];
-        if (!user) return null;
-
         const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
+        if (!isValid) throw new AppError('Credenciales inválidas', 401);
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -46,20 +45,19 @@ export default class UserService {
      * Renovar token de acceso usando refresh token
      */
     static async refreshToken(refreshToken) {
-        if (!refreshToken) return null;
+        if (!refreshToken) throw new AppError('Token de actualización requerido', 400);
 
         const decoded = verifyToken(
             refreshToken,
             process.env.JWT_REFRESH_SECRET
         );
 
-        if (!decoded) return null;
+        if (!decoded) throw new AppError('Token expirado o inválido', 401);
 
         const users = await UsersRepository.findById(decoded.id);
-        if (users.length === 0) return null;
+        if (users.length === 0) throw new AppError('Token expirado o inválido', 401);
 
         const user = users[0];
-        if (!user) return null;
 
         const newAccessToken = generateAccessToken(user);
         const newRefreshToken = generateRefreshToken(user);

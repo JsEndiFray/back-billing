@@ -1,16 +1,8 @@
 import EstateOwnersService from "../services/estatesOwnersServices.js";
 
-/**
- * Controlador para relaciones propiedad-propietario
- * El más simple: CRUD básico sin búsquedas complejas
- */
 export default class EstateOwnersController {
 
-    /**
-     * Obtiene todas las relaciones con JOINs
-     * Incluye nombres de propiedades y propietarios
-     */
-    static async getAllEstateOwners(req, res) {
+    static async getAllEstateOwners(req, res, next) {
         try {
             const estateOwners = await EstateOwnersService.getAllEstateOwners();
             if (!estateOwners.length) {
@@ -18,14 +10,11 @@ export default class EstateOwnersController {
             }
             return res.status(200).json(estateOwners);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Busca relación propiedad-propietario por ID
-     */
-    static async getEstateOwnersById(req, res) {
+    static async getEstateOwnersById(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id)) || Number(id) <= 0) {
@@ -36,17 +25,12 @@ export default class EstateOwnersController {
                 return res.status(404).json("Inmueble y propietario no encontrado");
             }
             return res.status(200).json(result);
-
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Crear relación propiedad-propietario
-     * El servicio maneja duplicados automáticamente
-     */
-    static async createEstateOwners(req, res) {
+    static async createEstateOwners(req, res, next) {
         try {
             const data = req.body;
             const result = await EstateOwnersService.createEstateOwners(data);
@@ -55,19 +39,15 @@ export default class EstateOwnersController {
             }
             return res.status(201).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Actualizar porcentaje de propiedad por ID único
-     */
-    static async updateEstateOwners(req, res) {
+    static async updateEstateOwners(req, res, next) {
         try {
             const {id} = req.params;
             const {ownership_percentage} = req.body;
 
-            // Validar ID
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
@@ -77,48 +57,28 @@ export default class EstateOwnersController {
             }
 
             const result = await EstateOwnersService.updateEstateOwner(Number(id), ownership_percentage);
-
-            if (result && result.error === 'INVALID_PERCENTAGE') {
-                return res.status(400).json("Porcentaje de propiedad inválido (debe ser entre 0 y 100)");
-            }
             if (!result || !result.length) {
                 return res.status(404).json("Relación inmueble-propietario no encontrada");
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    /**
-     * Eliminar relación por ID único
-     */
-    static async deleteEstateOwners(req, res) {
+    static async deleteEstateOwners(req, res, next) {
         try {
             const {id} = req.params;
-
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-
             const result = await EstateOwnersService.deleteEstateOwners(id);
             if (!result.length) {
                 return res.status(404).json("Relación inmueble-propietario no encontrada");
             }
-            return res.status(204).send(); // No content - eliminación exitosa
+            return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }
-
-/**
- *CARACTERÍSTICAS FINALES:
- * - Controlador más simple: solo CRUD básico
- * - Sin búsquedas complejas o filtros
- * - Sin validaciones duplicadas (el servicio las maneja)
- * - Verificaciones consistentes con array.length
- * - Manejo estándar de códigos HTTP
- * - Enfocado en tabla de relaciones pura
- * - Consistencia total con patrón de otros controladores
- */

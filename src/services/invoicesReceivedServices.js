@@ -2,6 +2,7 @@ import InvoicesReceivedRepository from "../repository/invoicesReceivedRepository
 import SuppliersRepository from "../repository/suppliersRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
 import CalculateHelper from "../shared/helpers/calculateTotal.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de facturas recibidas de proveedores
@@ -150,13 +151,13 @@ export default class InvoicesReceivedService {
         // Validación de datos obligatorios
         if (!data.invoice_number || !data.supplier_id || !data.invoice_date ||
             !data.tax_base || !data.description) {
-            return null; // Faltan datos obligatorios
+            throw new AppError('Datos de factura inválidos o faltantes', 400);
         }
 
         // Verificar que el proveedor existe
         const supplier = await SuppliersRepository.findById(data.supplier_id);
         if (!supplier.length) {
-            return null; // Proveedor no existe
+            throw new AppError('Proveedor no encontrado', 404);
         }
 
         // Validar que no exista factura duplicada del mismo proveedor
@@ -165,14 +166,14 @@ export default class InvoicesReceivedService {
             inv.supplier_id === Number(data.supplier_id) && !inv.is_refund
         );
         if (duplicateFromSameSupplier) {
-            return null; // Factura duplicada del mismo proveedor
+            throw new AppError('Ya existe una factura de este proveedor con ese número', 409);
         }
 
         // Validar campos proporcionales si es necesario
         if (data.is_proportional) {
             const proportionalValidation = CalculateHelper.validateProportionalFields(data);
             if (!proportionalValidation.isValid) {
-                return {error: 'INVALID_PROPORTIONAL', message: proportionalValidation.message};
+                throw new AppError('Error en campos proporcionales de la factura recibida', 400);
             }
         }
 
@@ -259,13 +260,13 @@ export default class InvoicesReceivedService {
 
         // Verificar que la factura existe
         const existing = await InvoicesReceivedRepository.findById(id);
-        if (!existing || existing.length === 0) return {error: 'NOT_FOUND'};
+        if (!existing || existing.length === 0) throw new AppError('Factura no encontrada', 404);
 
         // Si se actualiza el proveedor, verificar que existe
         if (updateData.supplier_id) {
             const supplier = await SuppliersRepository.findById(updateData.supplier_id);
             if (!supplier.length) {
-                return null; // Proveedor no existe
+                throw new AppError('Proveedor no encontrado', 404);
             }
         }
 
@@ -276,7 +277,7 @@ export default class InvoicesReceivedService {
                 ...updateData
             });
             if (!proportionalValidation.isValid) {
-                return {error: 'INVALID_PROPORTIONAL', message: proportionalValidation.message};
+                throw new AppError('Error de validación en campos proporcionales', 400);
             }
         }
 
@@ -541,7 +542,7 @@ export default class InvoicesReceivedService {
         if (!id || isNaN(Number(id))) return [];
         const refund = await InvoicesReceivedRepository.findById(id);
         if (!refund || refund.length === 0) return [];
-        if (!refund[0].is_refund) return {error: 'NOT_REFUND'};
+        if (!refund[0].is_refund) throw new AppError('El documento no es un abono', 400);
         return refund;
     }
 

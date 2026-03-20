@@ -11,7 +11,7 @@ export default class ClientsControllers {
     // MÉTODOS DE CONSULTA
     // ========================================
 
-    static async getAllClients(req, res) {
+    static async getAllClients(req, res, next) {
         try {
             const clients = await ClientsServices.getAllClients()
             if (!clients || clients.length === 0) {
@@ -19,11 +19,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(clients);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     };
 
-    static async getAllForDropdownClients(req, res) {
+    static async getAllForDropdownClients(req, res, next) {
         try {
             const clients = await ClientsServices.getAllForDropdownClients();
             if (!clients || clients.length === 0) {
@@ -31,7 +31,7 @@ export default class ClientsControllers {
             }
             return res.status(200).json(clients);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -39,7 +39,7 @@ export default class ClientsControllers {
      * Obtiene empresas para dropdown
      * Nota: Retorna array vacío en lugar de 404 para mejor UX
      */
-    static async getCompanies(req, res) {
+    static async getCompanies(req, res, next) {
         try {
             const companies = await ClientsServices.getCompanies();
             if (!companies || companies.length === 0) {
@@ -47,11 +47,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(companies);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getAutonomsWithCompanies(req, res) {
+    static async getAutonomsWithCompanies(req, res, next) {
         try {
             const autonoms = await ClientsServices.getAutonomsWithCompanies();
             if (!autonoms || autonoms.length === 0) {
@@ -59,11 +59,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(autonoms);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getAdministratorsByCompany(req, res) {
+    static async getAdministratorsByCompany(req, res, next) {
         try {
             const {companyId} = req.params;
             if (!companyId || isNaN(Number(companyId))) {
@@ -76,7 +76,7 @@ export default class ClientsControllers {
             }
             return res.status(200).json(administrators);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -87,7 +87,7 @@ export default class ClientsControllers {
     /**
      * Busca por tipo de cliente con validación de tipos permitidos
      */
-    static async getByClientType(req, res) {
+    static async getByClientType(req, res, next) {
         try {
             const {clientType} = req.params;
             const clientTypeNormalized = sanitizeString(clientType);
@@ -103,11 +103,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(clientsType);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getCompany(req, res) {
+    static async getCompany(req, res, next) {
         try {
             const {company_name} = req.params;
             if (!company_name || typeof company_name !== 'string' || company_name.trim() === '') {
@@ -119,7 +119,7 @@ export default class ClientsControllers {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -127,7 +127,7 @@ export default class ClientsControllers {
      * Búsqueda por nombre/apellido usando query parameters
      * Permite buscar por uno o ambos campos
      */
-    static async getFullName(req, res) {
+    static async getFullName(req, res, next) {
         try {
             const {name, lastname} = req.query;
             if (!name && !lastname) {
@@ -143,11 +143,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getByIdentification(req, res) {
+    static async getByIdentification(req, res, next) {
         try {
             const {identification} = req.params;
             const identificationNormalized = sanitizeString(identification);
@@ -160,11 +160,11 @@ export default class ClientsControllers {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async getById(req, res) {
+    static async getById(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -176,7 +176,7 @@ export default class ClientsControllers {
             }
             return res.status(200).json(result);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -184,7 +184,7 @@ export default class ClientsControllers {
     // CRUD CON MANEJO DE CÓDIGOS HTTP
     // ========================================
 
-    static async createClient(req, res) {
+    static async createClient(req, res, next) {
         try {
             const {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type} = req.body;
             const created = await ClientsServices.createClient({type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type});
@@ -193,11 +193,11 @@ export default class ClientsControllers {
             }
             return res.status(201).json(created);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
-    static async updateClient(req, res) {
+    static async updateClient(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
@@ -206,15 +206,12 @@ export default class ClientsControllers {
 
             const {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type} = req.body;
             const updated = await ClientsServices.updateClient(id, {type_client, name, lastname, company_name, identification, phone, email, address, postal_code, location, province, country, parent_company_id, relationship_type});
-            if (updated && updated.error === 'NOT_FOUND') {
-                return res.status(404).json("Cliente no encontrado");
-            }
             if (!updated || updated.length === 0) {
                 return res.status(409).json("Cliente duplicado");
             }
             return res.status(200).json(updated);
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 
@@ -222,34 +219,19 @@ export default class ClientsControllers {
      * Eliminar cliente con manejo de múltiples tipos de error del servicio
      * El servicio retorna strings específicos para diferentes escenarios
      */
-    static async deleteClient(req, res) {
+    static async deleteClient(req, res, next) {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
                 return res.status(400).json("ID inválido");
             }
-
             const result = await ClientsServices.deleteClient(id);
-
-            // Mapeo de respuestas del servicio a códigos HTTP
             if (!result || result.length === 0) {
                 return res.status(404).json("Cliente no encontrado");
             }
-
-            // Errores de integridad referencial
-            if (Array.isArray(result) && result[0] === 'CLIENT_HAS_BILLS') {
-                return res.status(409).json("El cliente tiene facturas asociadas");
-            }
-            if (Array.isArray(result) && result[0] === 'CLIENT_HAS_ADMINISTRATORS') {
-                return res.status(409).json("La empresa tiene administradores asociados");
-            }
-            if (Array.isArray(result) && result[0] === 'CLIENT_IS_ADMINISTRATOR') {
-                return res.status(409).json("El cliente es administrador de una empresa");
-            }
-            // Éxito - Sin contenido
             return res.status(204).send();
         } catch (error) {
-            return res.status(500).json("Error interno del servidor");
+            next(error);
         }
     }
 }

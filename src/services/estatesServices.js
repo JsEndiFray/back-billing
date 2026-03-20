@@ -1,5 +1,6 @@
 import EstatesRepository from "../repository/estatesRepository.js";
 import {sanitizeString} from "../shared/helpers/stringHelpers.js";
+import { AppError } from "../errors/AppError.js";
 
 /**
  * Servicio de propiedades inmobiliarias
@@ -23,7 +24,7 @@ export default class EstatesServices {
      * Busca por referencia catastral con sanitización
      */
     static async getByCadastralReference(cadastral_reference) {
-        if (!cadastral_reference || typeof cadastral_reference !== 'string') return null;
+        if (!cadastral_reference || typeof cadastral_reference !== 'string') throw new AppError('Referencia catastral requerida', 400);
 
         const refNormalized = sanitizeString(cadastral_reference);
         if (!refNormalized || refNormalized.length === 0) return [];
@@ -87,7 +88,7 @@ export default class EstatesServices {
 
         // Verificar que existe
         const existing = await EstatesRepository.findById(cleanEstatesData.id);
-        if (existing.length === 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) throw new AppError('Inmueble no encontrado', 404);
 
         // Verificar referencia catastral única (excepto esta misma propiedad)
         const {cadastral_reference} = data;
@@ -111,7 +112,7 @@ export default class EstatesServices {
 
         // Verificar que existe
         const existing = await EstatesRepository.findById(id);
-        if (existing.length === 0) return {error: 'NOT_FOUND'};
+        if (existing.length === 0) throw new AppError('Inmueble no encontrado', 404);
 
         const result = await EstatesRepository.delete(id);
         return result.length > 0 ? [{deleted: true, id: Number(id)}] : [];

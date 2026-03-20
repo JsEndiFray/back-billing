@@ -1,9 +1,9 @@
 /**
- * Invoices-issued service error code → HTTP response mapping tests.
+ * Invoices-issued service error → HTTP response mapping tests.
  *
- * Regression guard: after the controller refactor, service errors are returned
- * as {error: 'CODE'} objects instead of null/[]. This suite verifies that each
- * error code maps to the correct HTTP status without secondary service calls.
+ * Regression guard: after the AppError migration, service errors are thrown
+ * as AppError instances instead of returned as {error: 'CODE'} objects.
+ * This suite verifies that each error maps to the correct HTTP status.
  *
  * Covered:
  * - createInvoice: DUPLICATE → 409, INVALID_PROPORTIONAL → 400, DB_ERROR → 500
@@ -30,6 +30,7 @@ jest.unstable_mockModule('../../src/db/dbConnect.js', () => ({
 
 const { default: app } = await import('../../src/app.js');
 const { default: InvoicesIssuedService } = await import('../../src/services/invoicesIssuedServices.js');
+const { AppError } = await import('../../src/errors/AppError.js');
 
 const adminToken = jwt.sign(
     { id: 1, username: 'testadmin', role: 'admin' },
@@ -53,8 +54,8 @@ const VALID_INVOICE_BODY = {
 describe('Invoices issued — createInvoice service error codes', () => {
     beforeEach(() => InvoicesIssuedService.createInvoice.mockReset());
 
-    it('service returns DUPLICATE → 409 Conflict', async () => {
-        InvoicesIssuedService.createInvoice.mockResolvedValueOnce({ error: 'DUPLICATE' });
+    it('service throws DUPLICATE AppError → 409 Conflict', async () => {
+        InvoicesIssuedService.createInvoice.mockRejectedValueOnce(new AppError('Ya existe una factura para este cliente en esa propiedad y mes', 409));
 
         const res = await request(app)
             .post('/api/invoices-issued')
@@ -64,8 +65,8 @@ describe('Invoices issued — createInvoice service error codes', () => {
         expect(res.statusCode).toBe(409);
     });
 
-    it('service returns INVALID_PROPORTIONAL → 400', async () => {
-        InvoicesIssuedService.createInvoice.mockResolvedValueOnce({ error: 'INVALID_PROPORTIONAL' });
+    it('service throws INVALID_PROPORTIONAL AppError → 400', async () => {
+        InvoicesIssuedService.createInvoice.mockRejectedValueOnce(new AppError('Error en campos proporcionales de la factura', 400));
 
         const res = await request(app)
             .post('/api/invoices-issued')
@@ -75,8 +76,8 @@ describe('Invoices issued — createInvoice service error codes', () => {
         expect(res.statusCode).toBe(400);
     });
 
-    it('service returns DB_ERROR → 500', async () => {
-        InvoicesIssuedService.createInvoice.mockResolvedValueOnce({ error: 'DB_ERROR' });
+    it('service throws DB_ERROR AppError → 500', async () => {
+        InvoicesIssuedService.createInvoice.mockRejectedValueOnce(new AppError('Error al crear factura: La operación no se completó correctamente', 500));
 
         const res = await request(app)
             .post('/api/invoices-issued')
@@ -90,8 +91,8 @@ describe('Invoices issued — createInvoice service error codes', () => {
 describe('Invoices issued — createRefund service error codes', () => {
     beforeEach(() => InvoicesIssuedService.createRefund.mockReset());
 
-    it('service returns NOT_FOUND → 404', async () => {
-        InvoicesIssuedService.createRefund.mockResolvedValueOnce({ error: 'NOT_FOUND' });
+    it('service throws NOT_FOUND AppError → 404', async () => {
+        InvoicesIssuedService.createRefund.mockRejectedValueOnce(new AppError('Factura original no encontrada', 404));
 
         const res = await request(app)
             .post('/api/invoices-issued/refunds')
@@ -101,8 +102,8 @@ describe('Invoices issued — createRefund service error codes', () => {
         expect(res.statusCode).toBe(404);
     });
 
-    it('service returns CANNOT_REFUND_REFUND → 400', async () => {
-        InvoicesIssuedService.createRefund.mockResolvedValueOnce({ error: 'CANNOT_REFUND_REFUND' });
+    it('service throws CANNOT_REFUND_REFUND AppError → 400', async () => {
+        InvoicesIssuedService.createRefund.mockRejectedValueOnce(new AppError('No se puede crear un abono a partir de otro abono', 400));
 
         const res = await request(app)
             .post('/api/invoices-issued/refunds')
