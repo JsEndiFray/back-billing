@@ -111,11 +111,11 @@ app.use((req, res) => {
 /// Middleware global para manejar errores inesperados (500)
 app.use((err, req, res, next) => {
     if (err instanceof AppError && err.isOperational) {
-        return res.status(err.statusCode).json({ message: err.message });
+        return res.status(err.statusCode).json({ success: false, message: err.message });
     }
     // Error no operativo (bug, fallo de DB, etc.): loguear y respuesta genérica
     console.error(err);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
 });
 
 //Exportación de la App
