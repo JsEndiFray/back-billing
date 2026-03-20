@@ -80,8 +80,8 @@ export default class UserService {
 
     static async getUserByUsername(username) {
         if (!username) return [];
-        return await UsersRepository.findByUsername(username);
-
+        const users = await UsersRepository.findByUsername(username);
+        return users.map(({password, ...rest}) => rest);
     }
 
     static async getUserByEmail(email) {
@@ -135,7 +135,8 @@ export default class UserService {
         const created = await UsersRepository.create(userData);
         if (created.length === 0) return [];
 
-        return [{...userData, id: created[0].id}];
+        const {password: _, ...safeData} = userData;
+        return [{...safeData, id: created[0].id}];
     }
 
     /**

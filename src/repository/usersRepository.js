@@ -9,7 +9,7 @@ export default class UsersRepository {
      * Obtiene todos los usuarios registrados
      */
     static async getAll() {
-        const [rows] = await db.query('SELECT * FROM users');
+        const [rows] = await db.query('SELECT id, username, email, phone, role, date_create, date_update FROM users');
         return rows;
     }
 
@@ -29,7 +29,7 @@ export default class UsersRepository {
      * Busca por email (único)
      */
     static async findByEmail(email) {
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        const [rows] = await db.query('SELECT id, username, email, phone, role, date_create, date_update FROM users WHERE email = ?', [email]);
         return rows;
     }
 
@@ -37,7 +37,7 @@ export default class UsersRepository {
      * Busca por teléfono (único)
      */
     static async findByPhone(phone) {
-        const [rows] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]); // Corregido: faltaban []
+        const [rows] = await db.query('SELECT id, username, email, phone, role, date_create, date_update FROM users WHERE phone = ?', [phone]);
         return rows;
     }
 
@@ -45,7 +45,7 @@ export default class UsersRepository {
      * Busca por ID único
      */
     static async findById(id) {
-        const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+        const [rows] = await db.query('SELECT id, username, email, phone, role, date_create, date_update FROM users WHERE id = ?', [id]);
         return rows;
     }
 
