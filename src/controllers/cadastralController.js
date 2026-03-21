@@ -15,11 +15,7 @@ export default class CadastralController {
 
             // Validación básica del parámetro
             if (!reference || typeof reference !== 'string' || reference.trim() === '') {
-                return res.status(400).json({
-                    isValid: false,
-                    message: 'Referencia catastral requerida',
-                    error: 'missing_parameter'
-                });
+                return res.status(400).json({ success: false, message: 'Referencia catastral requerida' });
             }
 
             // Limpiar el parámetro
@@ -29,7 +25,7 @@ export default class CadastralController {
             const result = await CadastralService.validate(cleanReference);
 
             // Respuesta exitosa (200 tanto para válida como inválida)
-            return res.status(200).json(result);
+            return res.status(200).json({ success: true, data: result });
 
         } catch (error) {
             next(error);
@@ -43,10 +39,13 @@ export default class CadastralController {
     static async healthCheck(req, res, next) {
         try {
             return res.status(200).json({
-                status: 'ok',
-                service: 'Cadastral Validation Service',
-                timestamp: new Date().toISOString(),
-                version: '1.0.0'
+                success: true,
+                data: {
+                    status: 'ok',
+                    service: 'Cadastral Validation Service',
+                    timestamp: new Date().toISOString(),
+                    version: '1.0.0',
+                },
             });
         } catch (error) {
             next(error);

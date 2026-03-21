@@ -39,7 +39,8 @@ describe('Cadastral Controller', () => {
     it('GET /api/cadastral/health — responds 200 without auth', async () => {
         const res = await request(app).get('/api/cadastral/health');
         expect(res.statusCode).toBe(200);
-        expect(res.body.status).toBe('ok');
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.status).toBe('ok');
     });
 
     it('when service throws → returns 500 and never isValid: true', async () => {
@@ -62,7 +63,8 @@ describe('Cadastral Controller', () => {
             .set('Authorization', `Bearer ${employeeToken}`);
 
         expect(res.statusCode).toBe(200);
-        expect(res.body.isValid).toBe(true);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.isValid).toBe(true);
     });
 
     it('when service returns invalid result → passes it through as 200', async () => {
@@ -73,6 +75,7 @@ describe('Cadastral Controller', () => {
             .set('Authorization', `Bearer ${employeeToken}`);
 
         expect(res.statusCode).toBe(200);
-        expect(res.body.isValid).toBe(false);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.isValid).toBe(false);
     });
 });
