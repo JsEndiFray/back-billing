@@ -15,6 +15,7 @@ import fs from 'fs';
 import ExcelGenerator from "../shared/utils/excelGenerador/ExcelGenerator.js";
 import CompanyService from "../services/CompanyService.js";
 import {generateVATBookPDFContent} from "../shared/utils/Pdf-VATBook/vatBookPdfGenerator.js";
+import { vatBookExportDTO, vatBookPDFDTO, validateCompanyDTO } from '../dto/VATBook.dto.js';
 
 /**
  * Controlador para la gestión del Libro de IVA
@@ -265,7 +266,7 @@ export default class VATBookController {
      */
     static async exportVATBookToExcel(req, res, next) {
         try {
-            const {bookType, year, quarter, month, companyData} = req.body;
+            const { bookType, year, quarter, month, companyData } = vatBookExportDTO(req.body);
 
             if (!bookType || !['supported', 'charged'].includes(bookType)) {
                 return res.status(400).json({
@@ -335,7 +336,7 @@ export default class VATBookController {
      */
     static async validateCompanyData(req, res, next) {
         try {
-            const {companyData} = req.body;
+            const { companyData } = validateCompanyDTO(req.body);
 
             if (!companyData) {
                 return res.status(400).json({
@@ -406,7 +407,7 @@ export default class VATBookController {
                 companyData = CompanyService.getCompanyData();
             } else {
                 // Para peticiones POST desde frontend
-                ({bookType, year, quarter, month, companyData} = req.body);
+                ({bookType, year, quarter, month, companyData} = vatBookExportDTO(req.body));
 
                 // Si no hay companyData, usar por defecto
                 if (!companyData) {
@@ -501,7 +502,7 @@ export default class VATBookController {
      */
     static async downloadVATBookPDF(req, res, next) {
         try {
-            const { year, quarter, month, bookType } = req.body;
+            const { year, quarter, month, bookType } = vatBookPDFDTO(req.body);
 
             if (!year || isNaN(Number(year))) {
                 return res.status(400).json({
