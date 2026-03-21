@@ -2,6 +2,8 @@ import express from "express";
 import EstateOwnersController from "../controllers/estatesOwnersControllers.js";
 import auth from "../middlewares/auth.js";
 import role from "../middlewares/role.js";
+import errorHandler from "../middlewares/errorHandler.js";
+import { validateCreateEstateOwner, validateUpdateEstateOwner } from "../validator/validatorEstatesOwners.js";
 
 
 /**
@@ -97,7 +99,7 @@ const router = express.Router()
      *         description: No autorizado
      */
     // Crear
-    .post("/", auth, role(['admin']), EstateOwnersController.createEstateOwners)
+    .post("/", auth, role(['admin']), validateCreateEstateOwner, errorHandler, EstateOwnersController.createEstateOwners)
     /**
      * @swagger
      * /estates-owners/{id}:
@@ -133,7 +135,7 @@ const router = express.Router()
      *         description: No autorizado
      */
     // Actualizar por ID ÚNICO
-    .put("/:id", auth, role(['admin']), EstateOwnersController.updateEstateOwners)
+    .put("/:id", auth, role(['admin']), validateUpdateEstateOwner, errorHandler, EstateOwnersController.updateEstateOwners)
 
     /**
      * @swagger
