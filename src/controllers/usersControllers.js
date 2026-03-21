@@ -11,9 +11,9 @@ export default class UserController {
         try {
             const users = await UserService.getAllUsers();
             if (!users.length) {
-                return res.status(404).json("No se encontraron usuarios");
+                return res.status(404).json({ success: false, message: "No se encontraron usuarios" });
             }
-            return res.status(200).json(users);
+            return res.status(200).json({ success: true, data: users });
         } catch (error) {
             next(error);
         }
@@ -28,9 +28,9 @@ export default class UserController {
             const {username} = req.params;
             const user = await UserService.getUserByUsername(username);
             if (!user.length) {
-                return res.status(404).json("Usuario no encontrado");
+                return res.status(404).json({ success: false, message: "Usuario no encontrado" });
             }
-            return res.status(200).json(user);
+            return res.status(200).json({ success: true, data: user });
         } catch (error) {
             next(error);
         }
@@ -41,9 +41,9 @@ export default class UserController {
             const {email} = req.params;
             const userEmail = await UserService.getUserByEmail(email);
             if (!userEmail.length) {
-                return res.status(404).json("Usuario no encontrado");
+                return res.status(404).json({ success: false, message: "Usuario no encontrado" });
             }
-            return res.status(200).json(userEmail);
+            return res.status(200).json({ success: true, data: userEmail });
         } catch (error) {
             next(error);
         }
@@ -54,9 +54,9 @@ export default class UserController {
             const {phone} = req.params;
             const userPhone = await UserService.getUserByPhone(phone);
             if (!userPhone.length) {
-                return res.status(404).json("Usuario no encontrado");
+                return res.status(404).json({ success: false, message: "Usuario no encontrado" });
             }
-            return res.status(200).json(userPhone);
+            return res.status(200).json({ success: true, data: userPhone });
         } catch (error) {
             next(error);
         }
@@ -66,13 +66,13 @@ export default class UserController {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID inválido");
+                return res.status(400).json({ success: false, message: "ID inválido" });
             }
             const userId = await UserService.getUserById(id);
             if (!userId.length) {
-                return res.status(404).json("Usuario no encontrado");
+                return res.status(404).json({ success: false, message: "Usuario no encontrado" });
             }
-            return res.status(200).json(userId);
+            return res.status(200).json({ success: true, data: userId });
         } catch (error) {
             next(error);
         }
@@ -90,7 +90,7 @@ export default class UserController {
         try {
             const dto = createUserDTO(req.body);
             const result = await UserService.createUser(dto);
-            return res.status(201).json(result);
+            return res.status(201).json({ success: true, data: result });
         } catch (error) {
             next(error);
         }
@@ -104,12 +104,12 @@ export default class UserController {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID inválido");
+                return res.status(400).json({ success: false, message: "ID inválido" });
             }
 
             const dto = updateUserDTO(req.body);
             const updated = await UserService.updateUser(id, dto);
-            return res.status(200).json(updated);
+            return res.status(200).json({ success: true, data: updated });
         } catch (error) {
             next(error);
         }
@@ -119,7 +119,7 @@ export default class UserController {
         try {
             const {id} = req.params;
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID inválido");
+                return res.status(400).json({ success: false, message: "ID inválido" });
             }
             await UserService.deleteUser(id);
             return res.status(204).send();
