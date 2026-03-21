@@ -1,0 +1,33 @@
+export const createClientDTO = (data) => ({
+    type_client: data.type_client?.trim(),
+    name: data.name?.trim(),
+    lastname: data.lastname?.trim(),
+    company_name: data.company_name?.trim() ?? null,
+    identification: data.identification?.trim().toUpperCase(),
+    phone: data.phone,
+    email: data.email?.trim().toLowerCase(),
+    address: data.address?.trim(),
+    postal_code: data.postal_code,
+    location: data.location?.trim(),
+    province: data.province?.trim(),
+    country: data.country?.trim(),
+    parent_company_id: data.parent_company_id ?? null,
+    relationship_type: data.relationship_type ?? null,
+});
+
+export const updateClientDTO = (data) => ({
+    type_client: data.type_client?.trim(),
+    name: data.name?.trim(),
+    lastname: data.lastname?.trim(),
+    company_name: data.company_name?.trim() ?? null,
+    identification: data.identification?.trim().toUpperCase(),
+    phone: data.phone,
+    email: data.email?.trim().toLowerCase(),
+    address: data.address?.trim(),
+    postal_code: data.postal_code,
+    location: data.location?.trim(),
+    province: data.province?.trim(),
+    country: data.country?.trim(),
+    parent_company_id: data.parent_company_id ?? null,
+    relationship_type: data.relationship_type ?? null,
+});
