@@ -16,6 +16,16 @@
 import fs from 'fs';
 import InternalExpensesService from '../services/internalExpensesServices.js';
 import {localFileService} from "../services/fileService.js";
+import {
+    createExpenseDTO,
+    updateExpenseDTO,
+    expenseDateRangeDTO,
+    advancedSearchDTO,
+    approvalDTO,
+    expenseStatusDTO,
+    validateDateRangeDTO,
+    simulationDTO,
+} from '../dto/internalExpense.dto.js';
 
 /**
  * Controlador para la gestión de gastos internos de la empresa
@@ -48,10 +58,10 @@ export default class InternalExpensesController {
             const expenses = await InternalExpensesService.getAllExpenses();
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos internos");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos internos" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -75,16 +85,16 @@ export default class InternalExpensesController {
             const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             const expense = await InternalExpensesService.getExpenseById(id);
 
             if (!expense || expense.length === 0) {
-                return res.status(404).json("Gasto no encontrado");
+                return res.status(404).json({ success: false, message: "Gasto no encontrado" });
             }
 
-            return res.status(200).json(expense[0]);
+            return res.status(200).json({ success: true, data: expense[0] });
         } catch (error) {
             next(error);
         }
@@ -112,16 +122,16 @@ export default class InternalExpensesController {
             const {category} = req.params;
 
             if (!category || category.trim().length === 0) {
-                return res.status(400).json("Categoría requerida");
+                return res.status(400).json({ success: false, message: "Categoría requerida" });
             }
 
             const expenses = await InternalExpensesService.getExpensesByCategory(category);
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos para esta categoría");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos para esta categoría" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -145,16 +155,16 @@ export default class InternalExpensesController {
             const {status} = req.params;
 
             if (!status || status.trim().length === 0) {
-                return res.status(400).json("Estado requerido");
+                return res.status(400).json({ success: false, message: "Estado requerido" });
             }
 
             const expenses = await InternalExpensesService.getExpensesByStatus(status);
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos con ese estado");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos con ese estado" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -178,16 +188,16 @@ export default class InternalExpensesController {
             const {supplier_name} = req.params;
 
             if (!supplier_name || supplier_name.trim().length === 0) {
-                return res.status(400).json("Nombre de proveedor requerido");
+                return res.status(400).json({ success: false, message: "Nombre de proveedor requerido" });
             }
 
             const expenses = await InternalExpensesService.getExpensesBySupplier(supplier_name);
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos para este proveedor");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos para este proveedor" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -209,19 +219,19 @@ export default class InternalExpensesController {
      */
     static async getExpensesByDateRange(req, res, next) {
         try {
-            const {startDate, endDate} = req.body;
+            const { startDate, endDate } = expenseDateRangeDTO(req.body);
 
             if (!startDate || !endDate) {
-                return res.status(400).json("Fechas de inicio y fin son requeridas");
+                return res.status(400).json({ success: false, message: "Fechas de inicio y fin son requeridas" });
             }
 
             const expenses = await InternalExpensesService.getExpensesByDateRange(startDate, endDate);
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos en ese rango de fechas");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos en ese rango de fechas" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -245,10 +255,10 @@ export default class InternalExpensesController {
             const expenses = await InternalExpensesService.getDeductibleExpenses();
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos deducibles");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos deducibles" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -272,10 +282,10 @@ export default class InternalExpensesController {
             const expenses = await InternalExpensesService.getRecurringExpenses();
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos recurrentes");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos recurrentes" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -296,14 +306,14 @@ export default class InternalExpensesController {
      */
     static async getExpensesAdvanced(req, res, next) {
         try {
-            const filters = req.body;
+            const filters = advancedSearchDTO(req.body);
             const expenses = await InternalExpensesService.getExpensesAdvanced(filters);
 
             if (!expenses || expenses.length === 0) {
-                return res.status(404).json("No se encontraron gastos con los filtros especificados");
+                return res.status(404).json({ success: false, message: "No se encontraron gastos con los filtros especificados" });
             }
 
-            return res.status(200).json(expenses);
+            return res.status(200).json({ success: true, data: expenses });
         } catch (error) {
             next(error);
         }
@@ -338,7 +348,7 @@ export default class InternalExpensesController {
      */
     static async createExpense(req, res, next) {
         try {
-            const processedData = {...req.body};
+            const dto = createExpenseDTO(req.body);
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -346,29 +356,26 @@ export default class InternalExpensesController {
                     const fileUploadResult = await localFileService.uploadInvoiceFile(
                             req.file.buffer,
                             req.file.originalname,
-                            processedData.receipt_number || `expense-${Date.now()}`,
-                            processedData.expense_date,  // ⬅️ NUEVO: Pasar la fecha
+                            dto.receipt_number || `expense-${Date.now()}`,
+                            dto.expense_date,  // ⬅️ NUEVO: Pasar la fecha
                             'expenses'                    // ⬅️ NUEVO: Tipo de archivo
                         )
                     ;
-                    processedData.has_attachments = true;
-                    processedData.pdf_path = fileUploadResult.fileId;
+                    dto.has_attachments = true;
+                    dto.pdf_path = fileUploadResult.fileId;
 
                 } catch (fileError) {
                     return next(fileError);
                 }
             }
 
-            const created = await InternalExpensesService.createExpense(processedData);
+            const created = await InternalExpensesService.createExpense(dto);
 
             if (created === null || !created || created.length === 0) {
-                return res.status(400).json("Error en los datos proporcionados o faltantes");
+                return res.status(400).json({ success: false, message: "Error en los datos proporcionados o faltantes" });
             }
 
-            return res.status(201).json({
-                message: "Gasto creado correctamente",
-                expense: created[0]
-            });
+            return res.status(201).json({ success: true, data: created[0] });
         } catch (error) {
             next(error);
         }
@@ -392,10 +399,10 @@ export default class InternalExpensesController {
             const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID inválido");
+                return res.status(400).json({ success: false, message: "ID inválido" });
             }
 
-            const processedData = {...req.body};
+            const dto = updateExpenseDTO(req.body);
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -403,27 +410,24 @@ export default class InternalExpensesController {
                     const fileUploadResult = await localFileService.uploadInvoiceFile(
                         req.file.buffer,
                         req.file.originalname,
-                        processedData.receipt_number || `expense-${id}`,
-                        processedData.expense_date,  // ⬅️ NUEVO
+                        dto.receipt_number || `expense-${id}`,
+                        dto.expense_date,  // ⬅️ NUEVO
                         'expenses'                    // ⬅️ NUEVO
                     );
-                    processedData.has_attachments = true;
-                    processedData.pdf_path = fileUploadResult.fileId;
+                    dto.has_attachments = true;
+                    dto.pdf_path = fileUploadResult.fileId;
                 } catch (fileError) {
                     return next(fileError);
                 }
             }
 
-            const updated = await InternalExpensesService.updateExpense(Number(id), processedData);
+            const updated = await InternalExpensesService.updateExpense(Number(id), dto);
 
             if (updated === null || !updated || updated.length === 0) {
-                return res.status(400).json("Error en los datos proporcionados");
+                return res.status(400).json({ success: false, message: "Error en los datos proporcionados" });
             }
 
-            return res.status(200).json({
-                message: "Gasto actualizado correctamente",
-                expense: updated[0]
-            });
+            return res.status(200).json({ success: true, data: updated[0] });
         } catch (error) {
             next(error);
         }
@@ -447,13 +451,13 @@ export default class InternalExpensesController {
             const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             const deleted = await InternalExpensesService.deleteExpense(id);
 
             if (!deleted || deleted.length === 0) {
-                return res.status(404).json("Gasto no encontrado");
+                return res.status(404).json({ success: false, message: "Gasto no encontrado" });
             }
 
             return res.status(204).send();
@@ -482,22 +486,19 @@ export default class InternalExpensesController {
     static async approveExpense(req, res, next) {
         try {
             const {id} = req.params;
-            const {approved_by} = req.body;
+            const { approved_by } = approvalDTO(req.body);
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             const approved = await InternalExpensesService.approveExpense(Number(id), approved_by);
 
             if (!approved || approved.length === 0) {
-                return res.status(400).json("Error al aprobar gasto - solo se pueden aprobar gastos pendientes");
+                return res.status(400).json({ success: false, message: "Error al aprobar gasto - solo se pueden aprobar gastos pendientes" });
             }
 
-            return res.status(200).json({
-                message: "Gasto aprobado correctamente",
-                expense: approved[0]
-            });
+            return res.status(200).json({ success: true, data: approved[0] });
         } catch (error) {
             next(error);
         }
@@ -519,22 +520,19 @@ export default class InternalExpensesController {
     static async rejectExpense(req, res, next) {
         try {
             const {id} = req.params;
-            const {approved_by} = req.body;
+            const { approved_by } = approvalDTO(req.body);
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             const rejected = await InternalExpensesService.rejectExpense(Number(id), approved_by);
 
             if (!rejected || rejected.length === 0) {
-                return res.status(400).json("Error al rechazar gasto - solo se pueden rechazar gastos pendientes");
+                return res.status(400).json({ success: false, message: "Error al rechazar gasto - solo se pueden rechazar gastos pendientes" });
             }
 
-            return res.status(200).json({
-                message: "Gasto rechazado correctamente",
-                expense: rejected[0]
-            });
+            return res.status(200).json({ success: true, data: rejected[0] });
         } catch (error) {
             next(error);
         }
@@ -558,19 +556,16 @@ export default class InternalExpensesController {
             const {id} = req.params;
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             const paid = await InternalExpensesService.markExpenseAsPaid(Number(id));
 
             if (!paid || paid.length === 0) {
-                return res.status(400).json("Error al marcar como pagado - solo se pueden pagar gastos aprobados");
+                return res.status(400).json({ success: false, message: "Error al marcar como pagado - solo se pueden pagar gastos aprobados" });
             }
 
-            return res.status(200).json({
-                message: "Gasto marcado como pagado correctamente",
-                expense: paid[0]
-            });
+            return res.status(200).json({ success: true, data: paid[0] });
         } catch (error) {
             next(error);
         }
@@ -592,26 +587,23 @@ export default class InternalExpensesController {
     static async updateExpenseStatus(req, res, next) {
         try {
             const {id} = req.params;
-            const {status, approved_by} = req.body;
+            const { status, approved_by } = expenseStatusDTO(req.body);
 
             if (!id || isNaN(Number(id))) {
-                return res.status(400).json("ID de gasto inválido");
+                return res.status(400).json({ success: false, message: "ID de gasto inválido" });
             }
 
             if (!status) {
-                return res.status(400).json("Estado requerido");
+                return res.status(400).json({ success: false, message: "Estado requerido" });
             }
 
             const updated = await InternalExpensesService.updateExpenseStatus(Number(id), status, approved_by);
 
             if (!updated || updated.length === 0) {
-                return res.status(400).json("Error al actualizar estado - transición no válida");
+                return res.status(400).json({ success: false, message: "Error al actualizar estado - transición no válida" });
             }
 
-            return res.status(200).json({
-                message: "Estado actualizado correctamente",
-                expense: updated[0]
-            });
+            return res.status(200).json({ success: true, data: updated[0] });
         } catch (error) {
             next(error);
         }
@@ -642,7 +634,7 @@ export default class InternalExpensesController {
     static async getExpenseStats(req, res, next) {
         try {
             const stats = await InternalExpensesService.getExpenseStats();
-            return res.status(200).json(stats);
+            return res.status(200).json({ success: true, data: stats });
         } catch (error) {
             next(error);
         }
@@ -662,10 +654,10 @@ export default class InternalExpensesController {
             const stats = await InternalExpensesService.getStatsByCategory();
 
             if (!stats || stats.length === 0) {
-                return res.status(404).json("No hay estadísticas disponibles");
+                return res.status(404).json({ success: false, message: "No hay estadísticas disponibles" });
             }
 
-            return res.status(200).json(stats);
+            return res.status(200).json({ success: true, data: stats });
         } catch (error) {
             next(error);
         }
@@ -689,16 +681,16 @@ export default class InternalExpensesController {
             const {year} = req.params;
 
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({ success: false, message: "Año requerido y debe ser válido" });
             }
 
             const monthlyData = await InternalExpensesService.getMonthlySummary(year);
 
             if (!monthlyData || monthlyData.length === 0) {
-                return res.status(404).json("No hay datos de gastos para el año especificado");
+                return res.status(404).json({ success: false, message: "No hay datos de gastos para el año especificado" });
             }
 
-            return res.status(200).json(monthlyData);
+            return res.status(200).json({ success: true, data: monthlyData });
         } catch (error) {
             next(error);
         }
@@ -723,16 +715,16 @@ export default class InternalExpensesController {
             const {month} = req.query;
 
             if (!year || isNaN(Number(year))) {
-                return res.status(400).json("Año requerido y debe ser válido");
+                return res.status(400).json({ success: false, message: "Año requerido y debe ser válido" });
             }
 
             const vatData = await InternalExpensesService.getVATBookData(year, month);
 
             if (!vatData || vatData.length === 0) {
-                return res.status(404).json("No hay datos de IVA para el período especificado");
+                return res.status(404).json({ success: false, message: "No hay datos de IVA para el período especificado" });
             }
 
-            return res.status(200).json(vatData);
+            return res.status(200).json({ success: true, data: vatData });
         } catch (error) {
             next(error);
         }
@@ -760,10 +752,10 @@ export default class InternalExpensesController {
             const expensesDue = await InternalExpensesService.getRecurringExpensesDue();
 
             if (!expensesDue || expensesDue.length === 0) {
-                return res.status(404).json("No hay gastos recurrentes pendientes de procesar");
+                return res.status(404).json({ success: false, message: "No hay gastos recurrentes pendientes de procesar" });
             }
 
-            return res.status(200).json(expensesDue);
+            return res.status(200).json({ success: true, data: expensesDue });
         } catch (error) {
             next(error);
         }
@@ -786,10 +778,7 @@ export default class InternalExpensesController {
         try {
             const processed = await InternalExpensesService.processRecurringExpenses();
 
-            return res.status(200).json({
-                message: `Procesados ${processed.length} gastos recurrentes`,
-                processed: processed
-            });
+            return res.status(200).json({ success: true, data: processed });
         } catch (error) {
             next(error);
         }
@@ -814,13 +803,10 @@ export default class InternalExpensesController {
      */
     static async validateDateRange(req, res, next) {
         try {
-            const {start_date, end_date} = req.body;
+            const { start_date, end_date } = validateDateRangeDTO(req.body);
 
             if (!start_date || !end_date) {
-                return res.status(400).json({
-                    isValid: false,
-                    message: "Fechas de inicio y fin son requeridas"
-                });
+                return res.status(400).json({ success: false, message: "Fechas de inicio y fin son requeridas" });
             }
 
             const validation = InternalExpensesService.validateDateRange(start_date, end_date);
@@ -846,14 +832,14 @@ export default class InternalExpensesController {
      */
     static async simulateExpenseCalculation(req, res, next) {
         try {
-            const {amount, iva_percentage} = req.body;
+            const { amount, iva_percentage } = simulationDTO(req.body);
 
             if (!amount || amount <= 0) {
-                return res.status(400).json("Importe debe ser mayor a 0");
+                return res.status(400).json({ success: false, message: "Importe debe ser mayor a 0" });
             }
 
             const result = InternalExpensesService.simulateCalculation(amount, iva_percentage || 21);
-            return res.status(200).json(result);
+            return res.status(200).json({ success: true, data: result });
         } catch (error) {
             next(error);
         }
@@ -875,7 +861,7 @@ export default class InternalExpensesController {
     static async getAvailableCategories(req, res, next) {
         try {
             const categories = InternalExpensesService.getAvailableCategories();
-            return res.status(200).json(categories);
+            return res.status(200).json({ success: true, data: categories });
         } catch (error) {
             next(error);
         }
@@ -897,7 +883,7 @@ export default class InternalExpensesController {
     static async getAvailablePaymentMethods(req, res, next) {
         try {
             const methods = InternalExpensesService.getAvailablePaymentMethods();
-            return res.status(200).json(methods);
+            return res.status(200).json({ success: true, data: methods });
         } catch (error) {
             next(error);
         }
@@ -919,7 +905,7 @@ export default class InternalExpensesController {
     static async getAvailableStatuses(req, res, next) {
         try {
             const statuses = InternalExpensesService.getAvailableStatuses();
-            return res.status(200).json(statuses);
+            return res.status(200).json({ success: true, data: statuses });
         } catch (error) {
             next(error);
         }
@@ -944,7 +930,7 @@ export default class InternalExpensesController {
 
             // Validar nombre de archivo
             if (!fileName || !fileName.endsWith('.pdf')) {
-                return res.status(400).json("Nombre de archivo inválido");
+                return res.status(400).json({ success: false, message: "Nombre de archivo inválido" });
             }
 
             // Construir ruta del archivo
@@ -952,7 +938,7 @@ export default class InternalExpensesController {
 
             // Verificar que el archivo existe
             if (!fs.existsSync(filePath)) {
-                return res.status(404).json("Archivo no encontrado");
+                return res.status(404).json({ success: false, message: "Archivo no encontrado" });
             }
 
             // Enviar archivo para descarga
