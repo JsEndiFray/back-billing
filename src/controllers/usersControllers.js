@@ -1,4 +1,5 @@
 import UserService from "../services/usersServices.js";
+import { createUserDTO, updateUserDTO } from "../dto/user.dto.js";
 
 /**
  * Controlador de usuarios del sistema
@@ -87,8 +88,8 @@ export default class UserController {
      */
     static async createUser(req, res, next) {
         try {
-            const {username, password, email, phone, role} = req.body;
-            const result = await UserService.createUser({username, password, email, phone, role});
+            const dto = createUserDTO(req.body);
+            const result = await UserService.createUser(dto);
             return res.status(201).json(result);
         } catch (error) {
             next(error);
@@ -106,8 +107,8 @@ export default class UserController {
                 return res.status(400).json("ID inválido");
             }
 
-            const {username, password, email, phone, role} = req.body;
-            const updated = await UserService.updateUser(id, {username, password, email, phone, role});
+            const dto = updateUserDTO(req.body);
+            const updated = await UserService.updateUser(id, dto);
             return res.status(200).json(updated);
         } catch (error) {
             next(error);
