@@ -36,8 +36,9 @@ describe('Auth API', () => {
             .send({ username: 'testuser', password: 'password123' });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('accessToken');
-        expect(res.body).toHaveProperty('refreshToken');
+        expect(res.body.success).toBe(true);
+        expect(res.body.data).toHaveProperty('accessToken');
+        expect(res.body.data).toHaveProperty('refreshToken');
     });
 
     it('should reject invalid credentials', async () => {

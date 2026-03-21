@@ -17,14 +17,17 @@ export default class AuthController {
             const {username, password} = req.body;
 
             if (!username || !password) {
-                return res.status(400).json("Usuario y contraseña requeridos");
+                return res.status(400).json({ success: false, message: "Usuario y contraseña requeridos" });
             }
 
             const result = await UserService.login(username, password);
             return res.status(200).json({
-                user: result.user,
-                accessToken: result.accessToken,
-                refreshToken: result.refreshToken
+                success: true,
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken,
+                },
             });
         } catch (error) {
             next(error);
@@ -42,8 +45,11 @@ export default class AuthController {
 
             const tokens = await UserService.refreshToken(refreshToken);
             return res.status(200).json({
-                accessToken: tokens.accessToken,
-                refreshToken: tokens.refreshToken
+                success: true,
+                data: {
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                },
             });
         } catch (error) {
             next(error);
