@@ -48,7 +48,7 @@ describe('PUT /api/invoices-received/:id/payment — field name mapping', () => 
             .send({ payment_status: 'paid', payment_method: 'transfer' });
 
         expect(res.statusCode).toBe(200);
-        expect(res.body.message).toBeDefined();
+        expect(res.body.success).toBe(true);
     });
 
     it('collection_status + collection_method (old internal names) → 400 (regression: these are not the API field names)', async () => {
