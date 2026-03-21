@@ -349,6 +349,7 @@ export default class InternalExpensesController {
     static async createExpense(req, res, next) {
         try {
             const dto = createExpenseDTO(req.body);
+            let finalData = dto;
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -361,15 +362,17 @@ export default class InternalExpensesController {
                             'expenses'                    // ⬅️ NUEVO: Tipo de archivo
                         )
                     ;
-                    dto.has_attachments = true;
-                    dto.pdf_path = fileUploadResult.fileId;
-
+                    finalData = {
+                        ...dto,
+                        has_attachments: true,
+                        pdf_path: fileUploadResult.fileId,
+                    };
                 } catch (fileError) {
                     return next(fileError);
                 }
             }
 
-            const created = await InternalExpensesService.createExpense(dto);
+            const created = await InternalExpensesService.createExpense(finalData);
 
             if (created === null || !created || created.length === 0) {
                 return res.status(400).json({ success: false, message: "Error en los datos proporcionados o faltantes" });
@@ -403,6 +406,7 @@ export default class InternalExpensesController {
             }
 
             const dto = updateExpenseDTO(req.body);
+            let finalData = dto;
 
             // Manejar archivo adjunto si existe
             if (req.file) {
@@ -414,14 +418,17 @@ export default class InternalExpensesController {
                         dto.expense_date,  // ⬅️ NUEVO
                         'expenses'                    // ⬅️ NUEVO
                     );
-                    dto.has_attachments = true;
-                    dto.pdf_path = fileUploadResult.fileId;
+                    finalData = {
+                        ...dto,
+                        has_attachments: true,
+                        pdf_path: fileUploadResult.fileId,
+                    };
                 } catch (fileError) {
                     return next(fileError);
                 }
             }
 
-            const updated = await InternalExpensesService.updateExpense(Number(id), dto);
+            const updated = await InternalExpensesService.updateExpense(Number(id), finalData);
 
             if (updated === null || !updated || updated.length === 0) {
                 return res.status(400).json({ success: false, message: "Error en los datos proporcionados" });
