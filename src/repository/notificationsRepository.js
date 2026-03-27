@@ -39,7 +39,8 @@ export default class NotificationsRepository {
                 message: `${pendingRows[0].count} factura(s) pendientes de cobro`,
                 type: 'warning',
                 read: readIds.has(1),
-                createdAt: now
+                createdAt: now,
+                route: '/dashboards/invoices-issued/list'
             });
         }
 
@@ -49,7 +50,8 @@ export default class NotificationsRepository {
                 message: `${overdueRows[0].count} factura(s) con pago vencido`,
                 type: 'warning',
                 read: readIds.has(2),
-                createdAt: now
+                createdAt: now,
+                route: '/dashboards/invoices-issued/list'
             });
         }
 
@@ -59,7 +61,8 @@ export default class NotificationsRepository {
                 message: `${newClientsRows[0].count} nuevo(s) cliente(s) esta semana`,
                 type: 'success',
                 read: readIds.has(3),
-                createdAt: now
+                createdAt: now,
+                route: '/dashboards/clients/list'
             });
         }
 
