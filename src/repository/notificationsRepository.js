@@ -1,8 +1,20 @@
 import db from '../db/dbConnect.js';
 
 /**
- * Repositorio de notificaciones.
- * Las notificaciones son computadas desde datos existentes.
+ * Tipos de notificación — fuente de verdad del backend.
+ * El frontend mapea estos tipos a rutas/iconos/etc.
+ */
+export const NOTIFICATION_TYPES = Object.freeze({
+    PENDING_INVOICES: 'pending_invoices',
+    OVERDUE_INVOICES: 'overdue_invoices',
+    NEW_CLIENTS:      'new_clients',
+});
+
+/**
+ * Repositorio de notificaciones computadas.
+ * Devuelve datos puros: tipo, mensaje y metadata.
+ * NO incluye lógica de presentación ni rutas de frontend.
+ *
  * El estado "leído" se persiste en notification_reads (requiere CREATE TABLE manual).
  * Si la tabla no existe, todas las notificaciones aparecen como no leídas.
  */
@@ -36,33 +48,33 @@ export default class NotificationsRepository {
         if (pendingRows[0].count > 0) {
             notifications.push({
                 id: 1,
+                type: NOTIFICATION_TYPES.PENDING_INVOICES,
                 message: `${pendingRows[0].count} factura(s) pendientes de cobro`,
-                type: 'warning',
                 read: readIds.has(1),
                 createdAt: now,
-                route: '/dashboards/invoices-issued/list'
+                metadata: { count: pendingRows[0].count }
             });
         }
 
         if (overdueRows[0].count > 0) {
             notifications.push({
                 id: 2,
+                type: NOTIFICATION_TYPES.OVERDUE_INVOICES,
                 message: `${overdueRows[0].count} factura(s) con pago vencido`,
-                type: 'warning',
                 read: readIds.has(2),
                 createdAt: now,
-                route: '/dashboards/invoices-issued/list'
+                metadata: { count: overdueRows[0].count }
             });
         }
 
         if (newClientsRows[0].count > 0) {
             notifications.push({
                 id: 3,
+                type: NOTIFICATION_TYPES.NEW_CLIENTS,
                 message: `${newClientsRows[0].count} nuevo(s) cliente(s) esta semana`,
-                type: 'success',
                 read: readIds.has(3),
                 createdAt: now,
-                route: '/dashboards/clients/list'
+                metadata: { count: newClientsRows[0].count }
             });
         }
 
