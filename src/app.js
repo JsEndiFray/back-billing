@@ -29,6 +29,8 @@ import internalExpensesRoutes from "./routes/internalExpensesRoutes.js";
 import invoicesIssuedRoutes from "./routes/invoicesIssuedRoutes.js";
 import VATBookRoutes from "./routes/VATBookRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import settingsRoutes from "./routes/settingsRoutes.js";
+import notificationsRoutes from "./routes/notificationsRoutes.js";
 
 
 //Inicialización de la App
@@ -99,6 +101,8 @@ app.use('/api/invoices-issued', invoicesIssuedRoutes);
 app.use('/api/internal-expenses', internalExpensesRoutes);
 app.use('/api/vat-book', VATBookRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 //Documentación de la API con Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
