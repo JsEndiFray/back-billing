@@ -60,7 +60,7 @@ const corsOptions = {
     // URL del frontend Angular (desde variable de entorno o localhost por defecto)
     origin: process.env.FRONTEND_URL || 'http://localhost:4200',
     //Métodos HTTP permitidos para requests cross-origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     //Headers permitidos en las solicitudes del cliente
     allowedHeaders: ['Content-Type', 'Authorization'],
     //Permitir envío de credenciales (cookies, auth headers)
@@ -70,6 +70,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('/{*path}', cors(corsOptions));
 
 //Middlewares Generales
 
