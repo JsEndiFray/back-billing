@@ -110,6 +110,24 @@ async function run() {
 
         const pending = allFiles.filter(f => !applied.has(f));
 
+        const isBaseline = process.argv.includes('--baseline');
+
+        if (isBaseline) {
+            if (pending.length === 0) {
+                console.log('✓ No hay migraciones pendientes para marcar como base.');
+                return;
+            }
+            console.log(`Marcando ${pending.length} migración(es) como ya aplicadas (baseline)...\n`);
+            for (const file of pending) {
+                await conn.execute(
+                    'INSERT INTO schema_migrations (filename) VALUES (?)', [file]
+                );
+                console.log(`  ✓ ${file} registrada`);
+            }
+            console.log(`\n✓ Baseline completado. Ejecuta 'npm run migrate' para futuras migraciones.`);
+            return;
+        }
+
         if (pending.length === 0) {
             console.log('✓ No hay migraciones pendientes.');
             return;

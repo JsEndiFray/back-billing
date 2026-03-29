@@ -11,6 +11,7 @@
     "dev": "node --watch --env-file=.env index.js",
     "start": "node --env-file=.env index.js",
     "migrate": "node --env-file=.env scripts/migrate.js",
+    "migrate:baseline": "node --env-file=.env scripts/migrate.js --baseline",
     "lint": "eslint \"src/**/*.js\"",
     "build": "echo 'Preparando proyecto para producción...' && npm install --production",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
