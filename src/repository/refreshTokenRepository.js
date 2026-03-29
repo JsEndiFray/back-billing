@@ -6,6 +6,9 @@ import db from '../db/dbConnect.js';
  *
  * Los tokens se almacenan como hash SHA-256: nunca el valor en claro.
  * Esto impide que un volcado de BD permita suplantar sesiones.
+ *
+ * Los métodos save() y revoke() aceptan un parámetro opcional `conn`
+ * para participar en transacciones externas. Si no se pasa, usan el pool.
  */
 export default class RefreshTokenRepository {
 
@@ -16,13 +19,14 @@ export default class RefreshTokenRepository {
 
     /**
      * Persiste un nuevo refresh token.
-     * @param {number} userId
-     * @param {string} token  - Valor en claro (se hashea antes de insertar)
-     * @param {Date}   expiresAt
+     * @param {number}                userId
+     * @param {string}                token     - Valor en claro (se hashea antes de insertar)
+     * @param {Date}                  expiresAt
+     * @param {import('mysql2').Connection|import('mysql2').Pool} [conn=db]
      */
-    static async save(userId, token, expiresAt) {
+    static async save(userId, token, expiresAt, conn = db) {
         const hash = this.#hash(token);
-        await db.query(
+        await conn.query(
             'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
             [userId, hash, expiresAt]
         );
@@ -48,11 +52,12 @@ export default class RefreshTokenRepository {
 
     /**
      * Revoca un token concreto (logout de una sesión).
-     * @param {string} token - Valor en claro
+     * @param {string}                token - Valor en claro
+     * @param {import('mysql2').Connection|import('mysql2').Pool} [conn=db]
      */
-    static async revoke(token) {
+    static async revoke(token, conn = db) {
         const hash = this.#hash(token);
-        await db.query(
+        await conn.query(
             'UPDATE refresh_tokens SET revoked = 1 WHERE token_hash = ?',
             [hash]
         );

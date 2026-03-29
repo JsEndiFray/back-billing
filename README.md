@@ -465,20 +465,89 @@ Solo se incluye en la respuesta la notificación si su contador es > 0.
 
 ## ⚠️ Limitaciones reales
 
-1. **Sin revocación de tokens**: no existe blacklist de tokens. Un token robado es válido hasta que expire (máx. 15 min para access token).
-2. **Notificaciones estáticas**: máximo 3 tipos hardcodeados. Sin sistema push (WebSocket/SSE).
-3. **Migraciones manuales**: no hay sistema de migraciones automáticas; `001_create_app_tables.sql` debe ejecutarse a mano.
-4. **Rate limit en memoria**: en despliegues con múltiples procesos o instancias, el límite no se comparte.
-5. **Sin registro de auditoría**: no existe log de quién creó/modificó/eliminó registros.
-6. **Swagger warning cosmético**: `swagger-jsdoc@6` genera `DEP0169` en Node.js ≥24 por uso interno de `url.parse()`. No afecta a la funcionalidad (ver `TECHNICAL_DEBT.md`).
+1. **Notificaciones estáticas**: máximo 3 tipos hardcodeados. Sin sistema push (WebSocket/SSE).
+2. **Rate limit en memoria**: en despliegues con múltiples procesos o instancias, el límite no se comparte.
+3. **Sin registro de auditoría**: no existe log de quién creó/modificó/eliminó registros.
+4. **Swagger warning cosmético**: `swagger-jsdoc@6` genera `DEP0169` en Node.js ≥24 por uso interno de `url.parse()`. No afecta a la funcionalidad (ver `TECHNICAL_DEBT.md`).
+
+---
+
+## 🗄️ Migraciones
+
+El proyecto incluye un runner de migraciones en `scripts/migrate.js`.
+
+```bash
+npm run migrate
+```
+
+**Cómo funciona:**
+- Lee los archivos `NNN_nombre.sql` de `/migrations` ordenados por número.
+- Aplica solo los que aún no están registrados en la tabla `schema_migrations`.
+- Registra cada migración aplicada con su timestamp.
+- Para en el primer error para no dejar la BD en estado inconsistente.
+
+**Primera ejecución en un entorno nuevo:**
+```bash
+# 1. Copiar y configurar variables de entorno
+cp .env.example .env && nano .env
+
+# 2. Crear todas las tablas
+npm run migrate
+```
+
+**Añadir una nueva migración:**
+- Crear `migrations/NNN_descripcion.sql` con el siguiente número en secuencia.
+- Usar `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE IF NOT EXISTS` para que sea reaplicable de forma segura.
+
+---
+
+## 💾 Estrategia de Backups
+
+### Backup manual (mysqldump)
+
+```bash
+# Backup completo de la base de datos
+mysqldump \
+  -h $DB_HOST -P $DB_PORT \
+  -u $DB_USER -p$DB_PASSWORD \
+  $DB_DATABASE \
+  --single-transaction \
+  --routines \
+  --triggers \
+  > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restaurar
+mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_DATABASE < backup_YYYYMMDD_HHMMSS.sql
+```
+
+### Opciones `mysqldump` recomendadas
+
+| Opción | Por qué |
+|--------|---------|
+| `--single-transaction` | Snapshot consistente sin bloquear tablas InnoDB |
+| `--routines` | Incluye funciones/procedimientos almacenados |
+| `--triggers` | Incluye triggers |
+
+### Frecuencia recomendada
+
+| Tipo | Frecuencia | Retención |
+|------|------------|-----------|
+| Full | Diario (noche) | 30 días |
+| Incremental (binlog) | En tiempo real | 7 días |
+
+### Qué rotar periódicamente
+
+- Ficheros de backup antiguos (> 30 días).
+- Tokens `refresh_tokens` expirados — el servidor lo hace automáticamente cada 24 h via `startScheduler()`.
+- Logs de aplicación en `/logs` si se redirigen a fichero.
 
 ---
 
 ## 🧠 Mejoras futuras
 
 - Integrar Redis para rate limiting distribuido y blacklist de refresh tokens
-- Sistema de migraciones automáticas (ej. Flyway, Liquibase o solución Node.js)
 - Notificaciones en tiempo real vía WebSocket o SSE
 - Log de auditoría (quién y cuándo modificó cada registro)
 - Actualizar a `swagger-jsdoc@7` cuando haya versión estable (elimina DEP0169)
 - Paginación estandarizada en todos los listados
+- Automatizar backups con `cron` o servicio de snapshots del proveedor cloud

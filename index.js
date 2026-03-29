@@ -9,6 +9,7 @@
 //Importaciones
 import app from './src/app.js';
 import { checkDbConnection } from './src/db/dbConnect.js';
+import { startScheduler }   from './src/shared/scheduler.js';
 
 //Handlers de estabilidad del proceso — deben registrarse lo antes posible
 process.on('unhandledRejection', (err) => {
@@ -59,6 +60,7 @@ checkDbConnection()
             console.log(`Servidor conectado en el puerto..... ${port}`);
             console.log(`Documentación disponible en http://localhost:${port}/api-docs`);
         });
+        startScheduler();
     })
     .catch((error) => {
         console.error('Error de conexión:', error.message);

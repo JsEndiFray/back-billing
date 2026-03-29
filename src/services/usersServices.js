@@ -3,6 +3,7 @@ import RefreshTokenRepository from "../repository/refreshTokenRepository.js";
 import bcrypt from 'bcrypt';
 import {generateAccessToken, generateRefreshToken, verifyToken} from "../services/tokenManager.js";
 import { AppError } from "../errors/AppError.js";
+import db from "../db/dbConnect.js";
 
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
 
@@ -69,15 +70,28 @@ export default class UserService {
 
         const user = users[0];
 
-        // Rotate: revoke old, issue new
-        await RefreshTokenRepository.revoke(refreshToken);
-        const newAccessToken = generateAccessToken(user);
+        // Generar nuevos tokens en memoria (antes de la transacción)
+        const newAccessToken  = generateAccessToken(user);
         const newRefreshToken = generateRefreshToken(user);
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        await RefreshTokenRepository.save(user.id, newRefreshToken, expiresAt);
+        const expiresAt       = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        // Rotate dentro de transacción: revoke + save son atómicos.
+        // Si save falla, el token antiguo NO queda revocado → usuario no pierde sesión.
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+            await RefreshTokenRepository.revoke(refreshToken, conn);
+            await RefreshTokenRepository.save(user.id, newRefreshToken, expiresAt, conn);
+            await conn.commit();
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
 
         return {
-            accessToken: newAccessToken,
+            accessToken:  newAccessToken,
             refreshToken: newRefreshToken
         };
     }
