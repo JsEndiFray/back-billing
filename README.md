@@ -1,162 +1,484 @@
-# API de Gestión Administrativa y Facturación
+# 📦 Backend — API Facturación
 
-## 1. Descripción del Proyecto
+## 📖 Descripción
 
-Este proyecto es una **API RESTful** robusta y segura desarrollada en **Node.js** con **Express**, diseñada para actuar como el backend de un completo sistema de gestión administrativa y financiera. La aplicación está especialmente orientada a la administración de inmuebles y negocios que operan bajo la **normativa fiscal española**.
+API REST para gestión de facturación y administración inmobiliaria. Gestiona clientes, proveedores, propietarios, inmuebles, facturas emitidas, facturas recibidas, gastos internos y libros de IVA. Diseñada para ser consumida por un frontend Angular.
 
-La API gestiona de forma centralizada todas las operaciones críticas del negocio, incluyendo clientes, propietarios, inmuebles, proveedores y empleados. Su núcleo funcional se centra en un potente sistema de facturación que maneja tanto las **facturas emitidas** a clientes como las **facturas recibidas** de proveedores y los **gastos internos**, asegurando un control financiero preciso.
+---
 
-Una de sus características más destacadas es el módulo de cumplimiento fiscal, que permite la generación automática de **Libros de Registro de IVA** (Soportado y Repercutido) y la exportación de los mismos en el formato oficial de la **AEAT**, facilitando así la presentación de declaraciones trimestrales.
+## 🧱 Arquitectura
 
-## 2. Características Principales
+El proyecto sigue el patrón **Controller → Service → Repository (CSR)**:
 
-La API cuenta con un amplio abanico de funcionalidades diseñadas para automatizar y centralizar la gestión del negocio:
+| Capa | Responsabilidad |
+|------|----------------|
+| **Controller** (`src/controllers/`) | Recibe la petición HTTP, extrae parámetros, llama al servicio y devuelve la respuesta |
+| **Service** (`src/services/`) | Contiene la lógica de negocio. Orquesta llamadas al repositorio y a utilidades (PDF, Excel, cálculos) |
+| **Repository** (`src/repository/`) | Ejecuta las queries SQL directamente contra la base de datos usando el pool de MySQL |
 
-### 🔹 Seguridad y Acceso
-* **Autenticación JWT**: Implementa una estrategia de `AccessToken` (corta duración) y `RefreshToken` (larga duración) para un acceso seguro y persistente.
-* **Autorización por Roles (RBAC)**: Define roles de usuario (`admin`, `employee`) para restringir el acceso a endpoints específicos, garantizando que solo el personal autorizado pueda realizar operaciones críticas.
-* **Rate Limiting**: Protege la API contra ataques de fuerza bruta y abuso, con límites más estrictos en las rutas de autenticación.
-* **Seguridad de Cabeceras HTTP**: Utiliza `helmet` para configurar cabeceras de seguridad que protegen contra ataques comunes como XSS y clickjacking.
-* **Política de CORS**: Configurada para permitir peticiones únicamente desde el frontend autorizado.
-* **Hashing de Contraseñas**: Almacena las contraseñas de los usuarios de forma segura utilizando `bcrypt`.
+Adicionalmente existen:
 
-### 🔹 Gestión de Entidades (CRUD)
-* **Clientes**: Gestión completa de clientes, diferenciando entre `particular`, `autonomo` y `empresa`, con lógica para manejar relaciones jerárquicas (empresa-administrador).
-* **Propietarios**: CRUD para los propietarios de los inmuebles.
-* **Inmuebles (Estates)**: Gestión de propiedades, utilizando la **referencia catastral** como identificador único y validándola contra el algoritmo oficial español.
-* **Proveedores (SuppliersInterface)**: CRUD para proveedores, con soporte para borrado lógico (activación/desactivación) y validación de NIF/CIF.
-* **Empleados**: Gestión de los empleados de la empresa.
-* **Relación Inmueble-Propietario**: Permite asignar múltiples propietarios a un inmueble, especificando el **porcentaje de propiedad (%)** de cada uno, clave para el reparto de costes e ingresos.
+- `src/dto/` — Mapeo de filas de BD a objetos de transferencia
+- `src/validator/` — Validaciones de entrada con `express-validator`
+- `src/middlewares/` — Auth JWT, roles, rate-limit, upload de ficheros, error handler
+- `src/shared/` — Helpers (NIF, catastro, cálculos) y generadores de PDF/Excel
 
-### 🔹 Módulo de Facturación y Finanzas
-* **Facturas Emitidas**: Ciclo completo de facturación a clientes, incluyendo:
-  * Generación automática de números de factura secuenciales (`FACT-XXXX`).
-  * Cálculo de impuestos (IVA, IRPF).
-  * Creación de **abonos** (facturas rectificativas) con valores negativos.
-  * Gestión detallada de estados de **cobro**.
-* **Facturas Recibidas**: Seguimiento de facturas de proveedores, con:
-  * Generación de referencias internas (`FR-XXXX`).
-  * Categorización de gastos.
-  * Gestión de estados de **pago**.
-* **Gastos Internos**: Módulo para registrar gastos que no son facturas formales (ej. material de oficina, dietas), con un **flujo de aprobación** (`pendiente` -> `aprobado` -> `pagado`).
-* **Facturación Proporcional**: Capacidad para calcular importes de facturas y gastos basados en un rango de días específico dentro de un mes.
+---
 
-### 🔹 Cumplimiento Fiscal y Reportes (AEAT)
-* **Libro de Registro de IVA**:
-  * Generación del **Libro de IVA Soportado** (a partir de facturas recibidas y gastos internos deducibles).
-  * Generación del **Libro de IVA Repercutido** (a partir de facturas emitidas).
-* **Liquidación Trimestral**: Cálculo automático del resultado de la liquidación trimestral de IVA (Modelo 303), indicando si el resultado es a ingresar o a devolver.
-* **Exportación a Excel (Formato AEAT)**: Genera y permite la descarga de los libros de IVA en un archivo `.xls` que cumple con el formato requerido por la Agencia Tributaria española.
-* **Consolidado por Propietario**: Funcionalidad avanzada que genera un informe fiscal consolidado para cada propietario, repartiendo proporcionalmente los ingresos y gastos en función de su porcentaje de propiedad.
-* **Estadísticas y Analíticas**: Endpoints para obtener resúmenes, estadísticas y comparativas anuales/mensuales de ingresos, gastos e impuestos.
+## 📂 Estructura del proyecto
 
-### 🔹 Utilidades Adicionales
-* **Generación de PDFs**: Creación de documentos PDF para facturas, abonos y comprobantes de gastos.
-* **Validación de Datos**: Sistema de validación robusto con `express-validator` para todos los datos de entrada, asegurando la integridad de la información.
+```
+backend/
+├── index.js                        # Punto de entrada: carga .env, valida vars, arranca servidor
+├── src/
+│   ├── app.js                      # Configuración Express: middlewares, CORS, rutas, error handler
+│   ├── db/
+│   │   └── dbConnect.js            # Pool MySQL (10 conexiones, keep-alive)
+│   ├── config/
+│   │   └── swagger.js              # Configuración Swagger / OpenAPI
+│   ├── controllers/                # 16 controladores (uno por recurso)
+│   ├── services/                   # 16 servicios + tokenManager + fileService + CompanyService
+│   ├── repository/                 # 13 repositorios con queries SQL
+│   ├── routes/                     # 16 archivos de rutas (uno por recurso)
+│   ├── middlewares/
+│   │   ├── auth.js                 # Verificación JWT (Bearer token)
+│   │   ├── role.js                 # Autorización por rol (admin / employee)
+│   │   ├── rate-limit.js           # Límites de peticiones (general + auth)
+│   │   ├── fileUpload.js           # Multer — solo PDF, máx. 10 MB
+│   │   └── errorHandler.js         # Manejo de errores de validación express-validator
+│   ├── dto/                        # 11 DTOs de transformación de datos
+│   ├── validator/                  # 9 archivos de validación de entrada
+│   ├── errors/
+│   │   └── AppError.js             # Clase de error operativo personalizado
+│   └── shared/
+│       ├── helpers/                # Helpers: NIF, catastro, cálculo de totales, strings
+│       └── utils/
+│           ├── Pdf-invoicesIssued/ # Generador PDF facturas emitidas y abonos
+│           ├── Pdf-Received/       # Generador PDF facturas recibidas
+│           ├── Pdf-Expenses/       # Generador PDF gastos de alquiler y devoluciones
+│           ├── Pdf-VATBook/        # Generador PDF libro de IVA
+│           └── excelGenerador/     # Generador Excel (exceljs)
+├── migrations/
+│   └── 001_create_app_tables.sql   # Tablas opcionales: user_settings, notification_reads
+├── test/
+│   └── tests/                      # 7 suites de test (Jest + supertest)
+├── uploads/                        # Directorio de PDFs subidos
+├── Dockerfile
+├── .env.example
+└── package.json
+```
 
-## 3. Arquitectura y Tech Stack
+---
 
-La API está construida siguiendo el patrón de diseño **Controlador - Servicio - Repositorio**, lo que garantiza una clara separación de responsabilidades y facilita la mantenibilidad y escalabilidad del código.
+## ⚙️ Configuración (`.env`)
 
-* **Controlador**: Recibe las peticiones HTTP, valida la entrada (a través de middlewares) y delega la lógica de negocio al servicio correspondiente.
-* **Servicio**: Contiene la lógica de negocio principal. Orquesta las operaciones, realiza cálculos, aplica reglas de negocio y decide a qué métodos del repositorio llamar.
-* **Repositorio**: Es la única capa que interactúa directamente con la base de datos. Abstrae las consultas SQL y devuelve los datos al servicio.
+Copiar `.env.example` a `.env` y rellenar los valores:
 
-### Tech Stack
-* **Backend**: Node.js, Express.js
-* **Base de Datos**: MySQL
-* **Autenticación**: JSON Web Tokens (JWT)
-* **Seguridad**: `bcrypt`, `helmet`, `express-rate-limit`, `cors`
-* **Validación**: `express-validator`
-* **Documentación API**: Swagger (OpenAPI 3.0) con `swagger-ui-express`
-* **Generación de PDFs**: `pdfkit`
-* **Logging**: `morgan`
+```env
+# Servidor
+PORT=3600
+NODE_ENV=development
 
-## 4. Documentación de la API
+# Base de datos MySQL
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_DATABASE=your_db_name
 
-La API está completamente documentada utilizando **Swagger (OpenAPI 3.0)**. Una vez que el servidor esté en funcionamiento, puedes acceder a la documentación interactiva en la siguiente ruta:
+# JWT — usar cadenas largas y aleatorias distintas entre sí
+JWT_SECRET=change_this_to_a_long_random_secret
+JWT_REFRESH_SECRET=change_this_to_a_different_long_random_secret
 
-`/api-docs`
+# CORS — URL del frontend Angular
+FRONTEND_URL=http://localhost:4200
 
-Desde esta interfaz, podrás ver todos los endpoints disponibles, sus parámetros, los esquemas de datos de entrada y salida, y probarlos directamente desde el navegador.
+# Almacenamiento de archivos (opcional; por defecto ./uploads)
+# UPLOAD_PATH=/ruta/absoluta/a/uploads
 
-## 5. Guía de Instalación y Puesta en Marcha
+# Datos de empresa (para exportaciones AEAT)
+COMPANY_NIF=XXXXXXXXX
+COMPANY_NAME=Nombre de tu empresa
+COMPANY_ADDRESS=Calle y número
+COMPANY_POSTAL_CODE=00000
+COMPANY_CITY=Ciudad
+COMPANY_PROVINCE=Provincia
+COMPANY_COUNTRY=España
+```
 
-Sigue estos pasos para configurar y ejecutar el proyecto en un entorno de desarrollo local.
+**Variables obligatorias** (el servidor no arranca sin ellas):
+`JWT_SECRET`, `JWT_REFRESH_SECRET`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `COMPANY_NIF`
 
-### Prerrequisitos
-* **Node.js** (versión 18.x o superior)
-* **npm** (o un gestor de paquetes compatible)
-* Una instancia de **MySQL** en ejecución.
+---
 
-### Pasos de Instalación
+## 🚀 Ejecución
 
-1.  **Clonar el repositorio**:
-    ```bash
-    git clone <URL_DEL_REPOSITORIO>
-    cd <NOMBRE_DEL_DIRECTORIO>
-    ```
+```bash
+# Instalar dependencias
+npm install
 
-2.  **Instalar dependencias**:
-    ```bash
-    npm install
-    ```
+# Desarrollo (hot-reload con --watch nativo de Node.js)
+npm run dev
 
-3.  **Configurar la Base de Datos**:
-  * Asegúrate de que tu servidor MySQL esté funcionando.
-  * Crea una base de datos para el proyecto (ej: `gestion_api`).
-  * Ejecuta los scripts SQL necesarios para crear las tablas y, si los hay, insertar datos iniciales.
+# Producción
+npm start
 
-4.  **Configurar las Variables de Entorno**:
-  * En la raíz del proyecto, crea un archivo llamado `.env`.
-  * Copia el contenido del archivo `.env.example` (si existe) o añade las siguientes variables con tus propios valores:
+# Tests
+npm test
+npm run test:coverage
 
-    ```env
-    # Configuración de la Base de Datos
-    DB_HOST=localhost
-    DB_USER=root
-    DB_PASSWORD=tu_contraseña_de_mysql
-    DB_PORT=3306
-    DB_DATABASE=gestion_api
+# Linting
+npm run lint
+```
 
-    # Secretos para JWT (usa valores largos y aleatorios)
-    JWT_SECRET=tu_secreto_muy_largo_para_access_tokens
-    JWT_REFRESH_SECRET=tu_otro_secreto_muy_largo_para_refresh_tokens
+**Requisitos**: Node.js ≥ 24.0.0 y MySQL ≥ 8.
 
-    # URL del Frontend (para la configuración de CORS)
-    FRONTEND_URL=http://localhost:4200
+### Migraciones opcionales
 
-    # Datos de la Empresa (para reportes AEAT)
-    COMPANY_NIF=B12345678
-    COMPANY_NAME=Nombre de Tu Empresa S.L.
-    COMPANY_ADDRESS=Calle Ejemplo 123
-    COMPANY_POSTAL_CODE=28001
-    COMPANY_CITY=Madrid
-    COMPANY_PROVINCE=Madrid
-    COMPANY_COUNTRY=España
-    ```
+```sql
+-- Ejecutar para activar: configuración de usuario y estado de notificaciones leídas
+mysql -u root -p your_db_name < migrations/001_create_app_tables.sql
+```
 
-5.  **Ejecutar la aplicación**:
-    ```bash
-    npm start
-    ```
-    El servidor se iniciará, por lo general, en el puerto `3600` (o el que se haya configurado).
+> Sin esta migración el servidor funciona con normalidad; las notificaciones simplemente aparecen siempre como no leídas y la configuración de usuario no persiste.
 
-## 6. Estructura de Endpoints de la API
+### Documentación interactiva
 
-La API está organizada en torno a los siguientes recursos principales, todos bajo el prefijo `/api`:
+```
+http://localhost:3600/api-docs
+```
 
-* `/auth`: Endpoints para **login** y **renovación de tokens**.
-* `/users`: Gestión de los **usuarios** del sistema.
-* `/employees`: Gestión de **empleados**.
-* `/clients`: Gestión de **clientes**.
-* `/owners`: Gestión de **propietarios**.
-* `/estates`: Gestión de **inmuebles**.
-* `/estate-owners`: Gestión de la **relación N:M entre inmuebles y propietarios**.
-* `/suppliers`: Gestión de **proveedores**.
-* `/invoices-issued`: Gestión de **facturas emitidas**.
-* `/invoices-received`: Gestión de **facturas recibidas**.
-* `/internal-expenses`: Gestión de **gastos internos**.
-* `/vat-book`: Endpoints para la generación de **libros de IVA y reportes fiscales**.
+---
 
-Para ver el detalle completo de cada endpoint, consulta la [documentación de Swagger](#4-documentación-de-la-api).
+## 📡 Endpoints reales
+
+Todos los endpoints están bajo `/api`. Las rutas marcadas con 🔒 requieren token JWT. Las marcadas con 👑 requieren rol `admin`; el resto acepta `admin` o `employee`.
+
+### Autenticación — `/api/auth` (sin token, rate-limit: 25 req/hora)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/auth/login` | Login — devuelve `accessToken` (15 min) y `refreshToken` (7 días) |
+| POST | `/api/auth/refresh-token` | Renueva el `accessToken` usando el `refreshToken` |
+
+### Usuarios — `/api/users` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/users` | admin, employee |
+| GET | `/api/users/:id` | admin, employee |
+| GET | `/api/users/search/username/:username` | 👑 admin |
+| GET | `/api/users/search/email/:email` | 👑 admin |
+| GET | `/api/users/search/phone/:phone` | 👑 admin |
+| POST | `/api/users` | 👑 admin |
+| PUT | `/api/users/:id` | 👑 admin |
+| DELETE | `/api/users/:id` | 👑 admin |
+
+### Empleados — `/api/employee` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/employee` | admin, employee |
+| GET | `/api/employee/:id` | admin, employee |
+| GET | `/api/employee/search` | admin, employee |
+| POST | `/api/employee` | 👑 admin |
+| PUT | `/api/employee/:id` | 👑 admin |
+| DELETE | `/api/employee/:id` | 👑 admin |
+
+### Propietarios — `/api/owners` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/owners` | admin, employee |
+| GET | `/api/owners/:id` | admin, employee |
+| GET | `/api/owners/search/name` | admin, employee |
+| GET | `/api/owners/dropdown` | admin, employee |
+| POST | `/api/owners` | 👑 admin |
+| PUT | `/api/owners/:id` | 👑 admin |
+| DELETE | `/api/owners/:id` | 👑 admin |
+
+### Clientes — `/api/clients` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/clients` | admin, employee |
+| GET | `/api/clients/:id` | admin, employee |
+| GET | `/api/clients/companies` | admin, employee |
+| GET | `/api/clients/autonoms-with-companies` | admin, employee |
+| GET | `/api/clients/company/:companyId/administrators` | admin, employee |
+| GET | `/api/clients/type/:clientType` | admin, employee |
+| GET | `/api/clients/search/company/:company_name` | admin, employee |
+| GET | `/api/clients/search/fullname` | admin, employee |
+| GET | `/api/clients/search/identification/:identification` | admin, employee |
+| GET | `/api/clients/dropdown` | admin, employee |
+| POST | `/api/clients` | admin, employee |
+| PUT | `/api/clients/:id` | 👑 admin |
+| DELETE | `/api/clients/:id` | 👑 admin |
+
+### Proveedores — `/api/suppliers` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/suppliers` | admin, employee |
+| GET | `/api/suppliers/all` | admin, employee |
+| GET | `/api/suppliers/:id` | admin, employee |
+| GET | `/api/suppliers/stats` | admin, employee |
+| GET | `/api/suppliers/suggestions` | admin, employee |
+| GET | `/api/suppliers/search/:name` | admin, employee |
+| GET | `/api/suppliers/tax/:tax_id` | admin, employee |
+| GET | `/api/suppliers/payment-terms/:payment_terms` | admin, employee |
+| POST | `/api/suppliers` | admin, employee |
+| PUT | `/api/suppliers/:id` | admin, employee |
+| PUT | `/api/suppliers/:id/activate` | admin, employee |
+| DELETE | `/api/suppliers/:id` | admin, employee |
+
+### Inmuebles — `/api/estates` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/estates` | admin, employee |
+| GET | `/api/estates/:id` | admin, employee |
+| GET | `/api/estates/search/cadastral/:cadastral` | admin, employee |
+| GET | `/api/estates/dropdown/list` | admin, employee |
+| POST | `/api/estates` | admin, employee |
+| PUT | `/api/estates/:id` | 👑 admin |
+| DELETE | `/api/estates/:id` | 👑 admin |
+
+### Propietarios de Inmuebles — `/api/estate-owners` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/estate-owners` | admin, employee |
+| GET | `/api/estate-owners/:id` | admin, employee |
+| POST | `/api/estate-owners` | 👑 admin |
+| PUT | `/api/estate-owners/:id` | 👑 admin |
+| DELETE | `/api/estate-owners/:id` | 👑 admin |
+
+### Catastro — `/api/cadastral`
+
+| Método | Ruta | Auth |
+|--------|------|------|
+| GET | `/api/cadastral/validate/:reference` | 🔒 admin, employee |
+| GET | `/api/cadastral/health` | Pública |
+
+### Facturas Emitidas — `/api/invoices-issued` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/invoices-issued` | admin, employee |
+| GET | `/api/invoices-issued/:id` | admin, employee |
+| GET | `/api/invoices-issued/stats` | admin, employee |
+| GET | `/api/invoices-issued/stats/client` | admin, employee |
+| GET | `/api/invoices-issued/stats/owner` | admin, employee |
+| GET | `/api/invoices-issued/overdue` | admin, employee |
+| GET | `/api/invoices-issued/due-soon` | admin, employee |
+| GET | `/api/invoices-issued/aging` | admin, employee |
+| GET | `/api/invoices-issued/refunds` | admin, employee |
+| GET | `/api/invoices-issued/vat-book/:year` | admin, employee |
+| GET | `/api/invoices-issued/income-statement/:year` | admin, employee |
+| GET | `/api/invoices-issued/monthly-summary/:year` | admin, employee |
+| GET | `/api/invoices-issued/search/:invoice_number` | admin, employee |
+| GET | `/api/invoices-issued/owners/:id` | admin, employee |
+| GET | `/api/invoices-issued/clients/:id` | admin, employee |
+| GET | `/api/invoices-issued/clients/nif/:nif` | admin, employee |
+| GET | `/api/invoices-issued/collection-status/:status` | admin, employee |
+| GET | `/api/invoices-issued/month/:month` | admin, employee |
+| GET | `/api/invoices-issued/:id/proportional-details` | admin, employee |
+| GET | `/api/invoices-issued/:id/pdf` | admin, employee |
+| GET | `/api/invoices-issued/refunds/:id/pdf` | admin, employee |
+| POST | `/api/invoices-issued` | 👑 admin |
+| POST | `/api/invoices-issued/date-range` | 👑 admin |
+| POST | `/api/invoices-issued/refunds` | 👑 admin |
+| POST | `/api/invoices-issued/validate-proportional-dates` | 👑 admin |
+| POST | `/api/invoices-issued/simulate-proportional` | 👑 admin |
+| PUT | `/api/invoices-issued/:id` | 👑 admin |
+| PUT | `/api/invoices-issued/:id/collection` | 👑 admin |
+| DELETE | `/api/invoices-issued/:id` | 👑 admin |
+
+### Facturas Recibidas — `/api/invoices-received` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/invoices-received` | admin, employee |
+| GET | `/api/invoices-received/:id` | admin, employee |
+| GET | `/api/invoices-received/stats` | admin, employee |
+| GET | `/api/invoices-received/stats/category` | admin, employee |
+| GET | `/api/invoices-received/overdue` | admin, employee |
+| GET | `/api/invoices-received/due-soon` | admin, employee |
+| GET | `/api/invoices-received/refunds` | admin, employee |
+| GET | `/api/invoices-received/vat-book/:year` | admin, employee |
+| GET | `/api/invoices-received/search/:invoice_number` | admin, employee |
+| GET | `/api/invoices-received/supplier/:supplier_id` | admin, employee |
+| GET | `/api/invoices-received/category/:category` | admin, employee |
+| GET | `/api/invoices-received/payment-status/:status` | admin, employee |
+| GET | `/api/invoices-received/files/:fileName` | admin, employee |
+| GET | `/api/invoices-received/:id/pdf` | admin, employee |
+| GET | `/api/invoices-received/refunds/:id/pdf` | admin, employee |
+| POST | `/api/invoices-received` | admin, employee |
+| POST | `/api/invoices-received/date-range` | admin, employee |
+| POST | `/api/invoices-received/refunds` | admin, employee |
+| PUT | `/api/invoices-received/:id` | admin, employee |
+| PUT | `/api/invoices-received/:id/payment` | admin, employee |
+
+### Gastos Internos — `/api/internal-expenses` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/internal-expenses` | admin, employee |
+| GET | `/api/internal-expenses/:id` | admin, employee |
+| GET | `/api/internal-expenses/stats` | admin, employee |
+| GET | `/api/internal-expenses/stats/category` | admin, employee |
+| GET | `/api/internal-expenses/deductible` | admin, employee |
+| GET | `/api/internal-expenses/recurring` | admin, employee |
+| GET | `/api/internal-expenses/recurring-due` | admin, employee |
+| GET | `/api/internal-expenses/categories` | admin, employee |
+| GET | `/api/internal-expenses/payment-methods` | admin, employee |
+| GET | `/api/internal-expenses/statuses` | admin, employee |
+| GET | `/api/internal-expenses/category/:category` | admin, employee |
+| GET | `/api/internal-expenses/status/:status` | admin, employee |
+| GET | `/api/internal-expenses/supplier/:supplier_name` | admin, employee |
+| GET | `/api/internal-expenses/monthly-summary/:year` | admin, employee |
+| GET | `/api/internal-expenses/vat-book/:year` | admin, employee |
+| GET | `/api/internal-expenses/files/:fileName` | admin, employee |
+| POST | `/api/internal-expenses` | admin, employee |
+| POST | `/api/internal-expenses/date-range` | admin, employee |
+| POST | `/api/internal-expenses/advanced-search` | admin, employee |
+| POST | `/api/internal-expenses/process-recurring` | 👑 admin |
+
+### Libro de IVA — `/api/vat-book` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/vat-book/supported/:year[/:quarter[/:month]]` | admin, employee |
+| GET | `/api/vat-book/charged/:year[/:quarter[/:month]]` | admin, employee |
+| GET | `/api/vat-book/by-owner/:year[/:quarter[/:month]]` | admin, employee |
+| GET | `/api/vat-book/consolidated/:year[/:quarter[/:month]]` | admin, employee |
+| GET | `/api/vat-book/complete/:year` | admin, employee |
+| GET | `/api/vat-book/liquidation/:year/:quarter` | admin, employee |
+| GET | `/api/vat-book/stats/:year` | admin, employee |
+| GET | `/api/vat-book/comparison/:year` | admin, employee |
+| GET | `/api/vat-book/config` | admin, employee |
+| POST | `/api/vat-book/export/excel` | admin, employee |
+| POST | `/api/vat-book/download/excel` | admin, employee |
+| POST | `/api/vat-book/download/pdf` | admin, employee |
+
+### Dashboard — `/api/dashboard` 🔒
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/api/dashboard/stats` | admin, employee |
+
+### Configuración de usuario — `/api/settings` 🔒
+
+| Método | Ruta |
+|--------|------|
+| GET | `/api/settings` |
+| PUT | `/api/settings` |
+
+> Requiere ejecutar la migración `001_create_app_tables.sql` para persistir la configuración.
+
+### Notificaciones — `/api/notifications` 🔒
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/notifications` | Devuelve notificaciones computadas del usuario |
+| PATCH | `/api/notifications/:id/read` | Marca una notificación como leída |
+
+---
+
+## 🔐 Sistema de autenticación
+
+**Estrategia**: JWT stateless con doble token.
+
+| Token | Duración | Uso |
+|-------|----------|-----|
+| `accessToken` | 15 minutos | Header `Authorization: Bearer <token>` en cada petición |
+| `refreshToken` | 7 días | Endpoint `/api/auth/refresh-token` para renovar el access token |
+
+**Flujo**:
+1. `POST /api/auth/login` → devuelve ambos tokens
+2. El frontend adjunta el `accessToken` en cada request
+3. Cuando el access token expira (401), el frontend llama a `/api/auth/refresh-token`
+4. A los 7 días el refresh token expira y el usuario debe volver a hacer login
+
+**Roles disponibles**: `admin` (acceso completo) y `employee` (lectura + algunas operaciones de creación)
+
+**Rate limiting**:
+- Rutas generales: 100 peticiones por IP cada 15 minutos
+- Rutas de autenticación: 25 peticiones por IP cada hora
+
+---
+
+## 🔔 Sistema de notificaciones
+
+Las notificaciones son **computadas bajo demanda**, no almacenadas. En cada llamada a `GET /api/notifications` se ejecutan 3 queries en paralelo:
+
+| ID | Tipo | Condición |
+|----|------|-----------|
+| 1 | `pending_invoices` | `invoices_issued` con `collection_status = 'pending'` |
+| 2 | `overdue_invoices` | `invoices_issued` con `collection_status = 'overdue'` |
+| 3 | `new_clients` | `clients` creados en los últimos 7 días |
+
+Solo se incluye en la respuesta la notificación si su contador es > 0.
+
+**Estado "leído"**: persiste en la tabla `notification_reads` (requiere migración). Si la tabla no existe, el sistema funciona igualmente y todas las notificaciones aparecen como no leídas.
+
+**Limitación**: Los IDs de notificación son estáticos (1, 2, 3). No existe sistema de notificaciones en tiempo real (WebSocket/SSE).
+
+---
+
+## 📎 Gestión de archivos
+
+- **Subida**: Multer con `memoryStorage` (procesado en RAM antes de guardar en disco)
+- **Tipo permitido**: solo PDF
+- **Tamaño máximo**: 10 MB
+- **Campo del formulario**: `invoice_file`
+- **Descarga**: endpoint `GET /files/:fileName` disponible en facturas recibidas y gastos internos
+
+---
+
+## 🧪 Estado actual
+
+**✔ Funcionalidades completas**
+
+- Autenticación JWT (login + refresh token)
+- CRUD completo de: usuarios, empleados, propietarios, clientes, proveedores, inmuebles, relaciones propietario-inmueble
+- Gestión completa de facturas emitidas (con abonos, facturación proporcional, estados de cobro)
+- Gestión completa de facturas recibidas (con abonos, estados de pago, adjuntos PDF)
+- Gestión de gastos internos (con recurrentes, categorías, adjuntos PDF)
+- Libro de IVA con filtros por año/trimestre/mes, liquidación trimestral, exportación Excel y PDF
+- Dashboard con estadísticas agregadas
+- Generación de PDFs para facturas, abonos, gastos y libro de IVA
+- Validación de referencias catastrales
+- Rate limiting, Helmet, CORS configurados
+- Documentación Swagger en `/api-docs`
+- Suite de tests (Jest + supertest)
+- Dockerfile incluido
+
+**⚠ Funcionalidades parciales**
+
+- **Notificaciones**: funcionan en lectura, pero los IDs son estáticos; añadir nuevos tipos requiere modificar código
+- **`user_settings`**: el endpoint existe pero requiere ejecutar la migración manualmente para persistir datos
+- **Rate limiting en producción multi-instancia**: usa memoria local; sin Redis, el estado no se comparte entre instancias
+
+---
+
+## ⚠️ Limitaciones reales
+
+1. **Sin revocación de tokens**: no existe blacklist de tokens. Un token robado es válido hasta que expire (máx. 15 min para access token).
+2. **Notificaciones estáticas**: máximo 3 tipos hardcodeados. Sin sistema push (WebSocket/SSE).
+3. **Migraciones manuales**: no hay sistema de migraciones automáticas; `001_create_app_tables.sql` debe ejecutarse a mano.
+4. **Rate limit en memoria**: en despliegues con múltiples procesos o instancias, el límite no se comparte.
+5. **Sin registro de auditoría**: no existe log de quién creó/modificó/eliminó registros.
+6. **Swagger warning cosmético**: `swagger-jsdoc@6` genera `DEP0169` en Node.js ≥24 por uso interno de `url.parse()`. No afecta a la funcionalidad (ver `TECHNICAL_DEBT.md`).
+
+---
+
+## 🧠 Mejoras futuras
+
+- Integrar Redis para rate limiting distribuido y blacklist de refresh tokens
+- Sistema de migraciones automáticas (ej. Flyway, Liquibase o solución Node.js)
+- Notificaciones en tiempo real vía WebSocket o SSE
+- Log de auditoría (quién y cuándo modificó cada registro)
+- Actualizar a `swagger-jsdoc@7` cuando haya versión estable (elimina DEP0169)
+- Paginación estandarizada en todos los listados
