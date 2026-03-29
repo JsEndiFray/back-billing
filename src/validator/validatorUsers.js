@@ -6,7 +6,7 @@ export const validateUser = [
         .isLength({ min: 3 }).withMessage('El username debe tener al menos 3 caracteres'),
     body('password')
         .notEmpty().withMessage('La contraseña es obligatoria')
-        .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+        .isLength({ min: 10 }).withMessage('La contraseña debe tener al menos 10 caracteres'),
     body('email')
         .notEmpty().withMessage('El email es obligatorio')
         .isEmail().withMessage('El email no es válido'),

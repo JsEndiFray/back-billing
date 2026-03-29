@@ -135,8 +135,6 @@ const errorHandler = (req, res, next) => {
         // 📝 LOG PARA DEBUGGING Y AUDITORÍA
         // En development: ayuda al programador a ver qué validaciones fallaron
         // En production: logs para detectar patrones de errores de usuarios
-        console.debug("Validation errors:", errors.array());
-
         // 📦 OBTENER LISTA DE ERRORES EN FORMATO ARRAY
         // Cada error tiene estructura: { path, msg, value, location }
         // - path: nombre del campo que falló (ej: 'email', 'username')

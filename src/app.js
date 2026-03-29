@@ -6,11 +6,13 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
-import morgan from 'morgan';
 import helmet from "helmet";
+import cookieParser from 'cookie-parser';
+import pinoHttp from 'pino-http';
 
 //Importaciones de Configuración y Middlewares Locales
 import swaggerSpec from "./config/swagger.js";
+import logger from "./config/logger.js";
 import { AppError } from "./errors/AppError.js";
 import {generalLimiter, authLimiter} from "./middlewares/rate-limit.js";
 
@@ -31,6 +33,7 @@ import VATBookRoutes from "./routes/VATBookRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import notificationsRoutes from "./routes/notificationsRoutes.js";
+import healthRoutes from "./routes/healthRoutes.js";
 
 
 //Inicialización de la App
@@ -77,8 +80,11 @@ app.options('/{*path}', cors(corsOptions));
 // Parsea el body de las peticiones a JSON (req.body)
 app.use(express.json());
 
-// Logger de peticiones HTTP en la consola en modo desarrollo
-app.use(morgan('dev'));
+// Parsea cookies (necesario para leer httpOnly refreshToken)
+app.use(cookieParser());
+
+// Logger HTTP estructurado con Pino
+app.use(pinoHttp({ logger }));
 
 // Aplica un límite de peticiones general a toda la API
 app.use(generalLimiter);
@@ -105,6 +111,9 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
+// Health check (sin autenticación ni rate-limit)
+app.use('/api/health', healthRoutes);
+
 //Documentación de la API con Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -122,12 +131,13 @@ app.use((err, req, res, next) => {
     const method = req.method;
     const url = req.originalUrl;
 
-    // Log estructurado: siempre en servidor, stack solo en dev
-    const logParts = [`[ERROR] ${method} ${url} ${statusCode} - ${err.message}`];
-    if (err.errorCode) logParts.push(`(${err.errorCode})`);
-    if (err.details) logParts.push(`details: ${JSON.stringify(err.details)}`);
-    console.error(logParts.join(' '));
-    if (isDev && err.stack) console.error(err.stack);
+    // Log estructurado
+    logger.error({
+        method, url, statusCode,
+        errorCode: err.errorCode,
+        details:   err.details,
+        ...(isDev && { stack: err.stack }),
+    }, err.message);
 
     if (err instanceof AppError && err.isOperational) {
         return res.status(statusCode).json({ success: false, message: err.message });

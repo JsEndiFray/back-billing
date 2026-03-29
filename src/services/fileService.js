@@ -108,13 +108,30 @@ export class LocalFileService {
     }
 
     /**
+     * Valida que la ruta resuelta esté dentro del directorio de uploads.
+     * Previene path traversal (ej: ../../etc/passwd).
+     * @param {string} filePathOrName
+     * @returns {string} Ruta absoluta validada
+     * @throws {AppError} 403 si la ruta escapa del directorio permitido
+     */
+    #resolveAndGuard(filePathOrName) {
+        const resolved  = path.resolve(this.uploadPath, filePathOrName);
+        const uploadDir = path.resolve(this.uploadPath);
+        // La ruta debe comenzar exactamente con el directorio base + separador
+        if (resolved !== uploadDir && !resolved.startsWith(uploadDir + path.sep)) {
+            throw new AppError('Acceso denegado', 403);
+        }
+        return resolved;
+    }
+
+    /**
      * Lee un archivo del almacenamiento local
      * @param {string} filePathOrName - Ruta relativa o nombre del archivo
      * @returns {Promise<Buffer>} Buffer del archivo
      */
     async downloadFile(filePathOrName) {
         try {
-            const fullPath = path.join(this.uploadPath, filePathOrName);
+            const fullPath = this.#resolveAndGuard(filePathOrName);
 
             if (!fs.existsSync(fullPath)) {
                 throw new AppError('Archivo no encontrado', 404);

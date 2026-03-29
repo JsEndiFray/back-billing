@@ -1,7 +1,10 @@
 import UsersRepository from "../repository/usersRepository.js";
+import RefreshTokenRepository from "../repository/refreshTokenRepository.js";
 import bcrypt from 'bcrypt';
 import {generateAccessToken, generateRefreshToken, verifyToken} from "../services/tokenManager.js";
 import { AppError } from "../errors/AppError.js";
+
+const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
 
 //process.loadEnvFile();
 
@@ -29,6 +32,10 @@ export default class UserService {
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
+        // Persist hashed token — enables revocation
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await RefreshTokenRepository.save(user.id, refreshToken, expiresAt);
+
         return {
             user: {
                 id: user.id,
@@ -53,18 +60,35 @@ export default class UserService {
 
         if (!decoded) throw new AppError('Token expirado o inválido', 401, 'INVALID_REFRESH_TOKEN');
 
+        // Validate against DB (detects revoked tokens)
+        const rows = await RefreshTokenRepository.findValid(refreshToken);
+        if (rows.length === 0) throw new AppError('Token expirado o inválido', 401, 'INVALID_REFRESH_TOKEN');
+
         const users = await UsersRepository.findById(decoded.id);
         if (users.length === 0) throw new AppError('Token expirado o inválido', 401, 'INVALID_REFRESH_TOKEN');
 
         const user = users[0];
 
+        // Rotate: revoke old, issue new
+        await RefreshTokenRepository.revoke(refreshToken);
         const newAccessToken = generateAccessToken(user);
         const newRefreshToken = generateRefreshToken(user);
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await RefreshTokenRepository.save(user.id, newRefreshToken, expiresAt);
 
         return {
             accessToken: newAccessToken,
             refreshToken: newRefreshToken
         };
+    }
+
+    /**
+     * Logout: revoca el refresh token de la sesión actual
+     */
+    static async logout(refreshToken) {
+        if (refreshToken) {
+            await RefreshTokenRepository.revoke(refreshToken);
+        }
     }
 
     // ========================================
@@ -118,7 +142,7 @@ export default class UserService {
         const existsPhone = await UsersRepository.findByPhone(userData.phone);
         if (existsPhone.length > 0) throw new AppError('El teléfono ya está en uso', 409, 'DUPLICATE_PHONE');
 
-        userData.password = await bcrypt.hash(userData.password, 10);
+        userData.password = await bcrypt.hash(userData.password, BCRYPT_ROUNDS);
 
         const created = await UsersRepository.create(userData);
         if (created.length === 0) throw new AppError('Error al crear usuario', 500, 'USER_CREATE_ERROR');
@@ -160,7 +184,7 @@ export default class UserService {
         }
 
         if (cleanUserData.password) {
-            cleanUserData.password = await bcrypt.hash(cleanUserData.password, 10);
+            cleanUserData.password = await bcrypt.hash(cleanUserData.password, BCRYPT_ROUNDS);
         }
 
         const updated = await UsersRepository.update(cleanUserData);

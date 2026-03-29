@@ -375,15 +375,6 @@ export default class InvoicesIssuedService {
             ? parseFloat(ownershipResult[0].ownership_percent) || 0
             : 0;
 
-        // Generar número de factura secuencial
-        const lastInvoiceNumber = await InvoicesIssuedRepository.getLastInvoiceNumber();
-        let newInvoiceNumber = 'FACT-0001';
-        if (lastInvoiceNumber.length > 0) {
-            const lastNumber = parseInt(lastInvoiceNumber[0].invoice_number.replace(/\D/g, ''), 10);
-            const nextNumber = lastNumber + 1;
-            newInvoiceNumber = `FACT-${String(nextNumber).padStart(4, '0')}`;
-        }
-
         // Calcular fecha de vencimiento si no se proporciona
         let dueDate = data.due_date;
         if (!dueDate) {
@@ -398,9 +389,9 @@ export default class InvoicesIssuedService {
         // Generar mes de correspondencia
         const correspondingMonth = CalculateHelper.generateCorrespondingMonth(invoice_date, data.corresponding_month);
 
+        // invoice_number se genera atómicamente dentro de createAtomic (FOR UPDATE)
         const invoiceData = {
             ...data,
-            invoice_number: newInvoiceNumber,
             due_date: dueDate,
             ownership_percent: ownershipPercent,
             tax_base: calculationResult.details.proportional_base !== undefined ? parseFloat(calculationResult.details.proportional_base) : parseFloat(data.tax_base),
@@ -417,10 +408,10 @@ export default class InvoicesIssuedService {
             has_attachments: Boolean(data.has_attachments)
         };
 
-        const created = await InvoicesIssuedRepository.create(invoiceData);
+        const created = await InvoicesIssuedRepository.createAtomic(invoiceData);
         if (!created || created.length === 0) throw new AppError('Error al crear factura: La operación no se completó correctamente', 500);
 
-        return [{...invoiceData, id: created[0].id}];
+        return [{...invoiceData, invoice_number: created[0].invoice_number, id: created[0].id}];
     }
 
     // ==========================================

@@ -120,4 +120,17 @@ const router = express.Router()
      */
     .post('/refresh-token', AuthController.refreshToken)
 
+    //LOGOUT
+    /**
+     * @swagger
+     * /auth/logout:
+     *   post:
+     *     summary: Cerrar sesión (revoca el refresh token)
+     *     tags: [Autenticación]
+     *     responses:
+     *       200:
+     *         description: Sesión cerrada correctamente
+     */
+    .post('/logout', AuthController.logout)
+
 export default router;

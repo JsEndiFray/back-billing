@@ -73,7 +73,10 @@ const db = mysql2.createPool({
     enableKeepAlive: true,
 
     /** @type {number} Delay inicial para el mecanismo keep-alive (0 = inmediato) */
-    keepAliveInitialDelay: 0
+    keepAliveInitialDelay: 0,
+
+    /** @type {number} Tiempo máximo para establecer una conexión (ms) */
+    connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT) || 10000
 });
 
 /**

@@ -854,6 +854,65 @@ export default class InvoicesIssuedRepository {
      * @param {Object} refundData - Datos del abono (sin invoice_number, se genera aquí)
      * @returns {Array} [{id, invoice_number, created: true}] o []
      */
+    /**
+     * Crea una nueva factura emitida de forma atómica.
+     * Genera el número de factura dentro de una transacción con FOR UPDATE
+     * para evitar duplicados bajo concurrencia.
+     * @param {Object} invoiceData - Datos de la factura (sin invoice_number)
+     * @returns {Array} [{id, invoice_number, created: true}] o []
+     */
+    static async createAtomic(invoiceData) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Lock last row to prevent race condition on invoice numbering
+            const [lastRow] = await connection.query(
+                'SELECT invoice_number FROM invoices_issued WHERE is_refund = FALSE AND invoice_number LIKE \'FACT-%\' ORDER BY id DESC LIMIT 1 FOR UPDATE'
+            );
+
+            let newInvoiceNumber = 'FACT-0001';
+            if (lastRow.length > 0) {
+                const lastNumber = parseInt(lastRow[0].invoice_number.replace(/\D/g, ''), 10);
+                newInvoiceNumber = `FACT-${String(lastNumber + 1).padStart(4, '0')}`;
+            }
+
+            const {
+                estates_id, owners_id, clients_id, invoice_date,
+                due_date = null, tax_base, iva, irpf, total, ownership_percent,
+                collection_status = 'pending', collection_method = 'transfer',
+                collection_date = null, collection_reference = null, collection_notes = null,
+                start_date = null, end_date = null, corresponding_month = null,
+                is_proportional = 0, pdf_path = null, has_attachments = false, created_by = null
+            } = invoiceData;
+
+            const [result] = await connection.query(`
+                INSERT INTO invoices_issued (invoice_number, estates_id, owners_id, clients_id, invoice_date, due_date,
+                                             tax_base, iva, irpf, total, ownership_percent, is_refund, original_invoice_id,
+                                             collection_status, collection_method, collection_date, collection_reference,
+                                             collection_notes,
+                                             start_date, end_date, corresponding_month, is_proportional,
+                                             pdf_path, has_attachments, created_by, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                [
+                    newInvoiceNumber, estates_id, owners_id, clients_id, invoice_date, due_date,
+                    tax_base, iva, irpf, total, ownership_percent,
+                    collection_status, collection_method, collection_date, collection_reference, collection_notes,
+                    start_date, end_date, corresponding_month, is_proportional,
+                    pdf_path, has_attachments, created_by
+                ]
+            );
+
+            await connection.commit();
+            return result.insertId ? [{id: result.insertId, invoice_number: newInvoiceNumber, created: true}] : [];
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
     static async createRefundAtomic(refundData) {
         const connection = await db.getConnection();
         try {
